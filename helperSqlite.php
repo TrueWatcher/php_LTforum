@@ -5,14 +5,11 @@
 
 class helperSqlite {
 
-  public function getHello() {
-    return("\r\nHello, I'm helperSqlite::getHello\r\n");
-  }
-
   public static function createTable($dbo) {
     $qCreateTable="CREATE TABLE 'LTforum' (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      dateTime TEXT,
+      date TEXT,
+      time TEXT,
       author TEXT,
       message TEXT,
       comment TEXT
@@ -20,20 +17,24 @@ class helperSqlite {
     $dbo->exec($qCreateTable);
   }
   public static function addFirstMsg($dbo,$dbFileName) {
+    $dateTime=explode( "~",date("j.m.Y~G-i") );
+    
     $qAddFirstMsg="INSERT INTO 'LTforum' (
-      dateTime, author, message, comment ) VALUES ('".
-      date("j.m.Y G-i")."', 'Creator', 'New hangout ".$dbFileName." is prepared for you!',''
+      date, time, author, message, comment ) VALUES ('".
+      $dateTime[0]."','".$dateTime[1]."','Creator', 'New hangout ".$dbFileName." is prepared for you!',''
     )";
     $dbo->exec($qAddFirstMsg);
   }
   public static function addMsg($dbo,array $msg) {
     $qAddMsg="INSERT INTO 'LTforum' (
-      dateTime, author, message, comment ) VALUES (
-      :dateTime, :author, :message, :comment
+      date, time, author, message, comment ) VALUES (
+      :date, :time, :author, :message, :comment
     )";
     
     $stmt=$dbo->prepare($qAddMsg);
-    $stmt->bindValue(':dateTime',date("j.m.Y G-i"), SQLITE3_TEXT);
+    $dateTime=explode( "~",date("j.m.Y~G-i") );
+    $stmt->bindValue(':date',$dateTime[0], SQLITE3_TEXT);
+    $stmt->bindValue(':time',$dateTime[1], SQLITE3_TEXT);
     $stmt->bindValue(':author',$msg["author"], SQLITE3_TEXT);
     $stmt->bindValue(':message',$msg["message"], SQLITE3_TEXT);
     $stmt->bindValue(':comment',$msg["comment"], SQLITE3_TEXT);    
@@ -41,7 +42,7 @@ class helperSqlite {
   
   }
   public static function getOneMsg($dbo,$id) {
-    $qGetOneMsg="SELECT id, dateTime, author, message, comment
+    $qGetOneMsg="SELECT id, date, time, author, message, comment
       FROM LTforum 
       WHERE id=:id";
     $stmt=$dbo->prepare($qGetOneMsg);
@@ -50,8 +51,8 @@ class helperSqlite {
     $msg=$result->fetchArray(SQLITE3_ASSOC);
     return($msg);
   }
-  public static function getPackMsg($dbo,$startId,$length) {
-    $qGetPackMsg="SELECT id, dateTime, author, message, comment
+  public static function yieldPackMsg($dbo,$startId,$length) {
+    $qGetPackMsg="SELECT id, date, time, author, message, comment
       FROM LTforum 
       WHERE id<=:startId AND id>:finId ORDER BY id ASC";
     $stmt=$dbo->prepare($qGetPackMsg);
@@ -60,14 +61,15 @@ class helperSqlite {
     if ($finId < 0) $finId=0;
     $stmt->bindValue(':finId',$finId,SQLITE3_INTEGER);
     $result = $stmt->execute();
-    $msgs=array();
+    //$msgs=array();
     $count=0;
     while ( ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
-      $msgs[]=$msg;
+      //$msgs[]=$msg;
       $count++;
+      yield $count=>$msg;// not yield ($count=>$msg); !
     }
     
-    return($msgs);
+    //return($msgs);
   }
 }
 

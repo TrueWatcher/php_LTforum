@@ -28,16 +28,16 @@
   class singletAssocArrayWrapper {
     protected $arr;
     protected $strict;
-    private static $me=null;
+    //protected static $me=null;// this should be in child classes
     
     public static function getInstance($strict=true,$arr=array()) {
+      $sc=get_called_class();
       if ( empty( self::$me ) ) {
-        $sc=get_called_class();
-        //echo($sc);
-        self::$me = new $sc($strict,$arr);
+        //echo("Attaching instance to its \"$sc\" class\r\n");
+        $sc::$me = new $sc($strict,$arr);
         // just =new singletAssocArrayWrapper($strict,$arr); is not good for childs
       }
-      return self::$me;
+      return $sc::$me;
     }
    
     public function s($key,$value) {
@@ -63,6 +63,8 @@
   }
    
   class inputVars extends singletAssocArrayWrapper {
+    protected static $me=null;// private causes access error
+    
     public function load() {
       $inputKeys=array("act","page","rec","len");
       foreach ($inputKeys as $k) {
@@ -78,7 +80,9 @@
     }
   }
  
-  class settings extends singletAssocArrayWrapper {}
+  class settings extends singletAssocArrayWrapper {
+    protected static $me=null;
+  }
   
   function makeMsg($a,$t,$c="") {
     return ( array("author"=>$a,"message"=>$t,"comment"=>$c) );
@@ -101,11 +105,18 @@
   //$inssss->dump();
   
   $ins->load();
-  $dbo=singletDbo::getInstance( $ins->g("forum") );  
+
   $ins->dump();
+  print("====");
+  
+  $sets=settings::getInstance( true,array("near"=>"4-3-2-1") );
+  $sets->dump();
+  
+  
   
 
   
+  $dbo=singletDbo::getInstance( $ins->g("forum") );  
   $firstMsg=helperSqlite::getOneMsg($dbo,1);
   //print_r ($firstMsg);
   
@@ -118,8 +129,12 @@
   $msg3=makeMsg("SuperPuper","Blablablablablablablabla!!!Blablablablablablablabla!!!");
   helperSqlite::addMsg($dbo,$msg3);
   
-  $all=helperSqlite::getPackMsg($dbo,100,999);
-  print_r ($all);
+  //$all=helperSqlite::getPackMsg($dbo,100,999);
+  //print_r ($all);
+  $ms=helperSqlite::yieldPackMsg($dbo,100,999);
+  foreach ($ms as $i=>$m) {
+    print_r ($m);
+  }
   
   //try {
   
