@@ -25,21 +25,6 @@
     }
   }
  
-  /*class singletAssocArrayWrapper extends assocArrayWrapper {
-    private static $me=null;
-   
-    protected function __construct($strict,$arr) {
-      parent::__construct($strict,$arr);
-    }
-   
-    public static function getInstance($strict=true,$arr=array()) {
-      if ( empty( self::$me ) ) {
-        self::$me = new singletAssocArrayWrapper($strict,$arr);
-      }
-      return self::$me;
-    }
-  } */
-  
   class singletAssocArrayWrapper {
     protected $arr;
     protected $strict;
@@ -88,10 +73,18 @@
       else $this->s("user","UFO");
       $forum=( parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH) );
       $this->s("forum",$forum);
+      
+      $this->s("forum","testDb");// DEBUG!!!
     }
   }
  
   class settings extends singletAssocArrayWrapper {}
+  
+  function makeMsg($a,$t,$c="") {
+    return ( array("author"=>$a,"message"=>$t,"comment"=>$c) );
+  }
+  
+  require_once ("helperSqlite.php");
   
   // main -----------------------------------------------
   
@@ -108,7 +101,29 @@
   //$inssss->dump();
   
   $ins->load();
+  $dbo=singletDbo::getInstance( $ins->g("forum") );  
   $ins->dump();
+  
+
+  
+  $firstMsg=helperSqlite::getOneMsg($dbo,1);
+  //print_r ($firstMsg);
+  
+  $msg2=makeMsg("Super","Bla bla bla bla bla bla bla bla!!!");
+  helperSqlite::addMsg($dbo,$msg2);
+  
+  $msg=helperSqlite::getOneMsg($dbo,2);
+  //print_r ($msg);
+  
+  $msg3=makeMsg("SuperPuper","Blablablablablablablabla!!!Blablablablablablablabla!!!");
+  helperSqlite::addMsg($dbo,$msg3);
+  
+  $all=helperSqlite::getPackMsg($dbo,100,999);
+  print_r ($all);
+  
+  //try {
+  
+  //} catch ()
   
 
   
