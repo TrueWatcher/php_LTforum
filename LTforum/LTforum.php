@@ -60,11 +60,13 @@ $pr->s("forum",$forumName); // $forumName comes from index.php
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
 
-$sr=SessionRegistry::getInstance( true, array( "lang"=>"en","viewDefaultLength"=>20,"viewOverlay"=>1,"toPrintOutcome"=>1
+$sr=SessionRegistry::getInstance( true, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath 
 ) );
 
 
 // processing act=view --------------------------------------------
+try {
+
 $messages=new CardfileSqlt( $pr->g("forum"), true);
 
 //$firstMsg=$messages->getOneMsg(1);
@@ -82,14 +84,25 @@ $messages->getLimits($fb,$fe,$a);
 $topIsEditable=( strcmp($a,$pr->g("user"))==0 );
 
 $rr=ViewRegistry::getInstance( true, array( 
-"forumBegin"=>$fb, "forumEnd"=>$fe, "topIsEditable"=>$topIsEditable, "title"=>$pr->g("title"), "overlay"=>$sr->g("viewOverlay"), "length"=>"", "begin"=>"", "end"=>"", "base"=>"", "pageCurrent"=>"", "pageEnd"=>"", "msgGenerator"=>""
+"forumBegin"=>$fb, "forumEnd"=>$fe, "topIsEditable"=>$topIsEditable, "title"=>$pr->g("title"), "overlay"=>$sr->g("viewOverlay"), "length"=>"", "begin"=>"", "end"=>"", "base"=>"", "pageCurrent"=>"", "pageEnd"=>"", "msgGenerator"=>"",
 ) );
 
 if ( empty($pr->g("length")) || $pr->g("length")<0 ) $l=$sr->g("viewDefaultLength");
 else $l=$pr->g("length");
 $rr->s("length",$l);
 
-if ( empty($pr->g("begin")) && empty($pr->g("end")) ) {
+if ( $l=="*" ) { //print ("Got length=* ");
+  $rr->s("end",$fe);
+  $rr->s("base","begin");
+  $rr->s("begin",$fb);
+  
+  $b=$fb;
+  $e=$fe;
+  $l=$fe-$fb+1+1;// exact size conflicts with pagePanel
+  $rr->s("length",$l);
+}
+
+else if ( empty($pr->g("begin")) && empty($pr->g("end")) ) {
   $e=$fe;
   $rr->s("end",$fe);
   $rr->s("base","end");
@@ -127,7 +140,20 @@ $rr->s("pageCurrent",$currentPage_b);
 $toShow=$messages->yieldPackMsg($rr->g("begin"),$rr->g("end"));
 $rr->s("msgGenerator",$toShow);
 
+//$rr->s("no_such_key",0);// check catch UsageException
+
 $rr->dump();
-include ($templatePath."roll.php");
+include ($sr->g("templatePath")."roll.php");
+
+}
+catch (AccessException $ae) {
+  $pr->s( "alert",$ae->getMessage() );
+  include ($sr->g("templatePath")."alert.php");
+}
+catch (UsageException $ue) {
+  $pr->s( "alert",$ue->getMessage() );
+  include ($sr->g("templatePath")."alert.php");
+}
+
   
 ?>

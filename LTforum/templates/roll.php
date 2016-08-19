@@ -1,10 +1,14 @@
 <?php
 /**
  * A View to display a list of messages plus some nice control elements.
- * Under construction.
+ * Workable :).
+ * @uses $rr ViewRegistry
+ * @uses $sr SessionRegitry
  */
 /**
- * Functions just for this View.
+ * Functions just for this View, usually creating control elements.
+ * Need refactoring.
+ * @uses $rr ViewRegistry
  */
 class RollElements {
   /**
@@ -28,7 +32,7 @@ class RollElements {
     return ($newline);
   }
   
-  static function prevPageLink (SetGet $context,$anchor="Previous page") {
+  static function prevPageLink (SetGet $context,$anchor="Previous page",$showDeadAnchor=false) {
     $linkHead='<a href="?';
     $linkTail_1='">';
     $linkTail_2='</a>';
@@ -38,20 +42,26 @@ class RollElements {
     switch ($bs) {
     case "begin" :
       $to=$context->g("begin")-$step;
-      if ( $to <= $min-$context->g("length")+1 ) return("");// now on first page
+      if ( $to <= $min-$context->g("length")+1 ) {// now on first page
+        if ($showDeadAnchor) return($anchor);
+        return("");
+      }
       if ( $to < $min ) $to=$min;
       $qs="begin=".$to."&length=".$context->g("length");
       break;
     case "end" :
       $to=$context->g("end")-$step;
-      if ($to < $min) return("");// now on first page
+      if ($to < $min) {// now on first page
+        if ($showDeadAnchor) return($anchor);
+        return("");
+      }
       $qs="end=".$to."&length=".$context->g("length");
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
     }
     return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
   }
-  static function nextPageLink (SetGet $context,&$pageIsLast=false,$anchor="Next page") {
+  static function nextPageLink (SetGet $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
     $linkHead='<a href="?';
     $linkTail_1='">';
     $linkTail_2='</a>';
@@ -63,6 +73,7 @@ class RollElements {
       $to=$context->g("begin")+$step;
       if ($to > $max) {
         $pageIsLast=true;
+        if ($showDeadAnchor) return($anchor);
         return("");
       }
       $qs="begin=".$to."&length=".$context->g("length");
@@ -71,6 +82,7 @@ class RollElements {
       $to=$context->g("end")+$step;
       if ( $to >= $max+$context->g("length")-1 ) {
         $pageIsLast=true;
+        if ($showDeadAnchor) return($anchor);
         return("");
       }
       if ($to > $max) $to=$max;
@@ -96,12 +108,16 @@ class RollElements {
     $qs="end=".$max."&length=".$context->g("length");
     return($linkHead.$qs.$linkTail_1.$num.$linkTail_2);
   }
+  /*
+   * A small panel with current page number and rewind links.
+   * Like this: 1 < 23 > 99
+   */
   static function pagePanel (SetGet $context) {
     $panel="";
     $panel.=self::firstPageLink ($context)." ";
-    $panel.=self::prevPageLink($context,"<")." ";
+    $panel.=self::prevPageLink($context,"<",true)." ";
     $panel.=$context->g("pageCurrent")." ";
-    $panel.=self::nextPageLink($context,$no,">")." ";
+    $panel.=self::nextPageLink($context,$no,">",true)." ";
     $panel.=self::lastPageLink ($context);
     return($panel);
   }
@@ -110,20 +126,46 @@ class RollElements {
     $linkTail='">Write new</a>';
     return ($linkHead."act=new".$linkTail);
   }
+  /*
+   * A small form to change page length.
+   * Tries to keep upper/lower record in same place
+   */
+  static function lengthForm (SetGet $context) {
+    $lengths=array(10,20,50,100,"*");
+    
+    $form="Messages: <form><select name=\"length\">";
+    $optList="";
+    foreach ($lengths as $l) {
+      $optList.="<option value=\"".$l."\"";
+      if ( $l==$context->g("length") ) $optList.=" selected=\"selected\"";
+      $optList.=">".$l."</option>";
+    } 
+    //<option value="10">10</option>
+    $form.=$optList;
+    $form.="</select><input type=\"Submit\" value=\"Apply\"/>";
+    $defineBase="<input type=\"hidden\" name=\"";
+    $bs=$context->g("base");
+    $defineBase.=$bs."\" value=\"";
+    if ( $bs == "begin" ) $defineBase.=$context->g("begin");
+    else if ( $bs == "end" ) $defineBase.=$context->g("end");
+    else throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
+    $defineBase.="\"/>";
+    $form.=$defineBase."</form>";
+    return ($form);
+  }
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title><?php print( $rr->g("title") ) ?></title>
-  <link rel="stylesheet" type="text/css" href="<?php print($assetsPath."talk.css") ?>" media="all" />
+  <title><?php print( $rr->g("title")." : ".$rr->g("begin")."..".$rr->g("end") ); ?></title>
+  <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."talk.css") ?>" media="all" />
 </head>
 <body>
 <!--<h2>Hi, I'm LTforum/LTforum/templates/roll.php</h2>-->
-<p id="add"><!--<a href="form_t.php">Добавить запись</a>--><?php print ( RollElements::prevPageLink($rr) ); ?></p>
+<p id="add"><?php print ( RollElements::prevPageLink($rr) ); ?></p>
 <?php
-//require_once("TemplateHelper.php");
 foreach ($rr->g("msgGenerator") as $i=>$msg) {
   print ( RollElements::oneMessage($msg,$rr) ); 
 }
@@ -139,7 +181,7 @@ if( $sr->g("toPrintOutcome") ) print("<!--".$outcome."-->");
   if ($lastPage) print ( RollElements::newMsgLink($rr) );
   ?></td>
   <td><?php print ( RollElements::pagePanel($rr) ); ?></td>
-  <td></td>
+  <td><?php print ( RollElements::lengthForm($rr) ); ?></td>
 </tr></table>
 </body>
 </html>

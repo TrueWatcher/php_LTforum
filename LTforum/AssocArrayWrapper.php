@@ -10,7 +10,7 @@
    
     public function s($key,$value) {
       if ( !array_key_exists($key,$this->arr) ) {
-        if (strict) throw new UsageException ("Assignment by non-existent key ".$key." Use forceSet if you really mean it" );
+        if (strict) throw new UsageException ("Assignment by non-existent key ".$key.". Use forceSet if you really mean it" );
       }
       $this->arr[$key]=$value;
     }
@@ -59,7 +59,7 @@
    
     public function s($key,$value) {
       if ( !array_key_exists($key,$this->arr) ) {
-        if ($this->strict) throw new UsageException ("Assignment by non-existent key ".$key." Use forceSet if you really mean it" );
+        if ($this->strict) throw new UsageException ("Assignment by non-existent key ".$key.". Use forceSet if you really mean it" );
       }
       $this->arr[$key]=$value;
     }
