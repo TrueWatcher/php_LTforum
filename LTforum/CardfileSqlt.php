@@ -116,15 +116,14 @@ class CardfileSqlt extends ForumDb {
     return($msg);
   }
   
-  public function yieldPackMsg($startId,$length) {
+  public function yieldPackMsg($startId,$finId) {
     // from lower numbers to higher ones
     $qGetPackMsg="SELECT id, date, time, author, message, comment
       FROM '".self::$table."' 
       WHERE id>=:startId AND id<=:finId ORDER BY id ASC";
     $stmt=parent::$forumDbo->prepare($qGetPackMsg);
     $stmt->bindValue(':startId',$startId,SQLITE3_INTEGER);
-    $finId=$startId+$length;
- 
+    //$finId=$startId+$length;
     $stmt->bindValue(':finId',$finId,SQLITE3_INTEGER);
     $result = $stmt->execute();
     //$msgs=array();
