@@ -1,5 +1,9 @@
 <?php
 /**
+ * @pakage LTforum
+ */
+ 
+/**
  * A View to display a list of messages plus some nice control elements.
  * Workable :).
  * @uses $rr ViewRegistry
@@ -16,7 +20,9 @@ class RollElements {
    */
   static function editLink ($id,SetGet $context) {
     if( $id==$context->g("forumEnd") && $context->g("topIsEditable")) {
-      return ('<b title="Edit/Delete"><a href="?act=el">§</a></b>&nbsp;');
+      $userParam="";
+      if ( !empty($context->g("user")) ) $userParam="&user=".urlencode($context->g("user"));
+      return ('<b title="Edit/Delete"><a href="?act=el'.$userParam.'&end='.$id.'">§</a></b>&nbsp;');
     }
   }
 
@@ -159,7 +165,7 @@ class RollElements {
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title><?php print( $rr->g("title")." : ".$rr->g("begin")."..".$rr->g("end") ); ?></title>
+  <title><?php print( $rr->g("title")." : ".$rr->g("begin")."..".$rr->g("end")." (".$rr->g("pageCurrent")."/".$rr->g("pageEnd").")" ); ?></title>
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."talk.css") ?>" media="all" />
 </head>
 <body>

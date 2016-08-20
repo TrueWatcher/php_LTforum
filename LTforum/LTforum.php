@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.1.4 (new folders structure) view subcontroller
+ * @version 0.1.5 (new folders structure) (view subcontroller) add,edit,update
  */
 
 /**
@@ -19,19 +19,23 @@ class AccessException extends Exception {}
 /**
  * My exception for unsupported/forbidden client operations.
  */
-class UsageException extends Exception {} 
+class UsageException extends Exception {}
+/**
+ * My exception for exception in normal operations, like border situations.
+ */
+class OperationalException extends Exception {}
  
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
     
     public function load() {
-      $inputKeys=array("act","begin","end","length");
+      $inputKeys=array("act","begin","end","length","user","txt","comm","snap","del");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
       }
       if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);
-      else $this->s("user","Creator");
+      //else $this->s("user","Creator");
       //$this->s("forum","testDb");// DEBUG!!!
     }
 }
@@ -47,22 +51,123 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 function makeMsg($a,$t,$c="") {
     return ( array("author"=>$a,"message"=>$t,"comment"=>$c) );
 }
-  
+
+function showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
+  $pr->s( "alert",$alertMessage );
+  include ($sr->g("templatePath")."alert.php");
+  exit(0);
+}
+
+function charsInString($what,$charsString) {
+  if (strtok($what,$charsString)!==$what) return (true);
+}
+
+function prepareInputText($txt, SessionRegistry $sr) {
+  if( strlen($txt) > $sr->g("maxMessageBytes") ) $txt=substr($txt,0,$sr->g("maxMessageBytes"));  
+  require_once ($sr->g("mainPath")."mask_tags.php");
+  $keep_tags=array (
+    'bbc' => array ("[s]","[/s]","[i]","[/i]","[b]","[/b]","[u]","[/u]"),
+    'empty' => array ("br","br ","br/"),
+    'markup' => array ("center","em","del","s","u","i","b","a ")
+  );
+  $txt=mask_tags($txt,$keep_tags["bbc"],$keep_tags["empty"],$keep_tags["markup"]);
+  return($txt);
+}
+
 // MAIN
 
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // instantiate and initialize Page Registry and Session Registry
 
-$pr=PageRegistry::getInstance( false,array("there"=>"4321") );
+$pr=PageRegistry::getInstance( false,array() );
 $pr->load();
 $pr->s("forum",$forumName); // $forumName comes from index.php
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
 
-$sr=SessionRegistry::getInstance( true, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath 
-) );
+$sr=SessionRegistry::getInstance( true, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200")
+);
 
+// processing act=new --------------------------------------------
+if ( $pr->g("act")=="new" ) {
+  include ($sr->g("templatePath")."new.php");
+  exit(0);
+}
+
+// processing act=el (edit last) ----------------------------------
+if ( $pr->g("act")=="el" ) {
+  // checkings
+  $messages=new CardfileSqlt( $pr->g("forum"), false);
+  $lastMsg=$messages->getLastMsg();
+  if( $lastMsg["author"]!=$pr->g("user") ) showAlert ($pr,$sr,"Usernames are different!");  
+  if( $lastMsg["id"]!=$pr->g("end") ) showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+  // transfer message and comment
+  $pr->s("txt",$lastMsg["message"]);
+  $pr->s("comm",$lastMsg["comment"]);
+  // show form
+  include ($sr->g("templatePath")."edit.php");
+  exit(0);
+}
+
+// processing act=upd
+if ( $pr->g("act")=="upd" ) {
+  $pr->dump();
+  // checkings -- same as act=el
+  $messages=new CardfileSqlt( $pr->g("forum"), false);
+  $lastMsg=$messages->getLastMsg();
+  if( $lastMsg["author"]!=$pr->g("user") ) showAlert ($pr,$sr,"Usernames are different!");  
+  if( $lastMsg["id"]!=$pr->g("end") ) showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+  
+  if ( !empty($pr->g("del")) ) {
+    // simply delete
+    $messages->deletePackMsg($pr->g("end"),$pr->g("end"));
+    if ( empty($pr->g("snap")) ) showAlert ($pr,$sr,"Message ".$pr->g("end")." has been deleted by ".$pr->g("user"));
+    showAlert ($pr,$sr,"Message ".$pr->g("end")." has been deleted by ".$pr->g("user"));
+    // stub, from here we should go viewing
+  }
+  
+  $txt=$pr->g("txt");
+  if( empty($txt) ) showAlert ($pr,$sr,"Please, leave something in the Message field");
+  $txt=prepareInputText($txt,$sr);
+  $comm=$pr->g("comm");
+  $comm=prepareInputText($comm,$sr);
+  
+  $lastMsg["message"]=$txt;
+  $lastMsg["comment"]=$comm;
+
+  $messages->addMsg($lastMsg,true);// overwrite
+  // if it goes to view, CardfileSqlt can be instantiated again 
+  // see CardfileSqlt line 17
+  
+  if ( empty($pr->g("snap")) ) showAlert ($pr,$sr,"Message ".$pr->g("end")." has been updated by ".$pr->g("user"));
+  // goes on to viewer
+}
+
+// processing act=add --------------------------------------------
+if ( $pr->g("act")=="add" ) {
+  $pr->dump();
+  $user=$pr->g("user");
+  $txt=$pr->g("txt");
+  if( empty($user) ) showAlert ($pr,$sr,"Please, introduce yourself");
+  if( empty($txt) ) showAlert ($pr,$sr,"Please, write some message");
+  if ( charsInString($user,"<>&\"':;()") ) {
+    $pr->s("user","");
+    showAlert ($pr,$sr,"Username ".htmlspecialchars($user)." contains forbidden symbols");
+  }
+  if( strlen($txt) > 60 ) $txt=substr($txt,0,60);
+  
+  $txt=prepareInputText($txt,$sr);
+
+  $newMsg=makeMsg($user,$txt);
+  $messages=new CardfileSqlt( $pr->g("forum"), false);
+  $messages->addMsg($newMsg);
+  // if it goes to view, CardfileSqlt can be instantiated again 
+  // see CardfileSqlt line 17
+  
+  if ( empty($pr->g("snap")) ) showAlert ($pr,$sr,"Message was added successfully");
+  // next is viewer
+}
 
 // processing act=view --------------------------------------------
 try {
@@ -84,12 +189,14 @@ $messages->getLimits($fb,$fe,$a);
 $topIsEditable=( strcmp($a,$pr->g("user"))==0 );
 
 $rr=ViewRegistry::getInstance( true, array( 
-"forumBegin"=>$fb, "forumEnd"=>$fe, "topIsEditable"=>$topIsEditable, "title"=>$pr->g("title"), "overlay"=>$sr->g("viewOverlay"), "length"=>"", "begin"=>"", "end"=>"", "base"=>"", "pageCurrent"=>"", "pageEnd"=>"", "msgGenerator"=>"",
+"forumBegin"=>$fb, "forumEnd"=>$fe, "topIsEditable"=>$topIsEditable, "title"=>$pr->g("title"), "overlay"=>$sr->g("viewOverlay"), "length"=>"", "begin"=>"", "end"=>"", "base"=>"", "pageCurrent"=>"", "pageEnd"=>"", "msgGenerator"=>"", "user"=>$pr->g("user")
 ) );
 
 if ( empty($pr->g("length")) || $pr->g("length")<0 ) $l=$sr->g("viewDefaultLength");
 else $l=$pr->g("length");
 $rr->s("length",$l);
+
+if ( !empty($pr->g("begin")) && !empty($pr->g("end")) ) throw new UsageException ("You cannot send both \"begin\" and \"end\"; use length=* to see all messages.");
 
 if ( $l=="*" ) { //print ("Got length=* ");
   $rr->s("end",$fe);
@@ -98,10 +205,9 @@ if ( $l=="*" ) { //print ("Got length=* ");
   
   $b=$fb;
   $e=$fe;
-  $l=$fe-$fb+1+1;// exact size conflicts with pagePanel
+  $l=$fe-$fb+1+10;// exact size conflicts with pagePanel
   $rr->s("length",$l);
 }
-
 else if ( empty($pr->g("begin")) && empty($pr->g("end")) ) {
   $e=$fe;
   $rr->s("end",$fe);
@@ -143,8 +249,9 @@ $rr->s("msgGenerator",$toShow);
 //$rr->s("no_such_key",0);// check catch UsageException
 
 $rr->dump();
-include ($sr->g("templatePath")."roll.php");
 
+include ($sr->g("templatePath")."roll.php");
+exit(0);
 }
 catch (AccessException $ae) {
   $pr->s( "alert",$ae->getMessage() );

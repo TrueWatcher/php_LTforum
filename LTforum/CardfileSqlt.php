@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.1.3 new folders structure
+ * @version 0.1.5 (new folders structure) improvements and fixes
  */
 
 /**
@@ -13,7 +13,8 @@ class ForumDb {
   
   protected function __construct($forumDbFile,$allowCreate) {
     if (! is_null(self::$forumDbo) ) {
-      throw new UsageException ("You are supposed to have only one instance of ForumDb class");
+      //throw new UsageException ("You are supposed to have only one instance of ForumDb class");
+      return(0);
     }
     self::$forumDbo = new SQLite3($forumDbFile,SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
   }
@@ -52,8 +53,10 @@ class CardfileSqlt extends ForumDb {
   } 
   
   public function createTable($tableName) {
+    // AUTOINCREMENT with PRIMARY KEY prevent the reuse of ROWIDs from previously deleted rows.
+    // https://www.sqlite.org/autoinc.html
     $qCreateTable="CREATE TABLE '".$tableName."' (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id INTEGER PRIMARY KEY,
       date TEXT,
       time TEXT,
       author TEXT,
@@ -79,7 +82,9 @@ class CardfileSqlt extends ForumDb {
       date, time, author, message, comment ) VALUES (
       :date, :time, :author, :message, :comment
     )";
-    $qUpdateMsg="UPDATE '".self::$table."' SET date=:date, time=:time, author=:author, message=:message, comment=:comment WHERE id=:id"; 
+    $qUpdateMsg="UPDATE '".self::$table."' SET date=:date, time=:time, author=:author, message=:message, comment=:comment WHERE id=:id";
+    
+    if ( empty($msg["author"]) ) throw new UsageException ("New message must have an author");
     
     if (!$overwrite) $stmt=parent::$forumDbo->prepare($qAddMsg);
     else {
@@ -113,6 +118,14 @@ class CardfileSqlt extends ForumDb {
     $stmt->bindValue(':id',$id,SQLITE3_INTEGER);
     $result = $stmt->execute();
     $msg=$result->fetchArray(SQLITE3_ASSOC);
+    return($msg);
+  }
+  
+  public function getLastMsg() {
+    $qGetLastMsg="SELECT id, date, time, author, message, comment
+      FROM '".self::$table."' 
+      ORDER BY id DESC";
+    $msg=parent::$forumDbo->querySingle($qGetLastMsg,true);
     return($msg);
   }
   
@@ -153,7 +166,7 @@ class CardfileSqlt extends ForumDb {
   
   public function deletePackMsg($low,$high) {
     // operation is allowed only on first or last n messages
-    $this->getLimits($foundLow,$foundHigh);
+    $this->getLimits($foundLow,$foundHigh,$no);
     if($low!=$foundLow && $high!=$foundHigh) throw new UsageException ("You are supposed to remove messages from the beginning or from the end");
     
     $qDeletePack="DELETE FROM '".self::$table."' WHERE id>=:low AND id<=:high";
