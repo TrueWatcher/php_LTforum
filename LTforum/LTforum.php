@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.1.5 (new folders structure) (view subcontroller) add,edit,update
+ * @version 0.1.6 (new folders structure) (view subcontroller) (add,edit,update) improvements
  */
 
 /**
@@ -74,6 +74,17 @@ function prepareInputText($txt, SessionRegistry $sr) {
   return($txt);
 }
 
+function redirectToView (PageRegistry $pr) {
+  $url = 'http://';
+  if ( $_SERVER['HTTPS'] ) $url = 'https://';
+  $url .= $_SERVER['HTTP_HOST'];            // Get the server
+  $url .= rtrim(dirname($_SERVER['PHP_SELF']), '/\\'); // Get the current directory
+  $url .= "/?length=".$pr->g("length")."&user=".$pr->g("user");
+  //echo $url;
+  header("Location: ".$url);
+  exit(0);
+}
+
 // MAIN
 
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
@@ -123,7 +134,8 @@ if ( $pr->g("act")=="upd" ) {
     // simply delete
     $messages->deletePackMsg($pr->g("end"),$pr->g("end"));
     if ( empty($pr->g("snap")) ) showAlert ($pr,$sr,"Message ".$pr->g("end")." has been deleted by ".$pr->g("user"));
-    showAlert ($pr,$sr,"Message ".$pr->g("end")." has been deleted by ".$pr->g("user"));
+    redirectToView ($pr);
+    //showAlert ($pr,$sr,"Message ".$pr->g("end")." has been deleted by ".$pr->g("user"));
     // stub, from here we should go viewing
   }
   
@@ -135,6 +147,7 @@ if ( $pr->g("act")=="upd" ) {
   
   $lastMsg["message"]=$txt;
   $lastMsg["comment"]=$comm;
+  $lastMsg["time"]=$lastMsg["date"]="";// current date and time will be set
 
   $messages->addMsg($lastMsg,true);// overwrite
   // if it goes to view, CardfileSqlt can be instantiated again 
@@ -142,6 +155,7 @@ if ( $pr->g("act")=="upd" ) {
   
   if ( empty($pr->g("snap")) ) showAlert ($pr,$sr,"Message ".$pr->g("end")." has been updated by ".$pr->g("user"));
   // goes on to viewer
+  redirectToView ($pr);
 }
 
 // processing act=add --------------------------------------------
@@ -166,7 +180,7 @@ if ( $pr->g("act")=="add" ) {
   // see CardfileSqlt line 17
   
   if ( empty($pr->g("snap")) ) showAlert ($pr,$sr,"Message was added successfully");
-  // next is viewer
+  redirectToView ($pr);
 }
 
 // processing act=view --------------------------------------------
@@ -189,7 +203,7 @@ $messages->getLimits($fb,$fe,$a);
 $topIsEditable=( strcmp($a,$pr->g("user"))==0 );
 
 $rr=ViewRegistry::getInstance( true, array( 
-"forumBegin"=>$fb, "forumEnd"=>$fe, "topIsEditable"=>$topIsEditable, "title"=>$pr->g("title"), "overlay"=>$sr->g("viewOverlay"), "length"=>"", "begin"=>"", "end"=>"", "base"=>"", "pageCurrent"=>"", "pageEnd"=>"", "msgGenerator"=>"", "user"=>$pr->g("user")
+"forumBegin"=>$fb, "forumEnd"=>$fe, "title"=>$pr->g("title"), "overlay"=>$sr->g("viewOverlay"), "length"=>"", "begin"=>"", "end"=>"", "base"=>"", "pageCurrent"=>"", "pageEnd"=>"", "msgGenerator"=>""
 ) );
 
 if ( empty($pr->g("length")) || $pr->g("length")<0 ) $l=$sr->g("viewDefaultLength");
@@ -217,19 +231,20 @@ else if ( empty($pr->g("begin")) && empty($pr->g("end")) ) {
   $rr->s("begin",$b);    
 }
 else {
-  if ( empty($pr->g("begin")) ) {
+  if ( !empty($pr->g("end")) ) {
     $rr->s("base","end");
     $e=$pr->g("end");
-    if ( $e < 0 || $e > $fe ) $e=$fe;
+    if ( $e <= 0 || $e > $fe ) $e=$fe;
     $rr->s("end",$e);
     $b = $e - $l + 1;
     if ( $b < $fb ) $b=$fb;
     $rr->s("begin",$b);  
   }
-  else {
+  else { // begin is set
     $rr->s("base","begin");
     $b=$pr->g("begin");
     if ( $b < $fb ) $b=$fb;
+    if ( $b > $fe ) $b=$fe;
     $rr->s("begin",$b);    
     $e = $b + $l - 1;
     if ( $e > $fe ) $e=$fe;
@@ -238,10 +253,19 @@ else {
 }
 
 $o=$rr->g("overlay");
-$lastPage_b=(int)(($fe-$fb)/($l-$o)+1);
-$rr->s("pageEnd",$lastPage_b);
+$lastPage_b=(int)ceil(($fe-$fb)/($l-$o));// +1
+$lastPage_e=(int)ceil(($fe-$fb-$o+1)/($l-$o));
 $currentPage_b=(int)ceil(($b-$fb)/($l-$o)+1);
-$rr->s("pageCurrent",$currentPage_b);
+$currentPage_e=(int)ceil(($e-$fb-$o+1)/($l-$o));
+if ( $rr->g("base")=="begin" ) {
+  $rr->s("pageEnd",$lastPage_e);
+  $rr->s("pageCurrent",$currentPage_e);
+}
+else if ( $rr->g("base")=="end" ) {
+  $rr->s("pageEnd",$lastPage_b);
+  $rr->s("pageCurrent",$currentPage_b);
+}
+else throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
 
 $toShow=$messages->yieldPackMsg($rr->g("begin"),$rr->g("end"));
 $rr->s("msgGenerator",$toShow);

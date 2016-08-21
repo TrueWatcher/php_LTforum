@@ -21,6 +21,7 @@
   <input type="hidden" name="act" value="upd" />
   <input type="hidden" name="end" value="<?php print ($pr->g("end")); ?>" />
   <input type="hidden" name="user" value="<?php print ($pr->g("user")); ?>" />
+  <input type="hidden" name="length" value="<?php print ($pr->g("length")); ?>" /> 
   <fieldset>
     <legend>Edit message</legend>
     <table>

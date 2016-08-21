@@ -7,6 +7,7 @@
  * A View to display a list of messages plus some nice control elements.
  * Workable :).
  * @uses $rr ViewRegistry
+ * @uses $pr PageRegitry
  * @uses $sr SessionRegitry
  */
 /**
@@ -18,27 +19,27 @@ class RollElements {
   /**
    * Adds an Edit link to the latest message, if it is allowed.
    */
-  static function editLink ($id,SetGet $context) {
-    if( $id==$context->g("forumEnd") && $context->g("topIsEditable")) {
+  static function editLink ($msg,ViewRegistry $context,PageRegistry $pageContext) {
+    if( $msg["id"]==$context->g("forumEnd") && strcmp($msg["author"],$pageContext->g("user"))==0 ) {
       $userParam="";
-      if ( !empty($context->g("user")) ) $userParam="&user=".urlencode($context->g("user"));
-      return ('<b title="Edit/Delete"><a href="?act=el'.$userParam.'&end='.$id.'">§</a></b>&nbsp;');
+      if ( !empty($pageContext->g("user")) ) $userParam="&user=".urlencode($pageContext->g("user"));
+      return ('<b title="Edit/Delete"><a href="?act=el'.$userParam.'&end='.$msg["id"].'&length='.$context->g("length").'">§</a></b>&nbsp;');
     }
   }
 
-  static function oneMessage ($field,SetGet $context) {
+  static function oneMessage ($msg,ViewRegistry $context,PageRegistry $pageContext) {
     $newline="<hr />\r\n";
-    //$newline.='<!--'.$field['IP'].'; '.time()."-->\r\n";
-    $newline.='<address>'.$field['author'].' <em>wrote us on '.$field["date"]." at ".$field["time"]."</em>:";
-    $newline.='<span class="fr">'.self::editLink($field["id"],$context);
-    $newline.='<b title="'.$field["id"].'">#</b></span>';//."\r\n";
+    //$newline.='<!--'.$msg['IP'].'; '.time()."-->\r\n";
+    $newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
+    $newline.='<span class="fr">'.self::editLink($msg,$context,$pageContext);
+    $newline.='<b title="'.$msg["id"].'">#</b></span>';//."\r\n";
     $newline.="</address>\r\n";
-    $newline.='<p class="m">'.$field['message']."</p>\r\n";
-    if (! empty($field['comment']) ) $newline.='<p class="n">'.$field['comment']."</p>\r\n";
+    $newline.='<p class="m">'.$msg['message']."</p>\r\n";
+    if (! empty($msg['comment']) ) $newline.='<p class="n">'.$msg['comment']."</p>\r\n";
     return ($newline);
   }
   
-  static function prevPageLink (SetGet $context,$anchor="Previous page",$showDeadAnchor=false) {
+  static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false) {
     $linkHead='<a href="?';
     $linkTail_1='">';
     $linkTail_2='</a>';
@@ -67,7 +68,7 @@ class RollElements {
     }
     return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
   }
-  static function nextPageLink (SetGet $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
+  static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
     $linkHead='<a href="?';
     $linkTail_1='">';
     $linkTail_2='</a>';
@@ -98,14 +99,14 @@ class RollElements {
     }
     return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
   }
-  static function firstPageLink (SetGet $context) {
+  static function firstPageLink (ViewRegistry $context) {
     $linkHead='<a href="?';
     $linkTail='">1</a>';
     $min = $context->g("forumBegin");
     $qs="begin=".$min."&length=".$context->g("length");
     return($linkHead.$qs.$linkTail);
   }
-  static function lastPageLink (SetGet $context) {
+  static function lastPageLink (ViewRegistry $context) {
     $linkHead='<a href="?';
     $linkTail_1='">';
     $linkTail_2='</a>';
@@ -118,28 +119,27 @@ class RollElements {
    * A small panel with current page number and rewind links.
    * Like this: 1 < 23 > 99
    */
-  static function pagePanel (SetGet $context) {
+  static function pagePanel (ViewRegistry $context) {
     $panel="";
-    $panel.=self::firstPageLink ($context)." ";
-    $panel.=self::prevPageLink($context,"<",true)." ";
-    $panel.=$context->g("pageCurrent")." ";
-    $panel.=self::nextPageLink($context,$no,">",true)." ";
+    $panel.=self::firstPageLink ($context)."&nbsp;&nbsp;";
+    $panel.=self::prevPageLink($context,"-1",true)."&nbsp;&nbsp;";
+    $panel.="Page:&nbsp;".$context->g("pageCurrent")."&nbsp;&nbsp;";
+    $panel.=self::nextPageLink($context,$no,"+1",true)."&nbsp;&nbsp;";
     $panel.=self::lastPageLink ($context);
     return($panel);
   }
-  static function newMsgLink (SetGet $context) {
-    $linkHead='<a href="?';
-    $linkTail='">Write new</a>';
-    return ($linkHead."act=new".$linkTail);
+  static function newMsgLink (ViewRegistry $context) {
+    $el='<a href="?act=new&length='.$context->g("length").'">Write new</a>';
+    return ($el);
   }
   /*
    * A small form to change page length.
    * Tries to keep upper/lower record in same place
    */
-  static function lengthForm (SetGet $context) {
+  static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");
     
-    $form="Messages: <form><select name=\"length\">";
+    $form="Per page: <form><select name=\"length\">";
     $optList="";
     foreach ($lengths as $l) {
       $optList.="<option value=\"".$l."\"";
@@ -148,7 +148,7 @@ class RollElements {
     } 
     //<option value="10">10</option>
     $form.=$optList;
-    $form.="</select><input type=\"Submit\" value=\"Apply\"/>";
+    $form.="</select> <input type=\"Submit\" value=\"Apply\"/>";
     $defineBase="<input type=\"hidden\" name=\"";
     $bs=$context->g("base");
     $defineBase.=$bs."\" value=\"";
@@ -159,13 +159,20 @@ class RollElements {
     $form.=$defineBase."</form>";
     return ($form);
   }
+  static function numberForm (ViewRegistry $context) {
+    $form="Message (".$context->g("forumBegin")."..".$context->g("forumEnd")."):"; 
+    $form.="<form><input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" \>";
+    $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" \>";
+    $form.="</form>";
+    return ($form);
+  }
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title><?php print( $rr->g("title")." : ".$rr->g("begin")."..".$rr->g("end")." (".$rr->g("pageCurrent")."/".$rr->g("pageEnd").")" ); ?></title>
+  <title><?php print( $pr->g("title")." : ".$rr->g("begin")."..".$rr->g("end")." (".$rr->g("pageCurrent")."/".$rr->g("pageEnd").")" ); ?></title>
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."talk.css") ?>" media="all" />
 </head>
 <body>
@@ -173,7 +180,7 @@ class RollElements {
 <p id="add"><?php print ( RollElements::prevPageLink($rr) ); ?></p>
 <?php
 foreach ($rr->g("msgGenerator") as $i=>$msg) {
-  print ( RollElements::oneMessage($msg,$rr) ); 
+  print ( RollElements::oneMessage($msg,$rr,$pr) ); 
 }
 ?>
 <hr />
@@ -188,6 +195,7 @@ if( $sr->g("toPrintOutcome") ) print("<!--".$outcome."-->");
   ?></td>
   <td><?php print ( RollElements::pagePanel($rr) ); ?></td>
   <td><?php print ( RollElements::lengthForm($rr) ); ?></td>
-</tr></table>
+  <td><?php print ( RollElements::numberForm($rr) ); ?></td>
+  </tr></table>
 </body>
 </html>
