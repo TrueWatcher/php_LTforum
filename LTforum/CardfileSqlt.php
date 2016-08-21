@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.1.5 (new folders structure) improvements and fixes
+ * @version 0.2.0 (new folders structure) improvements and fixes
  */
 
 /**
@@ -13,8 +13,8 @@ class ForumDb {
   
   protected function __construct($forumDbFile,$allowCreate) {
     if (! is_null(self::$forumDbo) ) {
-      //throw new UsageException ("You are supposed to have only one instance of ForumDb class");
-      return(0);
+      throw new UsageException ("You are supposed to have only one instance of ForumDb class");
+      //return(0);
     }
     self::$forumDbo = new SQLite3($forumDbFile,SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
   }

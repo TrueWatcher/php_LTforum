@@ -20,7 +20,7 @@
 <p><?php print($pr->g("alert")); ?><br /></p>
 <p id="footer"><?php 
 $outcome="alert~".$pr->g("alert"); 
-if( $sr->g("toPrintOutcome") ) print("<!--".$outcome."-->"); 
+if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
 ?>
   
 </p>

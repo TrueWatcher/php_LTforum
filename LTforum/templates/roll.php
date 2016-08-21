@@ -139,7 +139,7 @@ class RollElements {
   static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");
     
-    $form="Per page: <form><select name=\"length\">";
+    $form="<form>Per page: <select name=\"length\">";
     $optList="";
     foreach ($lengths as $l) {
       $optList.="<option value=\"".$l."\"";
@@ -160,9 +160,9 @@ class RollElements {
     return ($form);
   }
   static function numberForm (ViewRegistry $context) {
-    $form="Message (".$context->g("forumBegin")."..".$context->g("forumEnd")."):"; 
-    $form.="<form><input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" \>";
-    $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" \>";
+    $form="<form>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
+    $form.="<input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" />";
+    $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" />";
     $form.="</form>";
     return ($form);
   }
@@ -176,17 +176,17 @@ class RollElements {
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."talk.css") ?>" media="all" />
 </head>
 <body>
-<!--<h2>Hi, I'm LTforum/LTforum/templates/roll.php</h2>-->
-<p id="add"><?php print ( RollElements::prevPageLink($rr) ); ?></p>
+<table class="low"><tr>
+  <td><?php print ( RollElements::prevPageLink($rr) ); ?></td>
+  <td><?php print ( RollElements::numberForm($rr) ); ?></td>
+</tr></table>
 <?php
-foreach ($rr->g("msgGenerator") as $i=>$msg) {
-  print ( RollElements::oneMessage($msg,$rr,$pr) ); 
-}
+foreach ($rr->g("msgGenerator") as $i=>$msg) { print( RollElements::oneMessage($msg,$rr,$pr) ); }
 ?>
 <hr />
 <p id="footer"><?php 
 $outcome="viewed~".$i; 
-if( $sr->g("toPrintOutcome") ) print("<!--".$outcome."-->"); 
+if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
 ?></p>
 <table class="low"><tr>
   <td><?php 
@@ -195,7 +195,7 @@ if( $sr->g("toPrintOutcome") ) print("<!--".$outcome."-->");
   ?></td>
   <td><?php print ( RollElements::pagePanel($rr) ); ?></td>
   <td><?php print ( RollElements::lengthForm($rr) ); ?></td>
-  <td><?php print ( RollElements::numberForm($rr) ); ?></td>
-  </tr></table>
+  <td></td>
+</tr></table>
 </body>
 </html>
