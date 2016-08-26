@@ -78,6 +78,9 @@ table.low td,p#add,p#footer {
 table.low td {
   text-align: center;
 }
+table.low p {
+  font-family: Verdana, sans-serif;  
+}
 .fr {
   float: right;
 }

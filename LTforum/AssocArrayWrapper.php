@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.1.5 (new folders structure) bugfixing 
+ * @version 0.2.1 improvements
  */
  
   class AssocArrayWrapper {
@@ -47,7 +47,7 @@
     protected $strict;
     //protected static $me=null;// this should be in child classes
     
-    public static function getInstance($stric=true,$ar=array()) {
+    public static function getInstance($stric=1,$ar=array()) {
       $sc=get_called_class();
       if ( empty( self::$me ) ) {
         //echo("Attaching instance to its \"$sc\" class\r\n");
@@ -58,15 +58,16 @@
     }
    
     public function s($key,$value) {
+      if ( $this->strict==2 ) throw new UsageException ("Attempt to set value by key ".$key." while this instance was constucted in READONLY mode" );    
       if ( !array_key_exists($key,$this->arr) ) {
-        if ($this->strict) throw new UsageException ("Assignment by non-existent key ".$key.". Use forceSet if you really mean it" );
+        if ( $this->strict==1 ) throw new UsageException ("Assignment by non-existent key ".$key." while this instance was constucted in STRICT mode" );
       }
       $this->arr[$key]=$value;
     }
     
-    public function forceSet($key,$value) {
+    /*public function forceSet($key,$value) {
       $this->arr[$key]=$value;
-    }
+    }*/
     
     public function g($key) {
       if ( !array_key_exists($key,$this->arr) ) {
@@ -77,6 +78,7 @@
     }
     
     public function r($key) {
+      if ( $this->strict==2 ) throw new UsageException ("Attempt to remove element by key ".$key." while this instance was constucted in READONLY mode" );         
       if ( array_key_exists($key,$this->arr) ) unset ($this->arr[$key]);
     }
     

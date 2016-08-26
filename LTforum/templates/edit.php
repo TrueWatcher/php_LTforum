@@ -18,11 +18,11 @@
 </head>
 <body>
 <form action="?act=upd" method="post" >
-  <input type="hidden" name="act" value="upd" />
-  <input type="hidden" name="end" value="<?php print ($pr->g("end")); ?>" />
-  <input type="hidden" name="user" value="<?php print ($pr->g("user")); ?>" />
-  <input type="hidden" name="length" value="<?php print ($pr->g("length")); ?>" /> 
   <fieldset>
+    <input type="hidden" name="act" value="upd" />
+    <input type="hidden" name="end" value="<?php print ($pr->g("end")); ?>" />
+    <input type="hidden" name="user" value="<?php print ($pr->g("user")); ?>" />
+    <input type="hidden" name="length" value="<?php print ($pr->g("length")); ?>" /> 
     <legend>Edit message</legend>
     <table>
       <tr>
@@ -47,7 +47,7 @@
         <th colspan="2"><label for="txt">Edit this comment (<span id="cnt2">max <?php $maxMessageLetters=(int)($sr->g("maxMessageBytes")/2); print($maxMessageLetters); ?> letters</span>):</label></th>
       </tr>
       <tr>
-        <td colspan="2" id="t"><textarea id="comm" name="comm" rows="" cols="" maxlength="<?php print($maxMessageLetters); ?>" ><?php print( $pr->g("comm") ); ?></textarea></td>
+        <td colspan="2" id="c"><textarea id="comm" name="comm" rows="" cols="" maxlength="<?php print($maxMessageLetters); ?>" ><?php print( $pr->g("comm") ); ?></textarea></td>
       </tr>      
       <tr>
         <th><label for="snap">View forum after posting</label></th>

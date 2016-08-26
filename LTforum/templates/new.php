@@ -17,10 +17,10 @@
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."form_t.css") ?>" media="all" />
 </head>
 <body>
-<form action="" method="post" >
-  <input type="hidden" name="act" value="add" />
-  <input type="hidden" name="length" value="<?php print ($pr->g("length")); ?>" />  
+<form action="" method="post" > 
   <fieldset>
+    <input type="hidden" name="act" value="add" />
+    <input type="hidden" name="length" value="<?php print ($pr->g("length")); ?>" />   
     <legend>Write new message</legend>
     <table>
       <tr>

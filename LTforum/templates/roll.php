@@ -6,14 +6,14 @@
 /**
  * A View to display a list of messages plus some nice control elements.
  * Workable :).
- * @uses $rr ViewRegistry
+ * @uses $vr ViewRegistry
  * @uses $pr PageRegitry
  * @uses $sr SessionRegitry
  */
 /**
  * Functions just for this View, usually creating control elements.
  * Need refactoring.
- * @uses $rr ViewRegistry
+ * @uses $vr ViewRegistry
  */
 class RollElements {
   /**
@@ -22,8 +22,8 @@ class RollElements {
   static function editLink ($msg,ViewRegistry $context,PageRegistry $pageContext) {
     if( $msg["id"]==$context->g("forumEnd") && strcmp($msg["author"],$pageContext->g("user"))==0 ) {
       $userParam="";
-      if ( !empty($pageContext->g("user")) ) $userParam="&user=".urlencode($pageContext->g("user"));
-      return ('<b title="Edit/Delete"><a href="?act=el'.$userParam.'&end='.$msg["id"].'&length='.$context->g("length").'">§</a></b>&nbsp;');
+      if ( !empty($pageContext->g("user")) ) $userParam="&amp;user=".urlencode($pageContext->g("user"));
+      return ('<b title="Edit/Delete"><a href="?act=el'.$userParam.'&amp;end='.$msg["id"].'&amp;length='.$context->g("length").'">§</a></b>&nbsp;');
     }
   }
 
@@ -31,8 +31,10 @@ class RollElements {
     $newline="<hr />\r\n";
     //$newline.='<!--'.$msg['IP'].'; '.time()."-->\r\n";
     $newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
-    $newline.='<span class="fr">'.self::editLink($msg,$context,$pageContext);
-    $newline.='<b title="'.$msg["id"].'">#</b></span>';//."\r\n";
+    //$newline.='<span class="fr">'.self::editLink($msg,$context,$pageContext);
+    //$newline.='<b title="'.$msg["id"].'">#</b></span>';//."\r\n";
+    $newline.='<b class="fr">'.self::editLink($msg,$context,$pageContext);
+    $newline.='<b title="'.$msg["id"].'">#</b></b>';//."\r\n";
     $newline.="</address>\r\n";
     $newline.='<p class="m">'.$msg['message']."</p>\r\n";
     if (! empty($msg['comment']) ) $newline.='<p class="n">'.$msg['comment']."</p>\r\n";
@@ -54,7 +56,7 @@ class RollElements {
         return("");
       }
       if ( $to < $min ) $to=$min;
-      $qs="begin=".$to."&length=".$context->g("length");
+      $qs="begin=".$to."&amp;length=".$context->g("length");
       break;
     case "end" :
       $to=$context->g("end")-$step;
@@ -62,7 +64,7 @@ class RollElements {
         if ($showDeadAnchor) return($anchor);
         return("");
       }
-      $qs="end=".$to."&length=".$context->g("length");
+      $qs="end=".$to."&amp;length=".$context->g("length");
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
     }
@@ -93,7 +95,7 @@ class RollElements {
         return("");
       }
       if ($to > $max) $to=$max;
-      $qs="end=".$to."&length=".$context->g("length");
+      $qs="end=".$to."&amp;length=".$context->g("length");
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
     }
@@ -103,7 +105,7 @@ class RollElements {
     $linkHead='<a href="?';
     $linkTail='">1</a>';
     $min = $context->g("forumBegin");
-    $qs="begin=".$min."&length=".$context->g("length");
+    $qs="begin=".$min."&amp;length=".$context->g("length");
     return($linkHead.$qs.$linkTail);
   }
   static function lastPageLink (ViewRegistry $context) {
@@ -112,7 +114,7 @@ class RollElements {
     $linkTail_2='</a>';
     $max = $context->g("forumEnd");
     $num = $context->g("pageEnd");
-    $qs="end=".$max."&length=".$context->g("length");
+    $qs="end=".$max."&amp;length=".$context->g("length");
     return($linkHead.$qs.$linkTail_1.$num.$linkTail_2);
   }
   /*
@@ -124,12 +126,12 @@ class RollElements {
     $panel.=self::firstPageLink ($context)."&nbsp;&nbsp;";
     $panel.=self::prevPageLink($context,"-1",true)."&nbsp;&nbsp;";
     $panel.="Page:&nbsp;".$context->g("pageCurrent")."&nbsp;&nbsp;";
-    $panel.=self::nextPageLink($context,$no,"+1",true)."&nbsp;&nbsp;";
+    $panel.=self::nextPageLink($context,$no,"1+",true)."&nbsp;&nbsp;";
     $panel.=self::lastPageLink ($context);
     return($panel);
   }
   static function newMsgLink (ViewRegistry $context) {
-    $el='<a href="?act=new&length='.$context->g("length").'">Write new</a>';
+    $el='<a href="?act=new&amp;length='.$context->g("length").'">Write new</a>';
     return ($el);
   }
   /*
@@ -139,7 +141,7 @@ class RollElements {
   static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");
     
-    $form="<form>Per page: <select name=\"length\">";
+    $form="<form action=\"\" method=\"get\"><p>Per page: <select name=\"length\">";
     $optList="";
     foreach ($lengths as $l) {
       $optList.="<option value=\"".$l."\"";
@@ -148,7 +150,7 @@ class RollElements {
     } 
     //<option value="10">10</option>
     $form.=$optList;
-    $form.="</select> <input type=\"Submit\" value=\"Apply\"/>";
+    $form.="</select> <input type=\"submit\" value=\"Apply\"/>";
     $defineBase="<input type=\"hidden\" name=\"";
     $bs=$context->g("base");
     $defineBase.=$bs."\" value=\"";
@@ -156,14 +158,14 @@ class RollElements {
     else if ( $bs == "end" ) $defineBase.=$context->g("end");
     else throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
     $defineBase.="\"/>";
-    $form.=$defineBase."</form>";
+    $form.=$defineBase."</p></form>";
     return ($form);
   }
   static function numberForm (ViewRegistry $context) {
-    $form="<form>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
+    $form="<form action=\"\" method=\"get\"><p>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
     $form.="<input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" />";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" />";
-    $form.="</form>";
+    $form.="</p></form>";
     return ($form);
   }
 }
@@ -172,16 +174,16 @@ class RollElements {
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title><?php print( $pr->g("title")." : ".$rr->g("begin")."..".$rr->g("end")." (".$rr->g("pageCurrent")."/".$rr->g("pageEnd").")" ); ?></title>
+  <title><?php print( $pr->g("title")." : ".$vr->g("begin")."..".$vr->g("end")." (".$vr->g("pageCurrent")."/".$vr->g("pageEnd").")" ); ?></title>
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."talk.css") ?>" media="all" />
 </head>
 <body>
 <table class="low"><tr>
-  <td><?php print ( RollElements::prevPageLink($rr) ); ?></td>
-  <td><?php print ( RollElements::numberForm($rr) ); ?></td>
+  <td><?php print ( RollElements::prevPageLink($vr) ); ?></td>
+  <td><?php print ( RollElements::numberForm($vr) ); ?></td>
 </tr></table>
 <?php
-foreach ($rr->g("msgGenerator") as $i=>$msg) { print( RollElements::oneMessage($msg,$rr,$pr) ); }
+foreach ($vr->g("msgGenerator") as $i=>$msg) { print( RollElements::oneMessage($msg,$vr,$pr) ); }
 ?>
 <hr />
 <p id="footer"><?php 
@@ -190,11 +192,11 @@ if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->");
 ?></p>
 <table class="low"><tr>
   <td><?php 
-  print ( RollElements::nextPageLink($rr,$lastPage) );
-  if ($lastPage) print ( RollElements::newMsgLink($rr) );
+  print ( RollElements::nextPageLink($vr,$lastPage) );
+  if ($lastPage) print ( RollElements::newMsgLink($vr) );
   ?></td>
-  <td><?php print ( RollElements::pagePanel($rr) ); ?></td>
-  <td><?php print ( RollElements::lengthForm($rr) ); ?></td>
+  <td><?php print ( RollElements::pagePanel($vr) ); ?></td>
+  <td><?php print ( RollElements::lengthForm($vr) ); ?></td>
   <td></td>
 </tr></table>
 </body>

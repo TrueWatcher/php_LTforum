@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.0 (add,edit,update) (improvements) cleaning
+ * @version 0.2.1 (cleaning) redirect back from alert, improvements
  */
 
 /**
@@ -56,14 +56,16 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // instantiate and initialize Page Registry and Session Registry
-$sr=SessionRegistry::getInstance( true, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200")
+$sr=SessionRegistry::getInstance( true, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "forum"=>$forumName)
 );
 
 $pr=PageRegistry::getInstance( false,array() );
 $pr->load();
-$pr->s("forum",$forumName); // $forumName comes from index.php
+//$pr->s("forum",$forumName); // $forumName comes from index.php
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
+$pr->s( "viewUri",Act::myAbsoluteUri()."/".Act::addToQueryString($pr,"","length","user") );
+
 try {
   $pr->s("cardfile",new CardfileSqlt($forumName,true));
 }

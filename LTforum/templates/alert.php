@@ -21,8 +21,16 @@
 <p id="footer"><?php 
 $outcome="alert~".$pr->g("alert"); 
 if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
-?>
-  
-</p>
+?></p>
+<table class="low"><tr>
+  <td><?php
+  if( !empty($pr->g("formUri")) )
+  print ( "<a href=\"{$pr->g("formUri")}\">Try again</a>" );
+  ?></td>
+  <td><?php
+  if( !empty($pr->g("viewUri")) )
+  print ( "<a href=\"{$pr->g("viewUri")}\">Go read messages</a>" );
+  ?></td>
+</tr></table>
 </body>
 </html>

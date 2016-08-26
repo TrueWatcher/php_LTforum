@@ -54,7 +54,7 @@ th {
 td {
   text-align: left;
 }
-td#enter,td#cancel,td#t {
+td#enter,td#cancel,td#t,td#c {
   text-align: center;
 }
 label,legend,input.submit {
