@@ -24,7 +24,7 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
-  protected $homeUri="http://LTforum/CHAT/test/";
+  protected $homeUri="http://LTforum/test/";
   //protected $formPath="";
   //protected $logPath="modules/mod_mail_inventory/mail_inventory_log.csv";
   //protected $delay=6;
@@ -52,6 +52,7 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
   static private $storedUsername="";
   static private $storedTotal=0;
   static private $storedMsg="";
+  static private $storedForum="";
   
   public function test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
@@ -67,14 +68,35 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     print("Info: first page OK");
   }
   
+  //include ("testAddEditDelete");
+  
+  public function parseViewTitle($t,&$begin,&$end,&$pageCurrent,&$pageEnd) {
+    $begin=$end=$pageCurrent=$pageEnd="";
+    $forumNumbers=explode(": ",$t);
+    $forum=$forumNumbers[0];
+    $numbers=$forumNumbers[1];
+    if (strpos($numbers,"(")===false) {
+      return($forum);
+    }
+    $beginMore=explode("..",$numbers);
+    $begin=$beginMore[0];
+    $more1=$beginMore[1];
+    $endMore=explode(" (",$more1);
+    $end=$endMore[0];
+    $more2=$endMore[1];
+    $currentMore=explode("/",$more2);
+    $pageCurrent=$currentMore[0];
+    $pageEnd=trim($currentMore[1],"() ");
+    return($forum);
+  }
+  
   public function test_Add() {
     $this->webDriver->get($this->homeUri);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
-    $forum=explode(":",$title)[0];
-    $nn=explode("..",$title)[1];
-    $lastMsg=explode(" ",$nn)[0];
+    $forum=self::parseViewTitle($title,$b,$lastMsg,$pc,$pe);
+    self::$storedForum=$forum;
     //print("\r\nForum:$forum Total:$lastMsg\r\n");
     
     $me="Robot_".time();
@@ -101,10 +123,9 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     
     $title_back=$this->webDriver->getTitle();
     if (strlen($title_back)) print ("\r\ntitle found: $title_back \r\n");
-    $forumSame=(strpos($title_back,$forum)===0);
+    $forum_back=self::parseViewTitle($title_back,$b,$lastMsg2,$pc,$pe);
+    $forumSame=( strcmp($forum_back,self::$storedForum )===0);
     $this->assertTrue($forumSame,"Not came back to View");
-    $nn=explode("..",$title_back)[1];
-    $lastMsg2=explode(" ",$nn)[0];
     $this->assertEquals($lastMsg+1,$lastMsg2,"Not came back to View or new message not counted");
     $addr=$this->webDriver->findElement(WebDriverBy::xpath('//address[last()]'));
     //print($addr->getText());
@@ -127,8 +148,10 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $total=self::$storedTotal;
-    $this->assertContains("..".$total." ",$title,"Invalid or missing total number");
+    $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
+    $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
     $editLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));
     $this->assertNotEmpty($editLink,"An EDIT link not found");
     $editLink->click();
@@ -136,6 +159,7 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     
     $title_edit=$this->webDriver->getTitle();
     if (strlen($title_edit)) print ("\r\ntitle found: $title_edit \r\n");
+    $this->assertContains(self::$storedForum,$title_edit,"Not came to EDIT page");
     $this->assertContains("edit message ".$total,$title_edit,"Missed EDIT LAST page or wrong message number");
     
     $t=(string)time();
@@ -145,7 +169,7 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $this->assertNotEmpty($inputText,"A MESSAGE field not found");
     $inputText->sendKeys($msg);
     //$msgC="My_second,".$t."<br /> <i>second</i> <br>comment";
-    $msgC="My good <co>mment ".$t;
+    $msgC="My <p>good</p> co<mm>ent ".$t;
     $inputComm=$this->webDriver->findElement(WebDriverBy::name("comm"));
     $this->assertNotEmpty($inputComm,"A COMMENT field not found");
     $inputComm->sendKeys($msgC);
@@ -157,9 +181,9 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     
     $title_back=$this->webDriver->getTitle();
     if (strlen($title_back)) print ("\r\ntitle found: $title_back \r\n");
-    $nn=explode("..",$title_back)[1];
-    $lastMsg3=explode(" ",$nn)[0];
-    $this->assertContains("..".$total." ",$title,"Not came back to View or changed total number");
+    $forum=self::parseViewTitle($title_back,$b,$lastMsg3,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forum,"Not came back to View");    
+    $this->assertEquals(self::$storedTotal,$lastMsg3,"Changed total number");  
     $addr=$this->webDriver->findElement(WebDriverBy::xpath('//address[last()]'));
     //print($addr->getText());
     $authorSame=(strpos($addr->getText(),$me)===0);
@@ -196,8 +220,11 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $total=self::$storedTotal;
-    $this->assertContains("..".$total." ",$title,"Invalid or missing total number");
+    $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
+    $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
+    //$this->assertContains("..".$total." ",$title,"Invalid or missing total number");
     $editLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));
     $this->assertNotEmpty($editLink,"An EDIT link not found");
     $editLink->click();
@@ -205,6 +232,7 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     
     $title_edit=$this->webDriver->getTitle();
     if (strlen($title_edit)) print ("\r\ntitle found: $title_edit \r\n");
+    $this->assertContains(self::$storedForum,$title_edit,"Not came to EDIT LAST page");
     $this->assertContains("edit message ".$total,$title_edit,"Missed EDIT LAST page or wrong message number");
     // come to work
     $delBox=$this->webDriver->findElement(WebDriverBy::name("del"));
@@ -218,11 +246,9 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     
     $title_back=$this->webDriver->getTitle();
     if (strlen($title_back)) print ("\r\ntitle found: $title_back \r\n");
-    /*$forumSame=(strpos($title_back,$forum)===0);
-    $this->assertTrue($forumSame,"Not came back to View");*/
-    $nn=explode("..",$title_back)[1];
-    $lastMsg3=explode(" ",$nn)[0];
-    $this->assertEquals($total-1,$lastMsg3,"Not came back to View or removal not counted");
+    $forum=self::parseViewTitle($title_back,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forum,"Not came back to View");    
+    $this->assertEquals($total-1,$e,"Removal not counted");    
     $addr=$this->webDriver->findElement(WebDriverBy::xpath('//address[last()]'));
     //print($addr->getText());
     $authorSame=(strpos($addr->getText(),$me)===0);
@@ -231,11 +257,196 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $mes=end($mess);
     $retr=$mes->getText();
     //print( $mes->getText() );    
-    //$msgSame=(strpos($mes->getText(),$msg)===0);
-    //$this->assertFalse($authorSame,"My good message not deleted");
     $this->assertNotContains(self::$storedMsg,$retr,"My edited message is not deketed");
     print("Info: delete OK");    
   }
   
+  public function test_ViewAddAlertView() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
+    self::$storedForum=$forum;
+    self::$storedTotal=$e;
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
+    //$this->assertNotEmpty($addLink,"A WRITE link not found");
+    $addLink->click();
+    
+    // submit an empty form
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forumAdd,"Not came to WRITE NEW page");
+    $this->assertContains("new message",$titleNew1,"Missed WRITE NEW page");    
+    // submit an empty form
+    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
+    $this->assertNotEmpty($subm,"A SUBMIT field not found");
+    $subm->submit();
+    print("Info: submit empty form OK");
+
+    // check alert page
+    $titleAlert=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $titleAlert \r\n");
+    $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
+    $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
+    $tryAgainLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("read"));
+    $tryAgainLink->click();
+    print("Info: ALERT after empty form OK");
+    
+    // check View page
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
+    $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
+    $addLink->click();
+    print("Info: VIEW after ALERT OK");
+
+    // send a message with cleared snap
+    $titleNew2=$this->webDriver->getTitle();    
+    if (strlen($title)) print ("\r\ntitle found: $titleNew2 \r\n");
+    $this->assertContains(self::$storedForum,$titleNew2,"Not came to WRITE NEW page after ALERT");
+    $this->assertContains("new message",$titleNew2,"Missed WRITE NEW page");
+    $me="Test Robot";
+    self::$storedUsername=$me;    
+    $msg="Test message 1";
+    $checkSnap=$this->webDriver->findElement(WebDriverBy::name("snap"));
+    $checkSnap->click();
+    $inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
+    //$this->assertNotEmpty($addLink,"A USER field not found");
+    $inputAuthor->sendKeys($me);
+    $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
+    //$this->assertNotEmpty($inputText,"A MESSAGE field not found");
+    $inputText->sendKeys($msg);
+    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
+    //print('Button '.$subm->getAttribute("value"));
+    //$this->assertNotEmpty($subm,"A SUBMIT field not found");
+    $subm->submit();
+    print("Info: submit a message with cleared SNAP OK");
+    
+    // again Alert, go read
+    $titleAlert=$this->webDriver->getTitle();
+    if (strlen($titleAlert)) print ("\r\ntitle found: $titleAlert \r\n");
+    $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
+    $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
+    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("read"));
+    $readLink->click();
+    print("Info: ALERT after cleared SNAP OK");
+    
+    // happy return to View
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forum,"Not came back to View");    
+    $this->assertEquals(self::$storedTotal+1,$e,"Added message not counted");
+    print("Info: View-Add-Alert-Add-Alert-View sequence OK");
+  }
+  
+  public function test_ViewEditAlertView() {
+    $me=self::$storedUsername;
+    $qs="?user=".$me;
+    $this->webDriver->get( ($this->homeUri).$qs );  
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
+    self::$storedForum=$forum;
+    self::$storedTotal=$e;
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));
+    //$this->assertNotEmpty($addLink,"A WRITE link not found");
+    $addLink->click();
+    
+    // submit a form without message
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
+    $this->assertContains("edit",$titleNew1,"Missed EDIT page");
+    $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
+    $inputText->clear();
+    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
+    $this->assertNotEmpty($subm,"A SUBMIT field not found");
+    $subm->submit();
+    print("Info: submit EDIT form with empty TXT OK");    
+
+    // check alert page
+    $titleAlert=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $titleAlert \r\n");
+    $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
+    $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
+    $tryAgainLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("again"));
+    $tryAgainLink->click();
+    print("Info: ALERT after empty form OK");
+    
+    // submit a form with a message and cleared snap
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
+    $this->assertContains("edit",$titleNew1,"Missed EDIT page");
+    $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
+    $msg2=" edited";    
+    $inputText->sendKeys($msg2);
+    $checkSnap=$this->webDriver->findElement(WebDriverBy::name("snap"));
+    $checkSnap->click();
+    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
+    $this->assertNotEmpty($subm,"A SUBMIT field not found");
+    $subm->submit();    
+    print("Info: return to EDIT and submit a form with message and cleared SNAP OK");
+    
+    // again Alert, get back to form
+    $titleAlert=$this->webDriver->getTitle();
+    if (strlen($titleAlert)) print ("\r\ntitle found: $titleAlert \r\n");
+    $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
+    $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
+    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("again"));
+    $readLink->click();
+    print("Info: ALERT after cleared SNAP OK");
+    
+    // submit a form with a comment and cleared snap
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
+    $this->assertContains("edit",$titleNew1,"Missed EDIT page");
+    $inputComm=$this->webDriver->findElement(WebDriverBy::name("comm"));
+    $msg3="My commentary";    
+    $inputComm->sendKeys($msg3);
+    $checkSnap=$this->webDriver->findElement(WebDriverBy::name("snap"));
+    $checkSnap->click();
+    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
+    $subm->submit();    
+    print("Info: return to EDIT and submit a form with cleared SNAP OK");
+    
+    // again Alert, get back to form
+    $titleAlert=$this->webDriver->getTitle();
+    if (strlen($titleAlert)) print ("\r\ntitle found: $titleAlert \r\n");
+    $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
+    $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
+    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("again"));
+    $readLink->click();
+    print("Info: again ALERT after cleared SNAP OK");
+    
+    // submit unchanged form with default snap=on
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
+    $this->assertContains("edit",$titleNew1,"Missed EDIT page");
+    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
+    $subm->submit(); 
+    print("Info: return to EDIT and submit a default form OK");
+    
+    // check View page
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
+    $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));
+    print("Info: View-Edit-Alert-Edit-Alert-Edit-View sequence OK");
+  }
 }
 ?>

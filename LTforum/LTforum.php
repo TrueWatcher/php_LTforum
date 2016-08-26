@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.1 (cleaning) redirect back from alert, improvements
+ * @version 0.2.2 (cleaning) (redirect back from alert, improvements) tests and bugfixing
  */
 
 /**

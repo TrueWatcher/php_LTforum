@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.1 (cleaning) redirect back from alert, improvements
+ * @version 0.2.2 (cleaning) (redirect back from alert, improvements) tests and bugfixing
  */
 
 /**
@@ -186,10 +186,9 @@ class Act {
   }
   
   public static function redirectToView (PageRegistry $pr) {
-    //$url=self::myAbsoluteUri();
-    //$url.="/?length=".$pr->g("length")."&user=".$pr->g("user");
-    //echo $url;
-    header("Location: ".$pr->g("viewUri"));
+    $uri=$pr->g("viewUri");
+    $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake
+    header("Location: ".$uri);
     exit(0);
   }
 
