@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.0 (new folders structure) improvements and fixes
+ * @version 0.3.0 (0.2.0 improvements and fixes) needs admin panel and docs
  */
 
 /**

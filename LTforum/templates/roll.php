@@ -1,6 +1,7 @@
 <?php
 /**
  * @pakage LTforum
+ * @version 0.3.0 (tests and bugfixing) needs admin panel and docs
  */
  
 /**
@@ -29,12 +30,9 @@ class RollElements {
 
   static function oneMessage ($msg,ViewRegistry $context,PageRegistry $pageContext) {
     $newline="<hr />\r\n";
-    //$newline.='<!--'.$msg['IP'].'; '.time()."-->\r\n";
     $newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
-    //$newline.='<span class="fr">'.self::editLink($msg,$context,$pageContext);
-    //$newline.='<b title="'.$msg["id"].'">#</b></span>';//."\r\n";
     $newline.='<b class="fr">'.self::editLink($msg,$context,$pageContext);
-    $newline.='<b title="'.$msg["id"].'">#</b></b>';//."\r\n";
+    $newline.='<b title="'.$msg["id"].'">#</b></b>';
     $newline.="</address>\r\n";
     $newline.='<p class="m">'.$msg['message']."</p>\r\n";
     if (! empty($msg['comment']) ) $newline.='<p class="n">'.$msg['comment']."</p>\r\n";
@@ -42,65 +40,65 @@ class RollElements {
   }
   
   static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false) {
+  // needs refactoring
     $linkHead='<a href="?';
     $linkTail_1='">';
     $linkTail_2='</a>';
-    $min = $context->g("forumBegin");
-    $bs = $context->g("base");
     $step = $context->g("length") - $context->g("overlay");
-    switch ($bs) {
+    $nextBegin = $context->g("begin") - $step;
+    $nextEnd = $context->g("end") - $step;
+    switch ( $context->g("base") ) {
     case "begin" :
-      $to=$context->g("begin")-$step;
-      if ( $to <= $min-$context->g("length")+1 ) {// now on first page
+      if ( $nextEnd <= $context->g("forumBegin") ) {
         if ($showDeadAnchor) return($anchor);
         return("");
       }
-      if ( $to < $min ) $to=$min;
-      $qs="begin=".$to."&amp;length=".$context->g("length");
+      if ( $nextBegin < $context->g("forumBegin") ) $nextBegin = $context->g("forumBegin");
+      $qs="begin=".$nextBegin."&amp;length=".$context->g("length");//."&amp;nextEnd=".$nextEnd;
       break;
     case "end" :
-      $to=$context->g("end")-$step;
-      if ($to < $min) {// now on first page
+      if ( $nextEnd <= $context->g("forumBegin") ) {
         if ($showDeadAnchor) return($anchor);
         return("");
       }
-      $qs="end=".$to."&amp;length=".$context->g("length");
+      $qs="end=".$nextEnd."&amp;length=".$context->g("length");//."&amp;nextBegin=".$nextBegin;        
       break;
-    default : throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
-    }
+    default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
+    }// end switch
     return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
   }
+  
   static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
+  // needs refactoring
     $linkHead='<a href="?';
     $linkTail_1='">';
     $linkTail_2='</a>';
-    $max = $context->g("forumEnd");
-    $bs = $context->g("base");
     $step = $context->g("length") - $context->g("overlay");
-    switch ($bs) {
+    $nextBegin = $context->g("begin") + $step;
+    $nextEnd = $context->g("end") + $step;    
+    switch ( $context->g("base") ) {
     case "begin" :
-      $to=$context->g("begin")+$step;
-      if ($to > $max) {
+      if ( $nextBegin >= $context->g("forumEnd") ) {
         $pageIsLast=true;
         if ($showDeadAnchor) return($anchor);
         return("");
       }
-      $qs="begin=".$to."&length=".$context->g("length");
+      $qs="begin=".$nextBegin."&length=".$context->g("length");
       break;
     case "end" :
-      $to=$context->g("end")+$step;
-      if ( $to >= $max+$context->g("length")-1 ) {
+      if ( $nextBegin >= $context->g("forumEnd") ) {
         $pageIsLast=true;
         if ($showDeadAnchor) return($anchor);
         return("");
       }
-      if ($to > $max) $to=$max;
-      $qs="end=".$to."&amp;length=".$context->g("length");
+      if ( $nextEnd > $context->g("forumEnd") ) $nextEnd = $context->g("forumEnd");
+      $qs="end=".$nextEnd."&amp;length=".$context->g("length");
       break;
-    default : throw new UsageException ("Illegal value at \"base\" key :".$bs.'!');
+    default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
     }
     return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
   }
+  
   static function firstPageLink (ViewRegistry $context) {
     $linkHead='<a href="?';
     $linkTail='">1</a>';
@@ -108,6 +106,7 @@ class RollElements {
     $qs="begin=".$min."&amp;length=".$context->g("length");
     return($linkHead.$qs.$linkTail);
   }
+  
   static function lastPageLink (ViewRegistry $context) {
     $linkHead='<a href="?';
     $linkTail_1='">';
@@ -117,6 +116,7 @@ class RollElements {
     $qs="end=".$max."&amp;length=".$context->g("length");
     return($linkHead.$qs.$linkTail_1.$num.$linkTail_2);
   }
+  
   /*
    * A small panel with current page number and rewind links.
    * Like this: 1 < 23 > 99
@@ -130,6 +130,7 @@ class RollElements {
     $panel.=self::lastPageLink ($context);
     return($panel);
   }
+  
   static function newMsgLink (ViewRegistry $context) {
     $el='<a href="?act=new&amp;length='.$context->g("length").'">Write new</a>';
     return ($el);
@@ -141,7 +142,7 @@ class RollElements {
   static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");
     
-    $form="<form action=\"\" method=\"get\"><p>Per page: <select name=\"length\">";
+    $form="<form action=\"\" method=\"get\" id=\"perPage\"><p>Per page: <select name=\"length\">";
     $optList="";
     foreach ($lengths as $l) {
       $optList.="<option value=\"".$l."\"";
@@ -162,7 +163,7 @@ class RollElements {
     return ($form);
   }
   static function numberForm (ViewRegistry $context) {
-    $form="<form action=\"\" method=\"get\"><p>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
+    $form="<form action=\"\" method=\"get\" id=\"messageNumber\"><p>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
     $form.="<input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" />";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" />";
     $form.="</p></form>";

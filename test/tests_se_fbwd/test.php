@@ -14,9 +14,10 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\WebDriverCapabilityType;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverSelect;
 //use PHPUnit\Framework\TestCase;
 
-class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
+class Test_LTforumAll extends PHPUnit_Framework_TestCase {
 
   protected $browser="htmlunit";
   protected $emulate="FIREFOX_45";// needed for JQuery and/or Bootstrap
@@ -138,6 +139,8 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $this->assertTrue($msgSame,"My good message not found");
     self::$storedUsername=$me;
     self::$storedTotal=$lastMsg2;
+    $addLink=$this->webDriver->findElement(WebDriverBy::xpath('//b[@title="Edit/Delete"]'));
+    $this->assertNotEmpty($addLink,"No EDIT link after adding message: check URIs for user=User");
     print("Info: add message OK"); 
   }
   
@@ -199,8 +202,6 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $this->assertContains("te&lt;st",$retr,"lone LT error");
     $this->assertContains("&lt;message>",$retr,"custom tag error");
     $this->assertContains("</s>",$retr,"auto close tag error");*/
-    //$comSame=(strpos($retr,$msg)>0);
-    //$this->assertTrue($comSame,"Message is altered");
     $this->assertContains($msg,$retr,"Message is altered");
     $coms=$this->webDriver->findElements(WebDriverBy::xpath('//p[@class="n"]'));
     $com=end($coms);
@@ -208,6 +209,7 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $this->assertContains($t,$retC,"My new comment not found");
     $comSame=(strpos($msgC,$retC)===0);
     $this->assertTrue($comSame,"Comment is altered");
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));// it's assertion
     print("Info: tag filter works, edit OK");
     self::$storedMsg=$msg;
   }
@@ -341,7 +343,8 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $this->assertEquals(self::$storedForum,$forum,"Not came back to View");    
     $this->assertEquals(self::$storedTotal+1,$e,"Added message not counted");
-    print("Info: View-Add-Alert-Add-Alert-View sequence OK");
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));// it's assertion   
+    print("Info: View-Add-Alert-View sequence OK");
   }
   
   public function test_ViewEditAlertView() {
@@ -420,24 +423,24 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $subm->submit();    
     print("Info: return to EDIT and submit a form with cleared SNAP OK");
     
-    // again Alert, get back to form
+    // again Alert, go to View //get back to form
     $titleAlert=$this->webDriver->getTitle();
     if (strlen($titleAlert)) print ("\r\ntitle found: $titleAlert \r\n");
     $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
     $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
-    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("again"));
+    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("read"));
     $readLink->click();
     print("Info: again ALERT after cleared SNAP OK");
     
     // submit unchanged form with default snap=on
-    $titleNew1=$this->webDriver->getTitle();
+    /*$titleNew1=$this->webDriver->getTitle();
     if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
     $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
     $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
     $this->assertContains("edit",$titleNew1,"Missed EDIT page");
     $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
     $subm->submit(); 
-    print("Info: return to EDIT and submit a default form OK");
+    print("Info: return to EDIT and submit a default form OK");*/
     
     // check View page
     $title=$this->webDriver->getTitle();
@@ -446,7 +449,90 @@ class Test_modMailInventoryHelper extends PHPUnit_Framework_TestCase {
     $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
     $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));
-    print("Info: View-Edit-Alert-Edit-Alert-Edit-View sequence OK");
+    print("Info: View-Edit-Alert-View sequence OK");
+  }
+  
+  public function addOneMsg($j=1) {
+    //$this->webDriver->get($this->homeUri);// bad because sets length to default
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
+    $addLink->click();
+    $titleNew2=$this->webDriver->getTitle();    
+    if (strlen($title)) print ("\r\ntitle found: $titleNew2 \r\n");
+    $this->assertContains(self::$storedForum,$titleNew2,"Not came to WRITE NEW page after ALERT");
+    $this->assertContains("new message",$titleNew2,"Missed WRITE NEW page");
+    $me=self::$storedUsername;    
+    $msg="Test message ".$j;
+    $inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
+    //$this->assertNotEmpty($addLink,"A USER field not found");
+    $inputAuthor->clear();
+    $inputAuthor->sendKeys($me);
+    $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
+    $this->assertNotEmpty($inputText,"A MESSAGE field not found");
+    $inputText->sendKeys($msg);
+    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
+    //$this->assertNotEmpty($subm,"A SUBMIT field not found");
+    $subm->submit();
+  }
+  
+  public function test_pageCountAcross10() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");  
+    $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
+    $this->assertLessThan(8,(int)$e-$b,"Too many messages in test database. Delete it manually");
+    self::$storedForum=$forum;    
+    self::$storedUsername="TestPagination";
+    $selectLength=$this->webDriver->findElement(WebDriverBy::id("perPage"))->findElement(WebDriverBy::name("length"));
+    $selector=new WebDriverSelect($selectLength);
+    $selector->selectByVisibleText("10");
+    $selectLength->submit();
+    print("Info: length have been set to 10");
+    for ($n=$e+1;$n<=$e+8-$b;$n++) {
+      self::addOneMsg($n);
+    }
+    print("Info: forum is filled with 9 messages");
+    // testing 9 messages
+    $title9=$this->webDriver->getTitle();
+    if (strlen($title9)) print ("\r\ntitle found: $title9 \r\n");  
+    $forum=self::parseViewTitle($title9,$b,$e,$pc,$pe);
+    $this->assertTrue( ((int)$e-$b)==8 && $pc==1 && $pe==1,"Something is wrong with 9 messages counts" );
+    $src9=$this->webDriver->getPageSource();
+    $this->assertNotContains(">Previous page<",$src9,"Previous page link found on the 9 messages page");
+    $this->assertNotContains(">Next page<",$src9,"Next page link found on the 9 messages page");
+    print("The 9 messages page OK");
+    //  testing 10 messages
+    self::addOneMsg($e-$b+2);
+    $title10=$this->webDriver->getTitle();
+    print ("\r\ntitle found: $title10 \r\n");  
+    $forum=self::parseViewTitle($title10,$b,$e,$pc,$pe);
+    $this->assertTrue( ((int)$e-$b)==9 && $pc==1 && $pe==1,"Something is wrong with 10 messages counts" );
+    $src10=$this->webDriver->getPageSource();
+    $this->assertNotContains("Previous page",$src10,"Previous page link found on the 10 messages page");
+    $this->assertNotContains("Next page",$src10,"Next page link found on the 10 messages page");
+    print("The 10 messages page OK");
+    // testing 11 messages
+    self::addOneMsg($e-$b+2);
+    $title11=$this->webDriver->getTitle();
+    print ("\r\ntitle found: $title11 \r\n");  
+    $forum=self::parseViewTitle($title11,$b,$e,$pc,$pe);
+    $this->assertEquals (2,$pe,"No second page on 11 messages: check URIs for length=10");
+    $this->assertTrue (  $b==2 && $e==11 && $pc==2,"Something is wrong with 11 messages counts" );
+    $src11=$this->webDriver->getPageSource();
+    $this->assertContains("Previous page",$src11,"Previous page link _not_ found on the 11 messages default page");
+    $this->assertNotContains("Next page",$src11,"Next page link found on the 11 messages default page");
+    print("The 11 messages default page OK");
+    $firstLink=$this->webDriver->findElement(webDriverBy::partialLinkText("1"));
+    $firstLink->click();
+    $title11f=$this->webDriver->getTitle();
+    print ("\r\ntitle found: $title11f \r\n");  
+    $forum=self::parseViewTitle($title11f,$b,$e,$pc,$pe);
+    $this->assertTrue (  $b==1 && $e==10 && $pc==1 && $pe==2,"Something is wrong with 11 messages first page counts" );
+    $src11=$this->webDriver->getPageSource();
+    $this->assertNotContains("Previous page",$src11,"Previous page link found on the 11 messages first page");
+    $this->assertContains("Next page",$src11,"Next page link _not_ found on the 11 messages first page");
+    print("The 11 messages first page OK");    
   }
 }
 ?>

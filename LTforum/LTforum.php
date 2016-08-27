@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.2 (cleaning) (redirect back from alert, improvements) tests and bugfixing
+ * @version 0.3.0 (tests and bugfixing) needs admin panel and docs
  */
 
 /**
@@ -64,7 +64,7 @@ $pr->load();
 //$pr->s("forum",$forumName); // $forumName comes from index.php
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
-$pr->s( "viewUri",Act::myAbsoluteUri()."/".Act::addToQueryString($pr,"","length","user") );
+$pr->s( "viewUri",Act::myAbsoluteUri()."/".Act::addToQueryString($pr,"","length","user") );//
 
 try {
   $pr->s("cardfile",new CardfileSqlt($forumName,true));
