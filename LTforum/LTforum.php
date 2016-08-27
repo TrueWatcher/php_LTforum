@@ -12,20 +12,10 @@
 require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
+require_once ($mainPath."MyExceptions.php");
 
 // Classes and function, which have not found their own files
-/**
- * My exception for file access errors.
- */
-class AccessException extends Exception {}
-/**
- * My exception for unsupported/forbidden client operations.
- */
-class UsageException extends Exception {}
-/**
- * My exception for exception in normal operations, like border situations.
- */
-class OperationalException extends Exception {}
+
  
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
@@ -38,8 +28,6 @@ class PageRegistry extends SingletAssocArrayWrapper {
       }
       if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);
       //else $this->s("user","Creator");
-      
-      //$this->s("forum","testDb");// DEBUG!!!
     }
 }
  
@@ -56,15 +44,15 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // instantiate and initialize Page Registry and Session Registry
-$sr=SessionRegistry::getInstance( true, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "forum"=>$forumName)
+$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "forum"=>$forumName)
 );
 
-$pr=PageRegistry::getInstance( false,array() );
+$pr=PageRegistry::getInstance( 0,array() );
 $pr->load();
 //$pr->s("forum",$forumName); // $forumName comes from index.php
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
-$pr->s( "viewUri",Act::myAbsoluteUri()."/".Act::addToQueryString($pr,"","length","user") );//
+$pr->s( "viewLink",Act::addToQueryString($pr,"","length","user") );//
 
 try {
   $pr->s("cardfile",new CardfileSqlt($forumName,true));

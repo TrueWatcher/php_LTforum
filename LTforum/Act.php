@@ -32,7 +32,7 @@ class Act {
     //$pr->dump();
     // check user -- same as act=el
     $lastMsg=$pr->g("cardfile")->getLastMsg();
-    $pr->s( "formUri",self::myAbsoluteUri()."/".self::addToQueryString($pr,"act=el","length","user","end") );   
+    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length","user","end") );   
     if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");  
     if( $lastMsg["id"]!=$pr->g("end") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
   
@@ -62,7 +62,7 @@ class Act {
     //$pr->dump();
     $user=$pr->g("user");
     $txt=$pr->g("txt");
-    $pr->s( "formUri",self::myAbsoluteUri()."/".self::addToQueryString($pr,"act=new","length","user") );
+    $pr->s( "formLink",self::addToQueryString($pr,"act=new","length","user") );
     if( empty($user) ) self::showAlert ($pr,$sr,"Please, introduce yourself");
     if( empty($txt) ) self::showAlert ($pr,$sr,"Please, write some message");
     if ( self::charsInString($user,"<>&\"':;()") ) {
@@ -80,7 +80,7 @@ class Act {
     self::redirectToView ($pr);  
   }
   
-  public static function view(PageRegistry $pr,SessionRegistry $sr) { 
+  public static function view (PageRegistry $pr,SessionRegistry $sr) { 
     try {
       $pr->g("cardfile")->getLimits($forunBegin,$forumEnd,$a);
       $overlay=$sr->g("viewOverlay");
@@ -186,8 +186,9 @@ class Act {
   }
   
   public static function redirectToView (PageRegistry $pr) {
-    $uri=$pr->g("viewUri");
+    $uri=$pr->g("viewLink");
     $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake
+    $uri=self::myAbsoluteUri()."/".$uri;
     header("Location: ".$uri);
     exit(0);
   }

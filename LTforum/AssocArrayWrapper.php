@@ -72,7 +72,7 @@
     public function g($key) {
       if ( !array_key_exists($key,$this->arr) ) {
         if (!$this->strict) return ("");
-        else throw new Exception ("Reading by non-existent key");
+        else throw new Exception ("Reading by non-existent key".$key);
       }
       return( $this->arr[$key] );
     }

@@ -24,12 +24,12 @@ if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->");
 ?></p>
 <table class="low"><tr>
   <td><?php
-  if( !empty($pr->g("formUri")) )
-  print ( "<a href=\"{$pr->g("formUri")}\">Try again</a>" );
+  if( !empty($pr->g("formLink")) )
+  print ( "<a href=\"{$pr->g("formLink")}\">Try again</a>" );
   ?></td>
   <td><?php
-  if( !empty($pr->g("viewUri")) )
-  print ( "<a href=\"{$pr->g("viewUri")}\">Go read messages</a>" );
+  if( !empty($pr->g("viewLink")) )
+  print ( "<a href=\"{$pr->g("viewLink")}\">Go read messages</a>" );
   ?></td>
 </tr></table>
 </body>
