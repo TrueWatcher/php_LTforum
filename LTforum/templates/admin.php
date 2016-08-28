@@ -1,6 +1,7 @@
 <?php
 /**
  * @pakage LTforum
+ * @version 0.3.2 (tests and bugfixing) (needs admin panel and docs) workable export-import 
  */
  
 /**
@@ -20,19 +21,23 @@
 </head>
 <body>
 <h1><?php print($apr->g("forum")); ?></h1>
-<p>Messages: <?php print( $apr->g("begin")."..".$apr->g("end") ); ?></p>
+<p>Messages: <?php print( $apr->g("forumBegin")."..".$apr->g("forumEnd") ); ?></p>
 <hr />
 <p><?php print($apr->g("alert")); ?></p>
 
 <form action="" method="get">
   <p>
-    Export to html,&nbsp;from: 
-    <input type="text" name="begin" />, length:
-    <input type="text" name="length" />
+    Export to html,&nbsp;begin: 
+    <input type="text" name="begin" />, end:
+    <input type="text" name="end" /> or max size (KB):
+    <input type="text" name="kb" /><br />
+    New IDs start from (blank to discard IDs, * to copy from forum):
+    <input type="text" name="newBegin" /><br />
+    Target file: <input type="text" name="obj" />.html    
     <input type="hidden" name="adm" value="exp" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
     <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />
-    <input type="submit" value="Go" />
+    <input type="submit" value="Export" />
   </p>
 </form>
 
@@ -46,7 +51,7 @@
     <input type="hidden" name="adm" value="imp" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
     <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
-    <input type="submit" value="Go" />
+    <input type="submit" value="Import" />
   </p>
 </form>
 

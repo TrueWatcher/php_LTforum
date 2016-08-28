@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.0 (functional viewAddEditDelete) refactored and cleaned
+ * @version 0.3.2 (tests and bugfixing) (needs admin panel and docs) workable export-import
  */
 /**
  * LTforum Admin panel, common for all forum-threads.
@@ -15,6 +15,7 @@ $adminTitle="LTforum administration panel";// page title
 $mainPath="";// relative to here
 $templatePath="templates/"; // relative to main LTforum folder
 $assetsPath="../assets/"; // relative to main LTforum folder
+$forumsPath="../";
 
 //require_once ($mainPath."LTforum.php");
 require_once ($mainPath."CardfileSqlt.php");
@@ -22,12 +23,13 @@ require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AdminAct.php");
+require_once ($templatePath."RollElements.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
     
     public function load() {
-      $inputKeys=array("adm","forum","pin","begin","end","length","obj","order","txt","comm","del");
+      $inputKeys=array("adm","forum","pin","begin","end","length","obj","order","kb","newBegin","txt","comm","del");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
@@ -45,7 +47,7 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 }
 
 // instantiate and initialize Page Registry and Session Registry
-$asr=SessionRegistry::getInstance( 2, array( "lang"=>"en","viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200","pin"=>1 )
+$asr=SessionRegistry::getInstance( 2, array( "lang"=>"en","viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath,"forumsPath"=>$forumsPath, "maxMessageBytes"=>"1200","pin"=>1 )
 );
 
 $apr=PageRegistry::getInstance( 0,array() );
@@ -58,7 +60,7 @@ if ( $error=AdminAct::checkThreadPin($apr,$asr) ) {
   Act::showAlert($apr,$asr,$error);
 }
 $apr->s( "title",$adminTitle." : ".$apr->g("forum") );
-$apr->s( "viewLink",Act::addToQueryString($apr,"","forum","pin") );
+$apr->s( "formLink",Act::addToQueryString($apr,"","forum","pin") );
 
 try {
   $apr->s("cardfile",new CardfileSqlt($targetPath,false));
@@ -67,23 +69,29 @@ catch (Exception $e) {
   Act::showAlert ($apr,$asr,$e->getMessage()); 
 }
 
+$total=$apr->g("cardfile")->getLimits($forumBegin,$forumEnd,$a,true);
+$apr->s("forumBegin",$forumBegin);
+$apr->s("forumEnd",$forumEnd);
+$missing=$forumEnd-$forumBegin+1-$total;
+if ($missing) Act::showAlert($apr,$asr,"There are ".$missing." missing messages");
+
+
 switch ( $apr->g("adm") ) {
   case ("exp"):
     //print("export");
+    //print_r($apr);
     AdminAct::exportHtml ($apr,$asr);
     //Act::view($apr,$asr);
     exit(0);
   case ("imp"):
     //print("export");
     if ( $error=AdminAct::importHtml ($apr,$asr) ) Act::showAlert($apr,$asr,$error);
-    else Act::showAlert($apr,$asr,"Going on...");
+    //else Act::showAlert($apr,$asr,"Import is complete");
     //Act::view($apr,$asr);
     exit(0);  
 }
 
-$apr->g("cardfile")->getLimits($forumBegin,$forumEnd,$a);
-$apr->s("begin",$forumBegin);
-$apr->s("end",$forumEnd);
+
 include ($asr->g("templatePath")."admin.php");
 exit(0);
 
