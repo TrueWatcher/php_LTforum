@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.3.2 (tests and bugfixing) (needs admin panel and docs) workable export-import 
+ * @version 0.3.3 (needs admin panel and docs) (workable export-import) workable exp-imp-del-ea 
  */
  
 /**
@@ -25,48 +25,63 @@
 <hr />
 <p><?php print($apr->g("alert")); ?></p>
 
-<form action="" method="get">
-  <p>
-    Export to html,&nbsp;begin: 
-    <input type="text" name="begin" />, end:
-    <input type="text" name="end" /> or max size (KB):
-    <input type="text" name="kb" /><br />
-    New IDs start from (blank to discard IDs, * to copy from forum):
+<form action="" method="get" id="export">
+  <fieldset>
+    Export to html<br />
+    begin : <input type="text" name="begin" />,<br />
+    end : <input type="text" name="end" /> or max size (x1000B) : <input type="text" name="kb" /><br />
+    new IDs start from (blank to discard IDs, * to copy from forum) :
     <input type="text" name="newBegin" /><br />
-    Target file: <input type="text" name="obj" />.html    
-    <input type="hidden" name="adm" value="exp" />
+    target file: <input type="text" name="obj" />.html<br />    
+    <input type="hidden" name="act" value="exp" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
     <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />
     <input type="submit" value="Export" />
-  </p>
+  </fieldset>
 </form>
 
-<form action="" method="get">
-  <p>
-    Import from html, file:
-    <input type="text" name="obj" />.html&nbsp;,<!--
-    number&nbsp;from: <input type="text" name="begin" /> ,<br />-->
-    order: <input type="radio" name="order" value="desc" checked="checked" />from latest,descending 
-    <input type="radio" name="order" value="asc" />from oldest,ascending 
-    <input type="hidden" name="adm" value="imp" />
+<form action="" method="get" id="import">
+  <fieldset>
+    Import from html<br />
+    file : <input type="text" name="obj" />.html<br />
+    order : <input type="radio" name="order" value="desc" /> from new to old, descending&nbsp;&nbsp;  
+    <input type="radio" name="order" value="asc" checked="checked" /> from old to new, ascending<br /> 
+    <input type="hidden" name="act" value="imp" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
     <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
     <input type="submit" value="Import" />
-  </p>
+  </fieldset>
+</form>
+
+<form action="" method="get" id="delRange">
+  <fieldset>
+    Delete a message block near begin or end of the forum<br />
+    from : <input type="text" name="begin" /> to : <input type="text" name="end" value="<?php print( $apr->g("end") ) ?>" /><br />
+    <input type="hidden" name="act" value="dr" />
+    <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
+    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
+    <input type="submit" value="Delete" />    
+  </fieldset>
+</form>
+
+<form action="" method="get" id="editAny">
+  <fieldset>
+    Edit any message<br />
+    id : <input type="text" name="end" /><br />
+    <input type="hidden" name="act" value="ea" />
+    <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
+    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
+    <input type="submit" value="Edit" />    
+  </fieldset>
 </form>
 
 <!--
-Edit any message
-Check numbering
+
 Renumber from
 -->
 
-
-<p id="footer"><?php 
-$outcome="alert~".$apr->g("alert"); 
-if( $asr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
-?></p>
-<table class="low"><tr>
+<p id="footer"></p>
+<!--<table class="low"><tr>
   <td><?php
   if( !empty($apr->g("formLink")) )
   print ( "<a href=\"{$apr->g("formLink")}\">Try again</a>" );
@@ -75,6 +90,6 @@ if( $asr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->");
   if( !empty($apr->g("viewLink")) )
   print ( "<a href=\"{$apr->g("viewLink")}\">Go read messages</a>" );
   ?></td>
-</tr></table>
+</tr></table>-->
 </body>
 </html>

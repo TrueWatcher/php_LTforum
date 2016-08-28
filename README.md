@@ -13,4 +13,8 @@ v.0.2.0    21 Aug 2016
 refactored and cleaned
 now under testing
 
+v.0.3.3    28 Aug 2016
+cleaned and tested view-add-edit-delete, workable import-export-delRange-editAny
+need docs, more testing and .htaccess
+
 

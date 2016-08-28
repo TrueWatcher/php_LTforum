@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.3.2 (tests and bugfixing) (needs admin panel and docs) workable export-import
+ * @version 0.3.3 (needs admin panel and docs) (workable export-import) workable exp-imp-del-ea
  */
 /**
  * LTforum Admin panel, common for all forum-threads.
@@ -11,7 +11,7 @@
 //echo ("I'm LTforum/demo/index.php"); 
  
 //$forumName="test";// canonical forum name
-$adminTitle="LTforum administration panel";// page title
+$adminTitle="LTforum messages manager";// page title
 $mainPath="";// relative to here
 $templatePath="templates/"; // relative to main LTforum folder
 $assetsPath="../assets/"; // relative to main LTforum folder
@@ -29,7 +29,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
     
     public function load() {
-      $inputKeys=array("adm","forum","pin","begin","end","length","obj","order","kb","newBegin","txt","comm","del");
+      $inputKeys=array("act","forum","pin","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
@@ -75,21 +75,36 @@ $apr->s("forumEnd",$forumEnd);
 $missing=$forumEnd-$forumBegin+1-$total;
 if ($missing) Act::showAlert($apr,$asr,"There are ".$missing." missing messages");
 
-
-switch ( $apr->g("adm") ) {
-  case ("exp"):
-    //print("export");
-    //print_r($apr);
-    AdminAct::exportHtml ($apr,$asr);
-    //Act::view($apr,$asr);
-    exit(0);
-  case ("imp"):
-    //print("export");
-    if ( $error=AdminAct::importHtml ($apr,$asr) ) Act::showAlert($apr,$asr,$error);
-    //else Act::showAlert($apr,$asr,"Import is complete");
-    //Act::view($apr,$asr);
-    exit(0);  
-}
+try {
+  switch ( $apr->g("act") ) {
+    case ("exp"):
+      //print("export");
+      //print_r($apr);
+      AdminAct::exportHtml ($apr,$asr);
+      //Act::view($apr,$asr);
+      exit(0);
+    case ("imp"):
+      //print("export");
+      AdminAct::importHtml ($apr,$asr);
+      //Act::showAlert($apr,$asr,$error);
+      //else Act::showAlert($apr,$asr,"Import is complete");
+      //Act::view($apr,$asr);
+      exit(0);
+    case ("dr"):
+      //print("delete");
+      AdminAct::deleteRange ($apr,$asr);
+      exit(0);
+    case ("ea"):
+      //print("edit any");
+      AdminAct::editAny ($apr,$asr);
+      exit(0);
+    case ("ua"):
+      AdminAct::updateAny ($apr,$asr);
+      exit(0);    
+  }
+} catch (AccessException $e) {
+  Act::showAlert ($apr,$asr,$e->getMessage());
+} 
 
 
 include ($asr->g("templatePath")."admin.php");

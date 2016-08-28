@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.3.2 (tests and bugfixing) (needs admin panel and docs) workable export-import
+ * @version 0.3.3 (needs admin panel and docs) (workable export-import) workable exp-imp-del-ea
  */
 
 /**
@@ -27,41 +27,54 @@ class AdminAct {
     $messages=""; 
     $size=0;
     $i=$begin;
-    $j=0;
+    $processed=0;
     while (true) {
       $m=$apr->g("cardfile")->getOneMsg($i);
-      if ( !$m ) break;
-      $i++;
-      $j++;
-      if ( $end && $i>$end+1 ) break;
-      if ( $apr->g("newBegin") >= 1 ) $m["id"] = $apr->g("newBegin") + $j;
+      if ( !$m ) {
+        //print("EOF");
+        $processed--;
+        break;
+      }
+      $processed++;
+      if ( $apr->g("newBegin") >= 1 ) $m["id"] = $apr->g("newBegin") + $processed - 1;
       if ( empty($apr->g("newBegin")) ) $m["id"] = "";
       $html=RollElements::oneMessage($m,RollElements::idTitle($m));
-      $messages.=$html;
-      if ( $apr->g("kb") && length($messages)>$apr->g("kb") ) break;
+      $messages.=$html;      
+      if ( $apr->g("kb")>=1 && ceil(strlen($messages)/1000)>=$apr->g("kb") ) {
+        $processed--;
+        //print("size exceeded");
+        break;
+      }
+      $i+=1;
+      if ( $end>=1 && $i>=($end+1) ) {
+        //print ("count ended");
+        $processed--;
+        break;        
+      }
     }
+    $realEnd=$begin+$processed;
     //print($messages);
     
     $template=file_get_contents($asr->g("templatePath")."export.html");
-    $template=str_replace("@title@",$apr->g("title")." : ".$apr->g("begin")."..".$apr->g("end"),$template);
+    $template=str_replace("@title@",$apr->g("forum")." : ".$begin."..".$realEnd,$template);
     $template=str_replace("@assets_path@",$asr->g("assetsPath"),$template);
     $template=str_replace("@prev_link@","<a href=\"\">Previous page</a>",$template);    
-    $template=str_replace("@next_link@","<a href=\"?begin=".($end+1)."\">Next page</a>",$template);
+    $template=str_replace("@next_link@","<a href=\"?begin=".($i+1)."\">Next page</a>",$template);
     $template=str_replace("@messages@",$messages,$template);
     $file=$apr->g("obj");
-    if ( empty($file) ) $file=$apr->g("forum")."_".$begin."_".$end;
+    if ( empty($file) ) $file=$apr->g("forum")."_".$begin."_".$realEnd;
     $fullFile=$asr->g("forumsPath")."/".$apr->g("forum")."/".$file.".html";
     //print ($fullFile);
     touch ($fullFile);
     if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
     file_put_contents($fullFile,$template);
-    Act::showAlert($apr,$asr,"Exported ".$j." messages to ".$fullFile);    
+    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".($processed+1).", about ".ceil(strlen($template)/1000)."KB");    
   }
   
   public function importHtml (PageRegistry $apr, SessionRegistry $asr) {
     //print("import");
     $fullFile=$asr->g("forumsPath")."/".$apr->g("forum")."/".$apr->g("obj").".html";
-    if ( !file_exists($fullFile) ) return("File not found: ".$fullFile." Have you really created it?");
+    if ( !file_exists($fullFile) ) Act::showAlert($apr,$asr,"File not found: ".$fullFile." Have you really created it?");
     //print($apr->g("order"));
     $i=0;
     $pieces=self::getOneMessage ($fullFile,$apr->g("order"));
@@ -77,19 +90,14 @@ class AdminAct {
   }
   
   private static function getOneMessage ($file,$order) {
-    //static $separator="<hr />";
-    //static $buf=null;
-    //static $pos=null;
-    //static $size=null;
     $separator="<hr />";
     
-    //if ( is_null($buf) ) {
-      print("init");
-      $buf=file_get_contents($file);
-      $size=strlen($buf);
-      if ($order=="desc") $pos=strrpos($buf,$separator)-1;
-      else $pos=strpos($buf,$separator)+strlen($separator);
-    //}
+    //print("init");
+    $buf=file_get_contents($file);
+    $size=strlen($buf);
+    if ($order=="desc") $pos=strrpos($buf,$separator)-1;
+    else $pos=strpos($buf,$separator)+strlen($separator);
+
     if ($order=="desc") { // search backward
       while ( is_int($newPos=strrpos($buf,$separator,$pos-$size)) ) {
         //print($newPos);
@@ -139,4 +147,54 @@ class AdminAct {
     return($ret);
   }
 
+  public function deleteRange (PageRegistry $apr, SessionRegistry $asr) {
+    $begin=$apr->g("begin");
+    $end=$apr->g("end");
+    if ( empty($begin) || empty($end) ) Act::showAlert($apr,$asr,"You must specify both begin and end");
+    if ( $begin < $apr->g("forumBegin") ) $begin = $apr->g("forumBegin");
+    if ( $end > $apr->g("forumEnd") ) $end = $apr->g("forumEnd");
+    if ( $begin != $apr->g("forumBegin") && $end != $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Your block must border begin or end of forum thread");
+    $apr->g("cardfile")->deletePackMsg($begin,$end);
+    Act::showAlert($apr,$asr,"Removed ".($end+1-$begin)." messages from ".$begin." to ".$end );
+  }
+  
+  public function editAny (PageRegistry $apr, SessionRegistry $asr) {
+    $targetId=$apr->g("end");
+    if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
+    $m=$apr->g("cardfile")->getOneMsg($targetId);
+  
+    $apr->s("txt",$m["message"]);
+    $apr->s("comm",$m["comment"]);
+    $apr->s("author",$m["author"]);    
+    // show form
+    include ($asr->g("templatePath")."editany.php");
+    exit(0);  
+  
+  }  
+
+  public function updateAny (PageRegistry $apr, SessionRegistry $asr) {
+    $apr->s( "viewLink",Act::addToQueryString($apr,"act=ea","forum","pin","end") );  
+    $targetId=$apr->g("end");
+    if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
+    $m=$apr->g("cardfile")->getOneMsg($targetId);    
+    // check input strings
+    $author=trim($apr->g("author"));
+    if ( empty($author) ) Act::showAlert ($apr,$asr,"Empty username is not allowed");
+    if ( Act::charsInString($author,"<>&\"':;()") ) 
+      Act::showAlert ($apr,$asr,"Username ".htmlspecialchars($author)." contains forbidden symbols");
+    $txt=$apr->g("txt");
+    if( empty($txt) ) Act::showAlert ($apr,$asr,"Please, leave something in the Message field");
+    $txt=Act::prepareInputText($txt,$asr);
+    $comm=$apr->g("comm");
+    $comm=Act::prepareInputText($comm,$asr);
+    // update it now
+    $m["author"]=$author;
+    $m["message"]=$txt;
+    $m["comment"]=$comm;
+    if ( !empty($apr->g("clear")) ) $m["time"]=$m["date"]="";// current date and time will be set
+    $apr->g("cardfile")->addMsg($m,true);// true for overwrite
+  
+    Act::showAlert ($apr,$asr,"Message ".$apr->g("end")." has been updated");    
+    
+  }   
 }
