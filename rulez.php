@@ -11,7 +11,7 @@
 //$forumName="test";// canonical forum name
 $adminTitle="LTforum messages manager";// page title
 $mainPath="LTforum/";// relative to here
-$templatePath="templates/"; // relative to main LTforum folder
+$templatePath="LTforum/templates/"; // relative to main LTforum folder
 $assetsPath="../assets/"; // relative to main LTforum folder
 $forumsPath="";
 

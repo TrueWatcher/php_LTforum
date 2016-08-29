@@ -54,16 +54,27 @@ class AdminAct {
     }
     $realEnd=$begin+$processed;
     //print($messages);
-    
+
+    //
+    if ($apr->g("newBegin") >= 1) {
+      $newBegin=$apr->g("newBegin");
+      $newEnd=$newBegin+$processed; 
+    }
+    else {
+      $newBegin=$begin;
+      $newEnd=$realEnd;
+    }
+    //---here comes the presentation---
+    //print("!!".$asr->g("templatePath")."export.html");
     $template=file_get_contents($asr->g("templatePath")."export.html");
-    $template=str_replace("@title@",$apr->g("forum")." : ".$begin."..".$realEnd,$template);
+    $template=str_replace("@title@",$apr->g("forum")." : ".$newBegin."..".$newEnd,$template);
     $template=str_replace("@assets_path@",$asr->g("assetsPath"),$template);
     $template=str_replace("@prev_link@","<a href=\"\">Previous page</a>",$template);    
-    $template=str_replace("@next_link@","<a href=\"?begin=".($i+1)."\">Next page</a>",$template);
+    $template=str_replace("@next_link@","<a href=\"?begin=".($newEnd+1)."\">Next page</a>",$template);
     $template=str_replace("@messages@",$messages,$template);
     $file=$apr->g("obj");
-    if ( empty($file) ) $file=$apr->g("forum")."_".$begin."_".$realEnd;
-    $fullFile=$asr->g("forumsPath")."/".$apr->g("forum")."/".$file.".html";
+    if ( empty($file) ) $file=$apr->g("forum")."_".$newBegin."_".$newEnd;
+    $fullFile=$asr->g("forumsPath").$apr->g("forum")."/".$file.".html";
     //print ($fullFile);
     touch ($fullFile);
     if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
@@ -73,7 +84,7 @@ class AdminAct {
   
   public function importHtml (PageRegistry $apr, SessionRegistry $asr) {
     //print("import");
-    $fullFile=$asr->g("forumsPath")."/".$apr->g("forum")."/".$apr->g("obj").".html";
+    $fullFile=$asr->g("forumsPath").$apr->g("forum")."/".$apr->g("obj").".html";
     if ( !file_exists($fullFile) ) Act::showAlert($apr,$asr,"File not found: ".$fullFile." Have you really created it?");
     //print($apr->g("order"));
     $i=0;
@@ -137,9 +148,9 @@ class AdminAct {
     preg_match("~\s[0-9\-]+~",$a,$t,0,$aFirstNumber+6);
     $ret["time"]=trim($t[0]);
     //print_r($t);
-    $m=self::getTagContent($m,"p");
+    $mes=self::getTagContent($m,"p");
     //print $m;
-    $ret["message"]=$m;
+    $ret["message"]=$mes;
     $posClosingP=strpos($m,"</p>");
     $mm=substr($m,$posClosingP+4);
     $c=self::getTagContent($mm,"p");

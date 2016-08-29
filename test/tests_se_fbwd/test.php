@@ -1,10 +1,9 @@
 <?php
-// Web-Test suite for Mail Inventory Module
+// Web-Test suite for LTforum main functions (view-add-edit-delete)
 // All PHPUnit tests stop after first failure!
 // Uses PHPUnit + Selenium + FacebookWebDriver + HtmlUnit
 // And optionally XAMPP
 // (c) TrueWatcher August 2016
-// succesfully tested mod_mail_inventory v.1.2 August 2016
 
 //require_once("/home/alexander/vendor/autoload.php" );// needed, but present in ./bootstrap.php
 
@@ -17,7 +16,7 @@ use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverSelect;
 //use PHPUnit\Framework\TestCase;
 
-class Test_LTforumAll extends PHPUnit_Framework_TestCase {
+class Test_LTforumMain extends PHPUnit_Framework_TestCase {
 
   protected $browser="htmlunit";
   protected $emulate="FIREFOX_45";// needed for JQuery and/or Bootstrap
@@ -68,8 +67,6 @@ class Test_LTforumAll extends PHPUnit_Framework_TestCase {
     $this->assertNotEmpty($title,"Failed to connect to the site");
     print("Info: first page OK");
   }
-  
-  //include ("testAddEditDelete");
   
   public function parseViewTitle($t,&$begin,&$end,&$pageCurrent,&$pageEnd) {
     $begin=$end=$pageCurrent=$pageEnd="";
@@ -292,7 +289,7 @@ class Test_LTforumAll extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $titleAlert \r\n");
     $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
     $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
-    $tryAgainLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("read"));
+    $tryAgainLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Ok"));
     $tryAgainLink->click();
     print("Info: ALERT after empty form OK");
     
@@ -333,7 +330,7 @@ class Test_LTforumAll extends PHPUnit_Framework_TestCase {
     if (strlen($titleAlert)) print ("\r\ntitle found: $titleAlert \r\n");
     $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
     $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
-    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("read"));
+    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Ok"));
     $readLink->click();
     print("Info: ALERT after cleared SNAP OK");
     
@@ -379,7 +376,7 @@ class Test_LTforumAll extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $titleAlert \r\n");
     $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
     $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
-    $tryAgainLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("again"));
+    $tryAgainLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Back"));
     $tryAgainLink->click();
     print("Info: ALERT after empty form OK");
     
@@ -404,7 +401,7 @@ class Test_LTforumAll extends PHPUnit_Framework_TestCase {
     if (strlen($titleAlert)) print ("\r\ntitle found: $titleAlert \r\n");
     $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
     $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
-    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("again"));
+    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Back"));
     $readLink->click();
     print("Info: ALERT after cleared SNAP OK");
     
@@ -428,7 +425,7 @@ class Test_LTforumAll extends PHPUnit_Framework_TestCase {
     if (strlen($titleAlert)) print ("\r\ntitle found: $titleAlert \r\n");
     $this->assertContains(self::$storedForum,$titleAlert,"Not came to ALERT page");
     $this->assertContains(" alert",$titleAlert,"Not came to ALERT page");
-    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("read"));
+    $readLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Ok"));
     $readLink->click();
     print("Info: again ALERT after cleared SNAP OK");
     

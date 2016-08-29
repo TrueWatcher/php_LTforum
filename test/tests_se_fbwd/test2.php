@@ -1,0 +1,217 @@
+<?php
+// Web-Test suite for LTforum admin functions (import-export-delRange-editAny)
+// All PHPUnit tests stop after first failure!
+// Uses PHPUnit + Selenium + FacebookWebDriver + HtmlUnit
+// And optionally XAMPP
+// (c) TrueWatcher August 2016
+
+//require_once("/home/alexander/vendor/autoload.php" );// needed, but present in ./bootstrap.php
+
+// important! (https://github.com/facebook/php-webdriver/blob/community/example.php)
+//namespace Facebook\WebDriver;
+use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\Remote\WebDriverCapabilityType;
+use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverSelect;
+//use PHPUnit\Framework\TestCase;
+
+class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
+
+  protected $browser="htmlunit";
+  protected $emulate="FIREFOX_45";// needed for JQuery and/or Bootstrap
+  // http://htmlunit.sourceforge.net/apidocs/index.html class 
+  // com.gargoylesoftware.htmlunit   Class BrowserVersion
+  protected $JSenabled=true;//true;//false;;
+  protected $webDriver;
+  protected $homeUri="http://LTforum/rulez.php?forum=test&pin=1";
+  protected $viewUri="http://LTforum/test";
+  
+  public function setUp() {
+    $host = 'http://localhost:4444/wd/hub'; // this is the default
+    $this->webDriver = RemoteWebDriver::create(
+        $host,
+        array(
+            WebDriverCapabilityType::BROWSER_NAME => $this->browser,
+            WebDriverCapabilityType::JAVASCRIPT_ENABLED => $this->JSenabled,
+            WebDriverCapabilityType::VERSION => $this->emulate
+        )
+     );
+  }
+  
+  public function tearDown() {
+    $this->webDriver->quit();
+  }
+  
+  private $storedTitle;
+  
+  public function _test_mainPage() {
+    print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
+    if ($this->JSenabled) print ("ON !");
+    else print ("OFF !");
+    print ("\r\nSending request for ".$this->homeUri."..."); 
+    $this->webDriver->get($this->homeUri);
+    print ("processing page..."); 
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print ("title not found!\r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");
+    print("Info: first page OK");
+    self::$storedTitle=$title;
+  }
+  
+  private function parseHtmlIds($pathName) {
+    $idList=[];
+    $buf=file_get_contents($pathName.".html");
+    $ret=preg_match_all('~"(\d+)">#</b>~',$buf,$list);
+    //print_r($list);
+    if( $ret ) $idList=$list[1];
+    return($idList);
+  }
+  
+  private function export($begin,$end,$file,$newBegin) {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $form=$this->webDriver->findElement(webDriverBy::id("export"));
+    $form->findElement(webDriverBy::name("begin"))->sendKeys($begin);
+    $form->findElement(webDriverBy::name("end"))->sendKeys($end);
+    $form->findElement(webDriverBy::name("obj"))->sendKeys($file);
+    if($newBegin) $form->findElement(webDriverBy::name("newBegin"))->sendKeys($newBegin);
+    $form->submit();
+  }
+
+  private function checkExportResponce($begin,$end) {
+    $expected1="Exported messages ".$begin."..".$end." to ";
+    $expected2=".html , total ".($end-$begin+1);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    $src=$this->webDriver->getPageSource();
+    $this->assertContains($expected1,$src,"Messages numbers mismatch");
+    $this->assertContains($expected2,$src,"Given total mismatches");   
+  }  
+  
+  private function checkExport($begin,$end,$file2,$newBegin) {   
+    $path="/home/alexander/www/LTforum/test/";
+    $idList=self::parseHtmlIds($path.$file2);
+    print( "Begin:".$idList[0]." , end:".end($idList).", total:".count($idList)." \r\n" );
+    $this->assertEquals(count($idList),(end($idList)-$idList[0]+1),"Some ids are missing in the exported file");
+    $this->assertEquals($newBegin,$idList[0],"Begin mismatches in ".$file2);
+    $this->assertEquals($newBegin+($end-$begin),end($idList),"End mismatches in ".$file2);
+    print("File check OK"); 
+  
+  }
+  
+  public function test_simpleExport() {
+    $file="e_1_11";
+    $begin=1;
+    $end=11;
+    $newBegin="*";
+    self::export($begin,$end,$file,$newBegin);
+    print("Export demanded to ".$file);
+    self::checkExportResponce($begin,$end);
+    print("Responce OK");    
+    self::checkExport($begin,$end,$file,$begin);
+    /*$expected1="Exported messages ".$begin."..".$end." to ";
+    $expected2=".html , total ".($end-$begin+1);
+
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    $src=$this->webDriver->getPageSource();
+    $this->assertContains($expected1,$src,"Messages numbers mismatch");
+    $this->assertContains($expected2,$src,"Given total mismatches");
+    print("Responce OK");
+    $path="/home/alexander/www/LTforum/test/";
+    $idList=self::parseHtmlIds($path.$file);
+    print( "Begin:".$idList[0]." , end:".end($idList).", total:".count($idList)." \r\n" );
+    $this->assertEquals(count($idList),(end($idList)-$idList[0]+1),"Some ids are missing in the exported file");
+    $this->assertEquals($begin,$idList[0],"Begin mismatches");
+    $this->assertEquals($end,end($idList),"End mismatches");
+    print("File check OK");*/    
+  }
+  
+  public function test_ImportExport() {
+    $file1="e_1_11";
+    $begin=12;
+    $end=22;    
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $form=$this->webDriver->findElement(webDriverBy::id("import"));
+    $form->findElement(webDriverBy::name("obj"))->sendKeys($file1);
+    $form->submit();
+    print("Import demanded");    
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    $ok=$this->webDriver->findElement(webDriverBy::partialLinkText("Ok"));
+    $ok->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $file2="ee_1_11";
+    $newBegin=1;
+    self::export($begin,$end,$file2,$newBegin);
+    print("Export demanded to ".$file2);
+    self::checkExportResponce($begin,$end);
+    print("Responce OK");    
+    self::checkExport(1,11,$file2,$newBegin);    
+    /*$expected1="Exported messages ".$begin."..".$end." to ";
+    $expected2=".html , total ".($end-$begin+1);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    $src=$this->webDriver->getPageSource();
+    $this->assertContains($expected1,$src,"Messages numbers mismatch");
+    $this->assertContains($expected2,$src,"Given total mismatches");
+    print("Responce OK");    
+    $path="/home/alexander/www/LTforum/test/";
+    $idList=self::parseHtmlIds($path.$file2);
+    print( "Begin:".$idList[0]." , end:".end($idList).", total:".count($idList)." \r\n" );
+    $this->assertEquals(count($idList),(end($idList)-$idList[0]+1),"Some ids are missing in the exported file");
+    $this->assertEquals($newBegin,$idList[0],"Begin mismatches");
+    $this->assertEquals($newBegin+($end-$begin),end($idList),"End mismatches");
+    print("File check OK")*/;
+    $path="/home/alexander/www/LTforum/test/";
+    $this->assertFileEquals($path.$file1.".html",$path.$file2.".html","Files are different");
+    print("Exported files are equal, congratulations!");
+  }
+
+  public function _test_DeleteExport() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $form=$this->webDriver->findElement(webDriverBy::id("delRange"));
+    $form->findElement(webDriverBy::name("begin"))->sendKeys(12);
+    $form->findElement(webDriverBy::name("end"))->sendKeys(22);    
+    $form->submit();
+    print("Deleting demanded");    
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    $ok=$this->webDriver->findElement(webDriverBy::partialLinkText("Ok"));
+    $ok->click();    
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $form=$this->webDriver->findElement(webDriverBy::id("delRange"));
+    $form->findElement(webDriverBy::name("begin"))->sendKeys(1);
+    $form->findElement(webDriverBy::name("end"))->sendKeys(2);    
+    $form->submit();
+    print("Deleting demanded");    
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    $ok=$this->webDriver->findElement(webDriverBy::partialLinkText("Ok"));
+    $ok->click();
+    
+    $file="e_3_11";
+    $begin=3;
+    $end=11;
+    $newBegin="*";
+    self::export($begin,$end,$file,$newBegin);
+    print("Export demanded to ".$file);
+    self::checkExportResponce($begin,$end);
+    print("Responce OK");    
+    self::checkExport($begin,$end,$file,$begin);
+    
+    
+  }
+  
+}
+
+?>
