@@ -1,0 +1,50 @@
+This version of LTforum can basically work without authentication, but it can be recommended only for test purposes. Somewhere in the future there will be added Access Controller, but for now it's good enough to work together with Apache's Basic Http authentication (and Https).
+
+Instructions:
+
+- Module mod_authz_groupfile must be enabled.
+
+- User data (encripted) are stored in forum_root/.users
+  I've created some users/passwords: Owl/owl1234, Winnie the Pooh/pooh1234, Tigger/tigger1234, Roo/roo1234
+  The command sequence:
+    $ cd forum_root
+    $ htpasswd -cbB users Owl owl1234
+    $ htpasswd -bB users "Winnie the Pooh" pooh1234
+    $ htpasswd -bB users "Roo" roo1234
+    $ htpasswd -bB users "Tigger" tigger1234
+    $ mv users ".users"
+    -c creates new file, -b orders to take password from command line, -B enforces strong encryption
+  
+- Permissions for particular folders/forums are set in their .htaccess files
+  I've created "demo" and "chat". Example folder .htaccess file:
+    AuthType Basic
+    AuthName "Register to forum demo"
+    AuthUserFile "/full_path_to_forum_root/.users"
+    AuthGroupFile "/full_path_to_forum_root/.groups"
+    Require group demo
+    
+- Permissions for MessageManager are set in .htaccess in forum root directory:
+    <Files rulez.php>
+      AuthType Basic
+      AuthName "Register to admin panel"
+      AuthUserFile "/home/alexander/www/LTforum/.users"
+      AuthGroupFile "/home/alexander/www/LTforum/.groups"
+      Require group admin
+    </Files>
+
+- Main script folder /LTforum should contain  .htaccess file:
+    <Files *>
+      Require all denied
+    </Files>
+  These scripts are included by php, and are not to be accessed directly from Web
+  
+- Now we need to define groups in forum_root/.groups
+    demo: "Winnie the Pooh" Tigger Roo
+    admin: "Winnie the Pooh" Owl
+    chat: Tigger Roo
+  
+- We can also set "Options +Indexes" for the forum root, for any visitor to see his allowed forums (and some other stuff like css tables :) )
+
+All this construction works wonderfully over HTTPS, but I'm not ready to present the setup instruction, Google knows better :) 
+  
+  

@@ -173,7 +173,7 @@ class AdminAct {
   }  
 
   public function updateAny (PageRegistry $apr, SessionRegistry $asr) {
-    $apr->s( "viewLink",Act::addToQueryString($apr,"act=ea","forum","pin","end") );  
+    $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum","pin","end") );  
     $targetId=$apr->g("end");
     if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
     $m=$apr->g("cardfile")->getOneMsg($targetId);    

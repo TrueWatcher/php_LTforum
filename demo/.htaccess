@@ -1,0 +1,5 @@
+AuthType Basic
+Authname "Register to forum: demo"
+AuthUserFile "/home/alexander/www/LTforum/.users"
+AuthGroupFile "/home/alexander/www/LTforum/.groups"
+Require group demo

@@ -10,12 +10,7 @@
 
 //echo ("I'm LTforum/demo/index.php"); 
  
-//$forumName="test";// canonical forum name
-$adminTitle="LTforum messages manager";// page title
-$mainPath="";// relative to here
-$templatePath="templates/"; // relative to main LTforum folder
-$assetsPath="../assets/"; // relative to main LTforum folder
-$forumsPath="../";
+
 
 //require_once ($mainPath."LTforum.php");
 require_once ($mainPath."CardfileSqlt.php");
@@ -53,14 +48,14 @@ $asr=SessionRegistry::getInstance( 2, array( "lang"=>"en","viewOverlay"=>1, "toP
 $apr=PageRegistry::getInstance( 0,array() );
 $apr->load();
 $apr->s("title",$adminTitle);
-$targetPath="../".$apr->g("forum")."/".$apr->g("forum");
+$targetPath=$forumsPath.$apr->g("forum")."/".$apr->g("forum");
 $apr->s("targetPath",$targetPath);
 
 if ( $error=AdminAct::checkThreadPin($apr,$asr) ) {
   Act::showAlert($apr,$asr,$error);
 }
 $apr->s( "title",$adminTitle." : ".$apr->g("forum") );
-$apr->s( "formLink",Act::addToQueryString($apr,"","forum","pin") );
+$apr->s( "viewLink",Act::addToQueryString($apr,"","forum","pin") );
 
 try {
   $apr->s("cardfile",new CardfileSqlt($targetPath,false));

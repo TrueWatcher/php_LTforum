@@ -17,20 +17,25 @@
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."talk.css"); ?>" media="all" />
 </head>
 <body>
-<p><?php print($pr->g("alert")); ?><br /></p>
-<p id="footer"><?php 
-$outcome="alert~".$pr->g("alert"); 
-if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
-?></p>
-<table class="low"><tr>
+<!--<p style="text-align:center;"><?php print($pr->g("alert")); ?><br /></p>-->
+
+<table class="low">
+  <tr><td colspan="2"><?php print($pr->g("alert")); ?></td></tr>
+  <tr>
   <td><?php
   if( !empty($pr->g("formLink")) )
-  print ( "<a href=\"{$pr->g("formLink")}\">Try again</a>" );
+  print ( "<a href=\"{$pr->g("formLink")}\">Back</a>" );
   ?></td>
   <td><?php
   if( !empty($pr->g("viewLink")) )
-  print ( "<a href=\"{$pr->g("viewLink")}\">Go read messages</a>" );
+  print ( "<a href=\"{$pr->g("viewLink")}\">Ok</a>" );
   ?></td>
-</tr></table>
+  </tr>
+</table>
+  
+<p id="footer"><?php 
+$outcome="alert~".$pr->g("alert"); 
+if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
+?></p>  
 </body>
 </html>
