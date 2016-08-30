@@ -25,7 +25,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
   protected $homeUri="http://LTforum/rulez.php?forum=test&pin=1";
-  protected $viewUri="http://LTforum/test";
+  protected $filesystemPath="/home/alexander/www/LTforum/test/";
+  //protected $viewUri="http://LTforum/test";
   
   public function setUp() {
     $host = 'http://localhost:4444/wd/hub'; // this is the default
@@ -104,7 +105,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }  
   
   private function checkExport($begin,$end,$file2,$newBegin) {   
-    $path="/home/alexander/www/LTforum/test/";
+    $path=$this->filesystemPath;
     $idList=self::parseHtmlIds($path.$file2);
     print( " Begin:".$idList[0]." , end:".end($idList).", total:".count($idList)." " );
     $this->assertEquals(count($idList),(end($idList)-$idList[0]+1),"Some ids are missing in the exported file");
@@ -151,7 +152,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::checkExportResponce($begin,$end);
     print(" Responce OK ");    
     self::checkExport(1,11,$file2,$newBegin);    
-    $path="/home/alexander/www/LTforum/test/";
+    $path=$this->filesystemPath;
     $this->assertFileEquals($path.$file1.".html",$path.$file2.".html","Files are different");
     print("\r\nExported files are equal, congratulations! \r\n");
     
@@ -231,7 +232,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::checkExport($begin,$end,$file,$begin);
     print (" Checking file ".$file." OK ");
     
-    $path="/home/alexander/www/LTforum/test/";
+    $path=$this->filesystemPath;
     $src=file_get_contents($path.$file.".html");
     $this->assertContains(">".$me,$src,"My dear authorName is missing");
     $this->assertContains($add,$src,"My remark is missing");    
@@ -273,7 +274,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     print(" Responce : ".$recBegin."..".$recEnd);         
     self::checkExport($begin,$recEnd,$file2,$newBegin);
     print (" Checking file ".$file2."OK ");
-    $path="/home/alexander/www/LTforum/test/";
+    $path=$this->filesystemPath;
     $this->assertFileEquals($path.$file.".html",$path.$file2.".html","Files are different");
     print("\r\nExported files are equal, congratulations!\r\n");    
   

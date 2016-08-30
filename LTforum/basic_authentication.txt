@@ -2,12 +2,12 @@ This version of LTforum can basically work without authentication, but it can be
 
 Instructions:
 
-- Module mod_authz_groupfile must be enabled.
+- Apache's module mod_authz_groupfile must be enabled.
 
-- User data (encripted) are stored in forum_root/.users
+- User data (encripted) are stored in forum_root/LTforum/.users
   I've created some users/passwords: Owl/owl1234, Winnie the Pooh/pooh1234, Tigger/tigger1234, Roo/roo1234
   The command sequence:
-    $ cd forum_root
+    $ cd forum_root/LTforum
     $ htpasswd -cbB users Owl owl1234
     $ htpasswd -bB users "Winnie the Pooh" pooh1234
     $ htpasswd -bB users "Roo" roo1234
@@ -19,32 +19,32 @@ Instructions:
   I've created "demo" and "chat". Example folder .htaccess file:
     AuthType Basic
     AuthName "Register to forum demo"
-    AuthUserFile "/full_path_to_forum_root/.users"
-    AuthGroupFile "/full_path_to_forum_root/.groups"
+    AuthUserFile "/full_path_to_forum_root/LTforum/.users"
+    AuthGroupFile "/full_path_to_forum_root/LTforum/.groups"
     Require group demo
     
 - Permissions for MessageManager are set in .htaccess in forum root directory:
     <Files rulez.php>
       AuthType Basic
       AuthName "Register to admin panel"
-      AuthUserFile "/home/alexander/www/LTforum/.users"
-      AuthGroupFile "/home/alexander/www/LTforum/.groups"
+      AuthUserFile "/home/user1/www/LTforum/LTforum/.users"
+      AuthGroupFile "/home/user1/www/LTforum/LTforum/.groups"
       Require group admin
     </Files>
 
-- Main script folder /LTforum should contain  .htaccess file:
+- Main script folder /LTforum should contain  .htaccess file as follows:
     <Files *>
       Require all denied
     </Files>
   These scripts are included by php, and are not to be accessed directly from Web
   
-- Now we need to define groups in forum_root/.groups
+- Now we need to create file forum_root/LTforum/.groups and arrange our users, for example:
     demo: "Winnie the Pooh" Tigger Roo
     admin: "Winnie the Pooh" Owl
     chat: Tigger Roo
   
-- We can also set "Options +Indexes" for the forum root, for any visitor to see his allowed forums (and some other stuff like css tables :) )
+- We can also set "Options +Indexes" for the forum_root folder (and remove the empty index.html), so any visitor will see his allowed forums (and some other stuff like css folder :) )
 
-All this construction works wonderfully over HTTPS, but I'm not ready to present the setup instruction, Google knows better :) 
+This construction works wonderfully over HTTPS, but I'm not ready to present the setup instruction, Google knows better :) 
   
   

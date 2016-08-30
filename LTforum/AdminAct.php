@@ -106,7 +106,6 @@ class AdminAct {
 
     if ($order=="desc") { // search backward
       while ( is_int($newPos=strrpos($buf,$separator,$pos-$size)) ) {
-        //print($newPos);
         $m=substr($buf,$newPos,$pos-$newPos);
         $pos=$newPos-1;
         yield($m);
@@ -114,7 +113,6 @@ class AdminAct {
     }
     else { // search forward
       while ( is_int($newPos=strpos($buf,$separator,$pos)) ) {
-        //print($newPos);
         $m=substr($buf,$pos,$newPos-$pos);
         $pos=$newPos+strlen($separator);
         yield($m);
