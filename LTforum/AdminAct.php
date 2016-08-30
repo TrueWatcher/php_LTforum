@@ -15,8 +15,7 @@ class AdminAct {
     if ( !file_exists($apr->g("targetPath").".db") ) return ("You must specify a valid forum thread ".$apr->g("targetDb"));    
   }
   
-  public function exportHtml (PageRegistry $apr, SessionRegistry $asr) {
-    //print("export");  
+  public function exportHtml (PageRegistry $apr, SessionRegistry $asr) { 
     //Act::view($apr,$asr);
     if ( empty($apr->g("begin")) || ( empty($apr->g("end")) && empty($apr->g("kb")) )  ) Act::showAlert($apr,$asr,"You should give begin and end|kb");
     $begin=$apr->g("begin");
@@ -28,11 +27,12 @@ class AdminAct {
     $size=0;
     $i=$begin;
     $processed=0;
+    $warning="";
     while (true) {
       $m=$apr->g("cardfile")->getOneMsg($i);
       if ( !$m ) {
         //print("EOF");
-        $processed--;
+        $warning="\r\nWarning! Records in database ended abruptly ";
         break;
       }
       $processed++;
@@ -41,36 +41,34 @@ class AdminAct {
       $html=RollElements::oneMessage($m,RollElements::idTitle($m));
       $messages.=$html;      
       if ( $apr->g("kb")>=1 && ceil(strlen($messages)/1000)>=$apr->g("kb") ) {
-        $processed--;
         //print("size exceeded");
         break;
       }
-      $i+=1;
-      if ( $end>=1 && $i>=($end+1) ) {
+      if ( $end>=1 && $i==$end ) {      
         //print ("count ended");
-        $processed--;
         break;        
       }
+      $i++;
     }
-    $realEnd=$begin+$processed;
+    $realEnd=$begin+$processed-1;
     //print($messages);
 
-    //
-    if ($apr->g("newBegin") >= 1) {
+    if ( $apr->g("newBegin") >= 1 ) {
       $newBegin=$apr->g("newBegin");
-      $newEnd=$newBegin+$processed; 
+      $newEnd=$newBegin+$processed-1; 
     }
     else {
       $newBegin=$begin;
       $newEnd=$realEnd;
     }
     //---here comes the presentation---
+    // $apr,$asr,$newBegin,$newEnd,$processed,$warning,$begin,$realEnd,$messages
     //print("!!".$asr->g("templatePath")."export.html");
     $template=file_get_contents($asr->g("templatePath")."export.html");
     $template=str_replace("@title@",$apr->g("forum")." : ".$newBegin."..".$newEnd,$template);
     $template=str_replace("@assets_path@",$asr->g("assetsPath"),$template);
     $template=str_replace("@prev_link@","<a href=\"\">Previous page</a>",$template);    
-    $template=str_replace("@next_link@","<a href=\"?begin=".($newEnd+1)."\">Next page</a>",$template);
+    $template=str_replace("@next_link@","<a href=\"./?begin=".($newEnd+1)."\">Next page</a>",$template);
     $template=str_replace("@messages@",$messages,$template);
     $file=$apr->g("obj");
     if ( empty($file) ) $file=$apr->g("forum")."_".$newBegin."_".$newEnd;
@@ -79,19 +77,16 @@ class AdminAct {
     touch ($fullFile);
     if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
     file_put_contents($fullFile,$template);
-    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".($processed+1).", about ".ceil(strlen($template)/1000)."KB");    
+    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil(strlen($template)/1000)."KB. ".$warning);    
   }
   
   public function importHtml (PageRegistry $apr, SessionRegistry $asr) {
     //print("import");
     $fullFile=$asr->g("forumsPath").$apr->g("forum")."/".$apr->g("obj").".html";
     if ( !file_exists($fullFile) ) Act::showAlert($apr,$asr,"File not found: ".$fullFile." Have you really created it?");
-    //print($apr->g("order"));
     $i=0;
     $pieces=self::getOneMessage ($fullFile,$apr->g("order"));
     foreach($pieces as $m) {
-      //print("\r\n".$m."\r\n");
-      //print("\r\n".self::getTag($m,"address")."\r\n");
       $parsed=self::parseMessage($m);
       //print_r(self::parseMessage($m));
       $apr->g("cardfile")->addMsg($parsed);
