@@ -1,5 +1,0 @@
-AuthType Basic
-Authname "Register to forum: demo"
-AuthUserFile "/home/alexander/www/LTforum/LTforum/.users"
-AuthGroupFile "/home/alexander/www/LTforum/LTforum/.groups"
-Require group demo

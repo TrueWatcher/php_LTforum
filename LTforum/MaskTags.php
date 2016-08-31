@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.1.5 added this file
+ * @version 1.0 experimental deployment
  */
  
 /**

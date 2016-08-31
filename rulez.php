@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.3.3 (needs admin panel and docs) (workable export-import) workable exp-imp-del-ea
+ * @version 1.0.1 experimental deployment
  */
 /**
  * LTforum Admin panel, common for all forum-threads, entry point.

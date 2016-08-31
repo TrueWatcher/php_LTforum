@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.3.2 (tests and bugfixing) (needs admin panel and docs) workable export-import
+ * @version 1.0 experimental deployment
  */ 
 /**
  * Functions just for View, usually creating control elements.

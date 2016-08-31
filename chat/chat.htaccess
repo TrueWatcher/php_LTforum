@@ -1,0 +1,5 @@
+AuthType Basic
+Authname "Register to forum: chat"
+AuthUserFile "/path_to_mysite/LTforum/.users"
+AuthGroupFile "/path_to_mysite/LTforum/.groups"
+Require group chat

@@ -1,6 +1,7 @@
 <?php
 /**
  * @pakage LTforum
+ * @version 1.0 experimental deployment
  */
  
 /**

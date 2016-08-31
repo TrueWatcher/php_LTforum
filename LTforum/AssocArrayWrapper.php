@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.1 improvements
+ * @version 1.0 experimental deployment
  */
  
   class AssocArrayWrapper {

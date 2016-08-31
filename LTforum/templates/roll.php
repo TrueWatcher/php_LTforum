@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.3.0 (tests and bugfixing) needs admin panel and docs
+ * @version 1.0 experimental deployment
  */
  /**
  * A View to display a list of messages plus some nice control elements.

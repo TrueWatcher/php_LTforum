@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.2.0 (functional viewAddEditDelete) refactored and cleaned
+ * @version 1.0 experimental deployment
  */
 /**
  * Forum thread entry point

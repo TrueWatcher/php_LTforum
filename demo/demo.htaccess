@@ -1,0 +1,5 @@
+AuthType Basic
+Authname "Register to forum: demo"
+AuthUserFile "/path_to_mysite/LTforum/.users"
+AuthGroupFile "/path_to_mysite/LTforum/.groups"
+Require group demo

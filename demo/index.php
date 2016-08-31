@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 0.1.3 new folders structure
+ * @version 1.0 experimental deployment
  */
 /**
  * Forum thread entry point
