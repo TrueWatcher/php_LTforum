@@ -24,13 +24,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
-  protected $homeUri="http://LTforum/test/";
-  //protected $formPath="";
-  //protected $logPath="modules/mod_mail_inventory/mail_inventory_log.csv";
-  //protected $delay=6;
-      
-  //protected $inputs_full=array("Name"=>"Иванов Пётр Сидорович","BirthDate"=>"01.02.1979","BirthPlace"=>"Washington DC","PlaceofResidence"=>"Москва сразу направо","ContactPhone"=>"999-888-77-00","Email"=>"ivanov@ivanov.me","ContactName"=>"Сидорова Мария Ивановна тёща 123-456-78-90","TextHealth"=>"не дождётесь","TextEquipment"=>"только котелок","TextWishes"=>"хлеба и зрелищ","AboutUs"=>"сказали по радио");  
- 
+  protected $homeUri="http://fs..net/new_ltforum/test/";//"http://LTforum/test/";
+
   public function setUp() {
     //$capabilities = array(\WebDriverCapabilityType::BROWSER_NAME => 'firefox');
     //$this->webDriver = RemoteWebDriver::create('http://localhost:4444/wd/hub', $capabilities);

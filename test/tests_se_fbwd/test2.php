@@ -24,9 +24,9 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
-  protected $homeUri="http://LTforum/rulez.php?forum=test&pin=1";
+  protected $homeUri="http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//"http://LTforum/rulez.php?forum=test&pin=1";
   protected $filesystemPath="/home/alexander/www/LTforum/test/";
-  //protected $viewUri="http://LTforum/test";
+  protected $testDirUri="http://fs..net/new_ltforum/test/";//"http://LTforum/test/";
   
   public function setUp() {
     $host = 'http://localhost:4444/wd/hub'; // this is the default
@@ -105,7 +105,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }  
   
   private function checkExport($begin,$end,$file2,$newBegin) {   
-    $path=$this->filesystemPath;
+    //$path=$this->filesystemPath;
+    $path=$this->testDirUri;
     $idList=self::parseHtmlIds($path.$file2);
     print( " Begin:".$idList[0]." , end:".end($idList).", total:".count($idList)." " );
     $this->assertEquals(count($idList),(end($idList)-$idList[0]+1),"Some ids are missing in the exported file");
@@ -152,8 +153,12 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::checkExportResponce($begin,$end);
     print(" Responce OK ");    
     self::checkExport(1,11,$file2,$newBegin);    
-    $path=$this->filesystemPath;
-    $this->assertFileEquals($path.$file1.".html",$path.$file2.".html","Files are different");
+    //$path=$this->filesystemPath;
+    $path=$this->testDirUri;
+    $buf1=file_get_contents($path.$file1.".html");
+    $buf2=file_get_contents($path.$file2.".html");
+    $this->assertEquals($buf1,$buf2,"Files are different");
+    //$this->assertFileEquals($path.$file1.".html",$path.$file2.".html","Files are different");
     print("\r\nExported files are equal, congratulations! \r\n");
     
     $file3="e_3kb";
@@ -232,7 +237,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::checkExport($begin,$end,$file,$begin);
     print (" Checking file ".$file." OK ");
     
-    $path=$this->filesystemPath;
+    //$path=$this->filesystemPath;
+    $path=$this->testDirUri;
     $src=file_get_contents($path.$file.".html");
     $this->assertContains(">".$me,$src,"My dear authorName is missing");
     $this->assertContains($add,$src,"My remark is missing");    
@@ -274,8 +280,12 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     print(" Responce : ".$recBegin."..".$recEnd);         
     self::checkExport($begin,$recEnd,$file2,$newBegin);
     print (" Checking file ".$file2."OK ");
-    $path=$this->filesystemPath;
-    $this->assertFileEquals($path.$file.".html",$path.$file2.".html","Files are different");
+    //$path=$this->filesystemPath;
+    $path=$this->testDirUri;
+    $buf1=file_get_contents($path.$file.".html");
+    $buf2=file_get_contents($path.$file2.".html");
+    $this->assertEquals($buf1,$buf2,"Files are different");    
+    //$this->assertFileEquals($path.$file.".html",$path.$file2.".html","Files are different");
     print("\r\nExported files are equal, congratulations!\r\n");    
   
   }
