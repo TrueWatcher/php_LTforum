@@ -24,9 +24,9 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
-  protected $homeUri="http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//"http://LTforum/rulez.php?forum=test&pin=1";
-  protected $filesystemPath="/home/alexander/www/LTforum/test/";
-  protected $testDirUri="http://fs..net/new_ltforum/test/";//"http://LTforum/test/";
+  protected $homeUri="http://LTforum/rulez.php?forum=test&pin=1";//"http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//
+  //protected $filesystemPath="/home/alexander/www/LTforum/test/";
+  protected $testDirUri="http://LTforum/test/";//"http://fs..net/new_ltforum/test/";//
   
   public function setUp() {
     $host = 'http://localhost:4444/wd/hub'; // this is the default

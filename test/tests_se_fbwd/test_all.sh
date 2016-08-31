@@ -1,5 +1,5 @@
 #!/bin/bash
-rm "../test.db"
-rm "../*.html"
+rm ../test.db
+rm ../*.html
 phpunit test
 phpunit test2

@@ -14,7 +14,7 @@ $forumName="demo";// canonical forum name
 $forumTitle="Just another open miniforum";// page title
 $mainPath="../LTforum/";// relative to here
 $templatePath="templates/"; // relative to main LTforum folder
-$assetsPath="../assets/"; // relative to main LTforum folder
+$assetsPath="../assets/"; // relative to here
 
 require_once ($mainPath."LTforum.php");
 

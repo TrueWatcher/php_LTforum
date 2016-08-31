@@ -24,7 +24,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
-  protected $homeUri="http://fs..net/new_ltforum/test/";//"http://LTforum/test/";
+  protected $homeUri="http://LTforum/test/";//"http://fs..net/new_ltforum/test/";//
 
   public function setUp() {
     //$capabilities = array(\WebDriverCapabilityType::BROWSER_NAME => 'firefox');

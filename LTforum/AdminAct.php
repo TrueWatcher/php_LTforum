@@ -123,7 +123,7 @@ class AdminAct {
   private static function getTagContent ($m,$tag) {
     $first=strpos($m,"<".$tag);
     $next=strpos($m,">",$first+strlen($tag)-1);
-    $closing=strpos($m,"</".$tag,$next+1);
+    $closing=strpos($m,"</".$tag,$next);
     if ( !is_int($first) || !is_int($next) || !is_int($closing) ) return(""); 
     return( substr($m,$next+1,$closing-$next-1) );
   }
@@ -158,6 +158,7 @@ class AdminAct {
     if ( $begin < $apr->g("forumBegin") ) $begin = $apr->g("forumBegin");
     if ( $end > $apr->g("forumEnd") ) $end = $apr->g("forumEnd");
     if ( $begin != $apr->g("forumBegin") && $end != $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Your block must border begin or end of forum thread");
+    if ( $begin <= $apr->g("forumBegin") && $end >= $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"You are not allowed to delete all messages, leave at least one");    
     $apr->g("cardfile")->deletePackMsg($begin,$end);
     Act::showAlert($apr,$asr,"Removed ".($end+1-$begin)." messages from ".$begin." to ".$end );
   }

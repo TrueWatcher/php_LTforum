@@ -168,6 +168,7 @@ class CardfileSqlt extends ForumDb {
     // operation is allowed only on first or last n messages
     $this->getLimits($foundLow,$foundHigh,$no);
     if($low!=$foundLow && $high!=$foundHigh) throw new UsageException ("You are supposed to remove messages from the beginning or from the end");
+    if($low<=$foundLow && $high>=$foundHigh) throw new UsageException ("You are supposed to leave at least one message");
     
     $qDeletePack="DELETE FROM '".self::$table."' WHERE id>=:low AND id<=:high";
     $stmt=parent::$forumDbo->prepare($qDeletePack);
