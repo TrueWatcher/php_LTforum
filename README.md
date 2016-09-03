@@ -29,7 +29,7 @@ Try http:://your_site/forum_directory/rulez.php?forum=test&pin=1
 You should see a panel of Messages Manager.  
 Now it's time to set up Apache's HTTP Basic Authentication.  
 Find a system path to your forum_directory and its "LTforum" folder. If you haven't got it (e.g. on a public hoster), go to "LTforum" folder, find ".htaccess" and rename it to "txt.htaccess". Then try http:://your_site/forum_directory/report_full_path.php and store the result. Remember to rename "txt.htaccess" back to ".htaccess".  
-Go to the folder "demo", open demo.htaccess and insert full system path into it (two times). Then save it as ".htaccess" to the same folder. Upload this file to the same folder of your site.  
+Go to the folder "demo", open "demo.htaccess" and insert full system path into it (two times). Then save it as ".htaccess" to the same folder. Upload this file to the same folder of your site.  
 Do the same with the folder "chat".  
 Do the same with root.htaccess in the forum root folder.  
 Create the file ".users" in LTforum folder (unless your are happy with preset users/passwords, see LTforum/basic_authentication.txt).  
@@ -37,7 +37,7 @@ Create the file ".users" in LTforum folder (unless your are happy with preset us
 Create the file ".groups" in a text editor. Arrange all users to groups "chat" and "demo" and administrator(s) to the group "admin".  
 (chet: user1 user2 \n demo: user1 user2 \n admin: user1)  
 Upload the files .users and .groups into "LTforum" folder.  
-Optionally add "Options +Indexes" to the forum root .htacces and remove index.html from there.  
+Optionally add "Options +Indexes" to the forum root folder's .htacces and remove index.html from there.  
 Try http:://your_site/forum_directory/chat and http:://your_site/forum_directory/chat  
 Try also http:://your_site/forum_directory/rulez.php?forum=demo and http:://your_site/forum_directory/rulez.php?forum=chat  as administrator.  
 If your get a "500 Error" or do not get a login form -- something is wrong, most probably with paths in ".htaccess" file(s).  
@@ -56,7 +56,7 @@ This completes the preparations. The database will be created automatically.
 Try http:://your_site/forum_directory/your_new_forum  
 If you don't like introductort message, add your own.  
 Try http:://your_site/forum_directory/rulez.php?forum=your_new_forum as administrator.  
-Optionally remove the messages from 1 to 1.  
+If you have added your welcome message, remove the messages from 1 to 1.  
 If your have enough rights to set up HTTPS, your are advised to do it also ;).  
 
 
