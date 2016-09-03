@@ -28,7 +28,7 @@ If your see a page with one or more messages, it's all right.
 Try http:://your_site/forum_directory/rulez.php?forum=test&pin=1  
 You should see a panel of Messages Manager.  
 Now it's time to set up Apache's HTTP Basic Authentication.  
-Find a system path to your forum_directory and its "LTforum" folder. If you haven't got it (e.g. on a public hoster), go to "LTforum" folder, find ".htaccess" and rename it to "_.htaccess". Then try http:://your_site/forum_directory/report_full_path.php and store the result. Remember to rename "_.htaccess" back to ".htaccess".  
+Find a system path to your forum_directory and its "LTforum" folder. If you haven't got it (e.g. on a public hoster), go to "LTforum" folder, find ".htaccess" and rename it to "txt.htaccess". Then try http:://your_site/forum_directory/report_full_path.php and store the result. Remember to rename "_.htaccess" back to ".htaccess".  
 Go to the folder "demo", open demo.htaccess and insert full system path into it (two times). Then save it as ".htaccess" to the same folder. Upload this file to the same folder of your site.  
 Do the same with the folder "chat".  
 Do the same with root.htaccess in the forum root folder.  
