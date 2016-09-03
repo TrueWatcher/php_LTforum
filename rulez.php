@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0.1 experimental deployment
+ * @version 1.0 experimental deployment
  */
 /**
  * LTforum Admin panel, common for all forum-threads, entry point.
