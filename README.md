@@ -8,7 +8,12 @@ Minimalistic forum engine on Linux Apache - PHP - SQLite.
 
 ##Targets
 
-Easy communication tool like basic_forum/offline_messenger/guestbook, which is simple enough to be used without instructions, and can work on public hosters and cloud instances. Support for several forum threads, as independent as possible. Easy addition/removal/transfer of contents. An exercise in OOP :)
+Easy communication tool like basic_forum/offline_messenger/guestbook,  
+which is simple enough to be used without instructions,  
+and can work on public hosters and cloud instances.  
+Support for several forum threads, as independent as possible.  
+Easy addition/removal/transfer of contents.  
+An exercise in OOP :)
 
 
 
