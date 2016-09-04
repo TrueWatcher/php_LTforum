@@ -178,5 +178,84 @@ class CardfileSqlt extends ForumDb {
     return ("");
   }
   
+  public function yieldSearchResults ($what,$order,$limit) {
+    mb_internal_encoding("UTF-8");
+    $qAll="SELECT id, date, time, author, message, comment
+      FROM '".self::$table."'" ;
+    if ( substr($order,0,1)==="d" ) $qAll.=" ORDER BY id DESC";
+
+    $result=parent::$forumDbo->query($qAll);
+    $count=0;
+    //$msgs=[];
+    foreach ($what as $k=>&$andTerm ) {
+      if ( mb_strlen($andTerm)<=1 ) throw new UsageException ("Too short or empty search term in array ".implode(";",$what));
+      $andTerm=mb_strtolower($andTerm);
+    }
+    while ( $count<=$limit && ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
+      $haystack=implode("  ",$msg)." ";
+      $afterId=mb_strpos($haystack,"  ");
+      $haystack=mb_substr($haystack,$afterId);
+      $haystack=mb_strtolower($haystack);
+      //print $haystack;
+      $res=true;
+      foreach ($what as $j=>$andTermM ) {
+        if (mb_substr($andTermM,0,1)==="-") {
+          $andTermM=mb_substr($andTermM,1);
+          $andResult=( mb_strpos($haystack,$andTermM)===false );
+        }
+        else { 
+          //$p=mb_strpos($haystack,$andTermM);
+          $andResult=( mb_strpos($haystack,$andTermM)!==false );
+        }
+        $res=($res && $andResult);
+        //print("{$msg["id"]}--$j--$andResult;");
+      }
+      //print ("\r\n{$msg["id"]}--$res;");      
+      if ($res) {
+        $count++;
+        //$msgs[]=$msg;
+        yield $count=>$msg;// not yield ($count=>$msg); !
+      }
+    }// end main cycle
+    //return $msgs;
+  }  
+  
+  public function defunct_yieldSearchResults ($what,$order,$limit) {
+    $qSearch="SELECT id, date, time, author, message, comment
+      FROM '".self::$table."' WHERE ";
+    if (! is_array($what) ) {}
+    foreach ($what as $i=>&$andTerm) {
+      if ($i>0) $qSearch.=" AND ";
+      /*$qSearch.="( instr( ' '||date||'  '||time||'  '||author||'  '||message||'  '||comment||' ' ,(:word".$i.") )";
+      if ( substr($andTerm,0,1)==="-" ) {
+        $qSearch.="=0 ) ";
+        $andTerm=substr($andTerm,1);
+      }
+      else $qSearch.=">0 ) ";*/
+      if ( substr($andTerm,0,1)==="-" ) {
+        $qSearch.=" NOT ";
+        $andTerm=substr($andTerm,1);
+      }
+      $qSearch.=" LIKE('%'||:word".$i."||'%',' '||date||'  '||time||'  '||author||'  '||message||'  '||comment||' ')=1";
+    }
+    if ( substr($order,0,1)==="d" ) $qSearch.=" ORDER BY id DESC";
+    $qSearch.=" LIMIT :limit";
+    print($qSearch);
+    print_r($what);
+    $stmt=parent::$forumDbo->prepare($qSearch);
+    foreach ($what as $i=>$andTerm) {
+      $stmt->bindValue(':word'.$i,$andTerm,SQLITE3_TEXT);
+    }
+    $stmt->bindValue(':limit',$limit,SQLITE3_INTEGER);
+    $result = $stmt->execute();
+    //$msgs=array();
+    $count=0;
+    while ( ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
+      //$msgs[]=$msg;
+      $count++;
+      yield $count=>$msg;// not yield ($count=>$msg); !
+    }
+  }
+  
 }// end CardfileSqlt
 ?>

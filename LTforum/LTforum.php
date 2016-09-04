@@ -71,6 +71,19 @@ catch (Exception $e) {
   $pr->g("cardfile")->addMsg($m);
 }*/
 //$pr->g("cardfile")->deletePackMsg(1,15);
+$search=[" ак ","http","-IT"];//,"dvd"];"AR",
+$order="";//"desc";
+$limit=10;
+$results="";
+$toShow=$pr->g("cardfile")->yieldSearchResults($search,$order,$limit);
+foreach($toShow as $i=>$res) {
+  $results.="<hr />".implode(":",$res)."<hr />";
+  //$results.= ("!".strpos(implode("  ",$res),$search[1]) );
+  //if(strpos(implode("  ",$res),$search[1])===false) print ("<!");
+}
+print($results);
+exit();
+
 
 $action=$pr->g("act");
 switch ($action) {
