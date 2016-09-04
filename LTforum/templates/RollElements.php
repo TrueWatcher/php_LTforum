@@ -16,8 +16,10 @@ class RollElements {
     if( $msg["id"]==$context->g("forumEnd") && strcmp($msg["author"],$pageContext->g("user"))==0 ) {
       $userParam="";
       if ( !empty($pageContext->g("user")) ) $userParam="&amp;user=".urlencode($pageContext->g("user"));
-      return ('<b title="Edit/Delete"><a href="?act=el'.$userParam.'&amp;end='.$msg["id"].'&amp;length='.$context->g("length").'">§</a></b>&nbsp;');
-    }
+      $qs="act=el".$userParam."&amp;end=".$msg["id"]."&amp;length=".$context->g("length");
+      $link=self::genericLink($qs,"§");
+      return('<b title="Edit/Delete">'.$link.'</b>&nbsp;');
+    }     
   }
   
   static function idTitle ($msg) {
@@ -36,10 +38,6 @@ class RollElements {
   }
   
   static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false) {
-  // needs refactoring
-    $linkHead='<a href="?';
-    $linkTail_1='">';
-    $linkTail_2='</a>';
     $step = $context->g("length") - $context->g("overlay");
     $nextBegin = $context->g("begin") - $step;
     $nextEnd = $context->g("end") - $step;
@@ -61,14 +59,10 @@ class RollElements {
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
     }// end switch
-    return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
+    return ( self::genericLink($qs,$anchor) );
   }
   
   static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
-  // needs refactoring
-    $linkHead='<a href="?';
-    $linkTail_1='">';
-    $linkTail_2='</a>';
     $step = $context->g("length") - $context->g("overlay");
     $nextBegin = $context->g("begin") + $step;
     $nextEnd = $context->g("end") + $step;    
@@ -92,25 +86,54 @@ class RollElements {
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
     }
-    return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
+    return ( self::genericLink($qs,$anchor) );
   }
   
+  static function genericRewind (ViewRegistry $context,$anchor,$multi,$showDeadAnchor) {
+    $step = $context->g("length") - $context->g("overlay");
+    $step *= $multi;
+    $nextBegin = $context->g("begin") + $step;
+    $nextEnd = $context->g("end") + $step;
+    
+    if ( $nextEnd <= $context->g("forumBegin") ) {
+      if ($showDeadAnchor) return($anchor);
+      return("");
+    }
+    if ( $nextBegin >= $context->g("forumEnd") ) {
+      //$pageIsLast=true;
+      if ($showDeadAnchor) return($anchor);
+      return("");
+    }            
+    if ( $nextBegin < $context->g("forumBegin") ) $nextBegin = $context->g("forumBegin");
+    if ( $nextEnd > $context->g("forumEnd") ) $nextEnd = $context->g("forumEnd");      
+
+    switch ( $context->g("base") ) {
+    case "begin" :
+      $qs="begin=".$nextBegin."&length=".$context->g("length");
+      break;
+    case "end" :
+      $qs="end=".$nextEnd."&amp;length=".$context->g("length");
+      break;
+    default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
+    }
+    return ( self::genericLink($qs,$anchor) );
+  }
+  
+
+  
   static function firstPageLink (ViewRegistry $context) {
-    $linkHead='<a href="?';
-    $linkTail='">1</a>';
-    $min = $context->g("forumBegin");
-    $qs="begin=".$min."&amp;length=".$context->g("length");
-    return($linkHead.$qs.$linkTail);
+    $qs="begin=".$context->g("forumBegin")."&amp;length=".$context->g("length");
+    return ( self::genericLink($qs,"1") );
   }
   
   static function lastPageLink (ViewRegistry $context) {
-    $linkHead='<a href="?';
-    $linkTail_1='">';
-    $linkTail_2='</a>';
-    $max = $context->g("forumEnd");
-    $num = $context->g("pageEnd");
-    $qs="end=".$max."&amp;length=".$context->g("length");
-    return($linkHead.$qs.$linkTail_1.$num.$linkTail_2);
+    $qs="end=".$context->g("forumEnd")."&amp;length=".$context->g("length");
+    return ( self::genericLink($qs,$context->g("pageEnd")) );   
+  }
+  
+  static function genericLink ($queryString,$linkText) {
+    $ahref="<a href=\"?%s\">%s</a>";
+    return ( sprintf($ahref,$queryString,$linkText) );
   }
   
   /*
@@ -120,9 +143,11 @@ class RollElements {
   static function pagePanel (ViewRegistry $context) {
     $panel="";
     $panel.=self::firstPageLink ($context)."&nbsp;&nbsp;";
+    $panel.=self::genericRewind ($context,"-3",-3,true)."&nbsp;&nbsp;";
     $panel.=self::prevPageLink($context,"-1",true)."&nbsp;&nbsp;";
     $panel.="Page:&nbsp;".$context->g("pageCurrent")."&nbsp;&nbsp;";
     $panel.=self::nextPageLink($context,$no,"1+",true)."&nbsp;&nbsp;";
+    $panel.=self::genericRewind ($context,"3+",3,true)."&nbsp;&nbsp;";    
     $panel.=self::lastPageLink ($context);
     return($panel);
   }
@@ -158,6 +183,9 @@ class RollElements {
     $form.=$defineBase."</p></form>";
     return ($form);
   }
+  /*
+   * A small form to go to any message by its number.
+   */
   static function numberForm (ViewRegistry $context) {
     $form="<form action=\"\" method=\"get\" id=\"messageNumber\"><p>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
     $form.="<input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" />";
