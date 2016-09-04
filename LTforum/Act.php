@@ -70,7 +70,7 @@ class Act {
       self::showAlert ($pr,$sr,"Username ".htmlspecialchars($user)." contains forbidden symbols");
     }
     
-    if( strlen($txt) > 60 ) $txt=substr($txt,0,60);
+    if( strlen($user) > 60 ) $user=substr($user,0,60);
     $txt=self::prepareInputText($txt,$sr);
 
     $newMsg=self::makeMsg($user,$txt);

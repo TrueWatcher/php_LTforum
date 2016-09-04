@@ -19,9 +19,7 @@ class RollElements {
       $qs="act=el".$userParam."&amp;end=".$msg["id"]."&amp;length=".$context->g("length");
       $link=self::genericLink($qs,"§");
       return('<b title="Edit/Delete">'.$link.'</b>&nbsp;');
-      
-      //return ('<b title="Edit/Delete"><a href="?act=el'.$userParam.'&amp;end='.$msg["id"].'&amp;length='.$context->g("length").'"></a></b>&nbsp;');
-    }
+    }     
   }
   
   static function idTitle ($msg) {
@@ -40,10 +38,6 @@ class RollElements {
   }
   
   static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false) {
-  // needs refactoring
-    //$linkHead='<a href="?';
-    //$linkTail_1='">';
-    //$linkTail_2='</a>';
     $step = $context->g("length") - $context->g("overlay");
     $nextBegin = $context->g("begin") - $step;
     $nextEnd = $context->g("end") - $step;
@@ -65,15 +59,10 @@ class RollElements {
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
     }// end switch
-    //return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
     return ( self::genericLink($qs,$anchor) );
   }
   
   static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
-  // needs refactoring
-    //$linkHead='<a href="?';
-    //$linkTail_1='">';
-    //$linkTail_2='</a>';
     $step = $context->g("length") - $context->g("overlay");
     $nextBegin = $context->g("begin") + $step;
     $nextEnd = $context->g("end") + $step;    
@@ -97,7 +86,6 @@ class RollElements {
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
     }
-    //return($linkHead.$qs.$linkTail_1.$anchor.$linkTail_2);
     return ( self::genericLink($qs,$anchor) );
   }
   
@@ -136,24 +124,11 @@ class RollElements {
   static function firstPageLink (ViewRegistry $context) {
     $qs="begin=".$context->g("forumBegin")."&amp;length=".$context->g("length");
     return ( self::genericLink($qs,"1") );
-    /*$linkHead='<a href="?';
-    $linkTail='">1</a>';
-    $min = $context->g("forumBegin");
-    $qs="begin=".$min."&amp;length=".$context->g("length");
-    return($linkHead.$qs.$linkTail);*/
   }
   
   static function lastPageLink (ViewRegistry $context) {
     $qs="end=".$context->g("forumEnd")."&amp;length=".$context->g("length");
     return ( self::genericLink($qs,$context->g("pageEnd")) );   
-    
-    /*$linkHead='<a href="?';
-    $linkTail_1='">';
-    $linkTail_2='</a>';
-    $max = $context->g("forumEnd");
-    $num = $context->g("pageEnd");
-    $qs="end=".$max."&amp;length=".$context->g("length");
-    return($linkHead.$qs.$linkTail_1.$num.$linkTail_2);*/
   }
   
   static function genericLink ($queryString,$linkText) {
@@ -168,11 +143,11 @@ class RollElements {
   static function pagePanel (ViewRegistry $context) {
     $panel="";
     $panel.=self::firstPageLink ($context)."&nbsp;&nbsp;";
-    $panel.=self::genericRewind ($context,"-1",-1,true)."&nbsp;&nbsp;";
+    $panel.=self::genericRewind ($context,"-3",-3,true)."&nbsp;&nbsp;";
     $panel.=self::prevPageLink($context,"-1",true)."&nbsp;&nbsp;";
     $panel.="Page:&nbsp;".$context->g("pageCurrent")."&nbsp;&nbsp;";
     $panel.=self::nextPageLink($context,$no,"1+",true)."&nbsp;&nbsp;";
-    $panel.=self::genericRewind ($context,"1+",1,true)."&nbsp;&nbsp;";    
+    $panel.=self::genericRewind ($context,"3+",3,true)."&nbsp;&nbsp;";    
     $panel.=self::lastPageLink ($context);
     return($panel);
   }

@@ -93,7 +93,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     //print("\r\nForum:$forum Total:$lastMsg\r\n");
     
     $me="Robot_".time();
-    $msg="My first test message_".time();
+    $msg="My first test message, quite long ".time()."_";
+    $msg.=$msg;
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
     $this->assertNotEmpty($addLink,"A WRITE link not found");
     $addLink->click();
