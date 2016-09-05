@@ -136,7 +136,7 @@ class Act {
 
       $toShow=$pr->g("cardfile")->yieldPackMsg($begin,$end);
       
-      $vr=ViewRegistry::getInstance( true, array( "forumBegin"=>$forunBegin, "forumEnd"=>$forumEnd, "overlay"=>$overlay, "length"=>$length, "begin"=>$begin, "end"=>$end, "base"=>$base, "pageCurrent"=>$pageCurrent, "pageEnd"=>$pageEnd, "msgGenerator"=>$toShow
+      $vr=ViewRegistry::getInstance( true, array( "controlsClass"=>"RollElements", "forumBegin"=>$forunBegin, "forumEnd"=>$forumEnd, "overlay"=>$overlay, "length"=>$length, "begin"=>$begin, "end"=>$end, "base"=>$base, "pageCurrent"=>$pageCurrent, "pageEnd"=>$pageEnd, "msgGenerator"=>$toShow
       ) );
       //$vr->s("no_such_key",0);// check catch UsageException
 

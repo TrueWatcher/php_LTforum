@@ -178,7 +178,7 @@ class CardfileSqlt extends ForumDb {
     return ("");
   }
   
-  public function yieldSearchResults ($what,$order,$limit) {
+  public function yieldSearchResults (array $what,$order,$limit) {
     mb_internal_encoding("UTF-8");
     $qAll="SELECT id, date, time, author, message, comment
       FROM '".self::$table."'" ;
@@ -243,8 +243,8 @@ class CardfileSqlt extends ForumDb {
     print($qSearch);
     print_r($what);
     $stmt=parent::$forumDbo->prepare($qSearch);
-    foreach ($what as $i=>$andTerm) {
-      $stmt->bindValue(':word'.$i,$andTerm,SQLITE3_TEXT);
+    foreach ($what as $j=>$andTermM) {
+      $stmt->bindValue(':word'.$i,$andTermM,SQLITE3_TEXT);
     }
     $stmt->bindValue(':limit',$limit,SQLITE3_INTEGER);
     $result = $stmt->execute();

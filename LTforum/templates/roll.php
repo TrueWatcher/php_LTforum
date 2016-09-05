@@ -23,7 +23,7 @@ require_once("RollElements.php");
 <table class="low"><tr>
   <td><?php print ( RollElements::prevPageLink($vr) ); ?></td>
   <td><?php print ( RollElements::numberForm($vr) ); ?></td>
-  <td><?php print ( RollElements::searchLink($vr) ); ?></td>
+  <td><?php print ( RollElements::searchLinkForm($vr) ); ?></td>
 </tr></table>
 <?php if( $pr->g("alert") ) print("<hr/><p class=\"n\">".$pr->g("alert")."</p>"); ?>
 <?php

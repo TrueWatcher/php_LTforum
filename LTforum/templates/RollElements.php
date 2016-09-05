@@ -37,10 +37,10 @@ class RollElements {
     return ($c);
   } 
 
-  static function oneMessage ($msg,$localControls) {
+  static function oneMessage ($msg,$localControlsString) {
     $newline="<hr />\r\n";
     $newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
-    if ( $localControls ) $newline.='<b class="fr">'.$localControls.'</b>';
+    if ( $localControlsString ) $newline.='<b class="fr">'.$localControlsString.'</b>';
     $newline.="</address>\r\n";
     $newline.='<p class="m">'.$msg['message']."</p>\r\n";
     if ( !empty($msg['comment']) ) $newline.='<p class="n">'.$msg['comment']."</p>\r\n";
@@ -167,7 +167,7 @@ class RollElements {
     return ($el);
   }
   
-  static function searchLink (ViewRegistry $context) {
+  static function searchLinkForm (ViewRegistry $context) {
     $el='<a href="?act=search&amp;query=&amp;length='.$context->g("length").'">Search</a>';
     return ($el);
   }
