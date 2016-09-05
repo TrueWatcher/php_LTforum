@@ -149,13 +149,48 @@ class Act {
     }
   }// end view
   
-  // UTILITIES ----------------------------------
+  public static function search (PageRegistry $pr, SessionRegistry $sr) {
+    $skipSearch=0;  
+    $q=$pr->g("query");
+    if ( strlen($q)<2 ) {
+      $pr->s("alert","Please, enter the search string");
+      $skipSearch=1;
+    }
+    if ( Act::charsInString($q,"<>'") ) {
+      $pr->s("alert","Sorry, your query contains forbidden symbols");
+      $skipSearch=1;  
+    }
+    if ( strpos($q," ")>0 && strrpos($q," ")<strlen($q)-1 ) $pr->s("alert","Use \"foo&bar\" to find messages containing both \"foo\" and \"bar\"<br/>Use \"foo bar\" to find messages containing  \"foo[SPACE]bar\"");
+    if ( strpos($q,"&")>0 && strrpos($q,"&")<strlen($q) ) $andTerms=explode("&",$q);
+    else $andTerms=[$q];
+    //print_r($andTerms);
+  
+    $lim=$pr->g("searchLength");
+    if ( empty($lim) ) $lim=$pr->g("length");
+  
+    $order=$pr->g("order");
+    if ( empty($order) ) $order="desc";
+  
+    if ($skipSearch) $toShow=null;
+    else $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
+    //if ( count($toShow) ) print("!!".count($toShow));
+
+    $vr=ViewRegistry::getInstance( true, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms  ) );
+
+    //$vr->dump();
+      
+    require ($sr->g("templatePath")."SearchElements.php");
+    include ($sr->g("templatePath")."roll.php");
+    exit(0);  
+  }
   
   public static function showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
     $pr->s( "alert",$alertMessage );
     include ($sr->g("templatePath")."alert.php");
     exit(0);
   }
+
+  // UTILITIES ----------------------------------  
   
   public static function prepareInputText($txt, SessionRegistry $sr) {
     if( strlen($txt) > $sr->g("maxMessageBytes") ) $txt=substr($txt,0,$sr->g("maxMessageBytes"));  

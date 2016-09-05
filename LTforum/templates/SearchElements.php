@@ -26,7 +26,75 @@ class SearchElements {
   } 
   
   static function oneMessage ($msg,$localControlsString) {
-    return( RollElements::oneMessage ($msg,$localControlsString) );
+    // open up hrefs, because they are also search objects
+    $msg["message"]=str_replace("<a ","&lt;a ",$msg["message"]);
+    $msg["message"]=str_replace("</a>","&lt;/a>",$msg["message"]);
+    $msg["comment"]=str_replace("<a ","&lt;a ",$msg["comment"]);
+    $msg["comment"]=str_replace("</a>","&lt;/a>",$msg["comment"]);
+    // pad with spaces for highlighting
+    foreach ($msg as $k=>&$fld) {
+      if ( $k!="id" && !empty($fld) ) $fld=" ".$fld." ";
+    }
+    // format it as usually
+    $html=RollElements::oneMessage ($msg,$localControlsString);
+    // get the search terms and do highlighting
+    $searches=ViewRegistry::getInstance(true,[])->g("searchTerms");
+    $html=self::highlight($html,$searches,"h","#abc");
+    return($html);
+  }
+  
+  static function fixOverlap (array &$s, array &$e) {
+    $blockList=[];
+    if ( count($s)!=count($e) ) throw new UsageException("Array counts are different");
+    for ($i=0;$i<count($s);$i++) {
+      for ($j=$i+1;$j<count($s);$j++) {
+        $collides=( ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) || ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) );
+        // start or end of one interval falls inside another interval
+        if ($collides) {
+          // try to extend the first interval
+          $s[$i]=min($s[$i],$s[$j],$e[$i],$e[$j]);
+          $e[$i]=max($s[$i],$s[$j],$e[$i],$e[$j]);
+          // dismiss the second interval
+          $blockList[]=$j;
+        }
+        // if ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) $blockList[]=$j;
+        // if ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) $blockList[]=$j;          
+      }
+    }  
+    return ($blockList);
+  }
+  
+  static function highlight ($str,array $searches,$class,$color="blue") {
+    $starts=[];
+    $ends=[];
+    $span0="<span style=\"background-color:".$color."\" class=\"".$class."\">";
+    $span1="</span>";
+    
+    // repeat the search on formatted message
+    $searches=cardfileSqlt::prepareTerms($searches);
+    $found=cardfileSqlt::found($str,$searches);
+    if ( !$found ) return ($str);// something is wrong with new search
+    $starts=$found[0];
+    sort($starts);    
+    $ends=$found[1];
+    sort($ends);
+    $blockList=self::fixOverlap($starts,$ends);
+     
+    $res="";
+    $pos=0;
+    for ($i=0;$i<count($starts);$i++) {
+      //print("{$starts[$i]}_{$ends[$i]} ");
+      if ( $ends[$i]<=$starts[$i] ) break;
+      if ( in_array($i,$blockList) ) break;
+      $res.=mb_substr($str,$pos,$starts[$i]-$pos+1);
+      $res.=$span0;
+      $pos=$starts[$i]+1;
+      $res.=mb_substr($str,$pos,$ends[$i]-$pos+1);
+      $res.=$span1;
+      $pos=$ends[$i]+1;      
+    }
+    $res.=mb_substr($str,$pos);
+    return ($res);
   }
   
   static function prevPageLink (ViewRegistry $context,$anchor="View first page",$showDeadAnchor=false) {
@@ -60,7 +128,7 @@ class SearchElements {
     $form.=$optList;
     $form.="</select> <input type=\"submit\" value=\"Apply\"/>";
     $form.="<input type=\"hidden\" name=\"act\" value=\"search\"/>";
-    $form.="<input type=\"hidden\" name=\"query\" value=\"".$context->g("query")."\"/>";
+    $form.="<input type=\"hidden\" name=\"query\" value='".$context->g("query")."'/>";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\"/>";
     $form.="<input type=\"hidden\" name=\"order\" value=\"".$context->g("order")."h\"/>";
     $form.="</p></form>";
@@ -68,11 +136,19 @@ class SearchElements {
   }
   
   static function searchLinkForm (ViewRegistry $context) {
+    //$orders=["asc"=>,"desc"];
+  
     $form="<form action=\"\" method=\"get\" id=\"resultsPerPage\"><p>Search: ";
-    $form.="<input type=\"text\" name=\"query\" value=\"\"/>";
-    $form.=" order : <input type=\"radio\" name=\"order\" value=\"desc\" /> from new to old, descending&nbsp;&nbsp;";  
-    $form.="<input type=\"radio\" name=\"order\" value=\"asc\" checked=\"checked\" /> from old to new, ascending";
-    $form.="</select> <input type=\"submit\" value=\"Search\"/>";    
+    $form.="<input type=\"text\" name=\"query\" value='".$context->g("query")."'/>";
+    $form.="</select> <input type=\"submit\" value=\"Search\"/><br/>";
+    
+    $form.=" order : <input type=\"radio\" name=\"order\" value=\"desc\"";
+    if ( $context->g("order")==="desc" ) $form.=" checked=\"checked\"";
+    $form.=" /> from new to old, descending&nbsp;&nbsp;";  
+    $form.="<input type=\"radio\" name=\"order\" value=\"asc\"";
+    if ( $context->g("order")==="asc" ) $form.=" checked=\"checked\"";
+    $form.=" /> from old to new, ascending";
+   
     $form.="<input type=\"hidden\" name=\"act\" value=\"search\"/>";    
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\"/>";  
     $form.="<input type=\"hidden\" name=\"searchLength\" value=\"".$context->g("searchLength")."\"/>";
@@ -80,7 +156,4 @@ class SearchElements {
     return ($form);
   }
   
-  
-
-
 }

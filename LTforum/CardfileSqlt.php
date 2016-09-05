@@ -177,39 +177,78 @@ class CardfileSqlt extends ForumDb {
     $stmt->execute();
     return ("");
   }
+
+  /** Does the searching.
+    * Performs AND on hits
+    * @param string $haystack string to search
+    * @param array $what array of search terms
+    * @returns array empty on failure, if all terms found:
+      [ [start1,start2,...], [end1,end2,...] ] -- positions of term1,term2,...
+    */
+  public function found($haystack,array $what) {
+    $starts=[];
+    $ends=[];
+ 
+    $res=true;
+    $haystack=mb_strtolower($haystack);
+    foreach ($what as $j=>$andTermM ) {
+      $pos=null;
+      if (mb_substr($andTermM,0,1)==="-") {
+        $andTermM=mb_substr($andTermM,1);
+        $andResult=( mb_strpos($haystack,$andTermM)===false );
+      }
+      else {
+        //$andResult=( mb_strpos($haystack,$andTermM)!==false );
+        $p=mb_strpos($haystack,$andTermM);
+        if ($p!==false) {
+          $andResult=true;
+          // add positions to hit lists
+          $starts[]=$p-1;
+          $ends[]=$p+mb_strlen($andTermM)-1;
+        }
+        else $andResult=false;
+      }
+      $res=($res && $andResult);
+    }
+    if ($res) return (array($starts,$ends));// all are Ok, return hit lists
+    return(false);
+  }
+  
+  public function prepareTerms($what) {
+    // remove quotes if present
+    foreach ($what as $k=>&$andTerm ) {
+      if ( strpos($andTerm,'"')===0 && strrpos($andTerm,'"')===(strlen($andTerm)-1) ) {
+        $andTerm=trim($andTerm,'"');
+        //print("@$andTerm@");
+      }
+      if ( mb_strlen($andTerm)<=1 ) throw new UsageException ("Too short or empty search term in array ".implode(";",$what));
+      // make the search case-insensitive 
+      $andTerm=mb_strtolower($andTerm);
+    }
+    return($what);
+  }
   
   public function yieldSearchResults (array $what,$order,$limit) {
     mb_internal_encoding("UTF-8");
+    
+    $what=self::prepareTerms($what);
+    
+    // simple query to select all
     $qAll="SELECT id, date, time, author, message, comment
       FROM '".self::$table."'" ;
     if ( substr($order,0,1)==="d" ) $qAll.=" ORDER BY id DESC";
-
     $result=parent::$forumDbo->query($qAll);
     $count=0;
     //$msgs=[];
-    foreach ($what as $k=>&$andTerm ) {
-      if ( mb_strlen($andTerm)<=1 ) throw new UsageException ("Too short or empty search term in array ".implode(";",$what));
-      $andTerm=mb_strtolower($andTerm);
-    }
+
+    if ($limit<=0) $limit=1000000;
     while ( $count<=$limit && ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
+      // concatenate all the interesting fields and add spaces
       $haystack=implode("  ",$msg)." ";
       $afterId=mb_strpos($haystack,"  ");
       $haystack=mb_substr($haystack,$afterId);
-      $haystack=mb_strtolower($haystack);
-      //print $haystack;
-      $res=true;
-      foreach ($what as $j=>$andTermM ) {
-        if (mb_substr($andTermM,0,1)==="-") {
-          $andTermM=mb_substr($andTermM,1);
-          $andResult=( mb_strpos($haystack,$andTermM)===false );
-        }
-        else { 
-          //$p=mb_strpos($haystack,$andTermM);
-          $andResult=( mb_strpos($haystack,$andTermM)!==false );
-        }
-        $res=($res && $andResult);
-        //print("{$msg["id"]}--$j--$andResult;");
-      }
+      // search
+      $res=self::found($haystack,$what);
       //print ("\r\n{$msg["id"]}--$res;");      
       if ($res) {
         $count++;
@@ -220,7 +259,7 @@ class CardfileSqlt extends ForumDb {
     //return $msgs;
   }  
   
-  public function defunct_yieldSearchResults ($what,$order,$limit) {
+  private function defunct_yieldSearchResults ($what,$order,$limit) {
     $qSearch="SELECT id, date, time, author, message, comment
       FROM '".self::$table."' WHERE ";
     if (! is_array($what) ) {}

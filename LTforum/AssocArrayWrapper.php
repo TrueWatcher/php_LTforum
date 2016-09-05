@@ -49,7 +49,7 @@
     
     public static function getInstance($stric=1,$ar=array()) {
       $sc=get_called_class();
-      if ( empty( self::$me ) ) {
+      if ( empty( $sc::$me ) ) {
         //echo("Attaching instance to its \"$sc\" class\r\n");
         $sc::$me = new $sc($stric,$ar);
         // just =new singletAssocArrayWrapper($strict,$arr); is not good for childs
@@ -72,7 +72,7 @@
     public function g($key) {
       if ( !array_key_exists($key,$this->arr) ) {
         if (!$this->strict) return ("");
-        else throw new Exception ("Reading by non-existent key".$key);
+        else throw new Exception ("Reading by non-existent key ".$key);
       }
       return( $this->arr[$key] );
     }

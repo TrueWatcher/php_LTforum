@@ -84,28 +84,6 @@ foreach($toShow as $i=>$res) {
 print($results);
 exit();*/
 
-if ($pr->g("act")=="search") {
-  $q=$pr->g("query");
-  if ( strlen($q)<2 ) $pr->s("alert","Please, enter the search string");
-  if ( strpos($q," ")>0 && strpos($q," ")<strlen($q) ) $pr->s("alert","Use \"foo&bar\" to find messages containing both \"foo\" and \"bar\"<br/>Use \"foo bar\" to find messages containing  \"foo[SPACE]bar\"");
-  if ( strpos($q,"&")>0 && strpos($q,"&")<strlen($q) ) $andTerms=explode("&",$q);
-  else $andTerms=[$q];
-  $lim=$pr->g("searchLength");
-  if ( empty($lim) ) $lim=$pr->g("length");
-  $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
-  if ( count($toShow) ) print("!!".count($toShow));
-
-      $vr=ViewRegistry::getInstance( true, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$pr->g("order"), "searchLength"=>$pr->g("searchLength"), "length"=>$pr->g("length"), "msgGenerator"=>$toShow
-      ) );
-      //$vr->s("no_such_key",0);// check catch UsageException
-
-      //$vr->dump();
-      
-      require ($sr->g("templatePath")."SearchElements.php");
-      include ($sr->g("templatePath")."roll.php");
-      exit(0);  
-}
-
 $action=$pr->g("act");
 switch ($action) {
   case "new":
@@ -119,6 +97,9 @@ switch ($action) {
     break;
   case "add":
     Act::add($pr,$sr);
+    break;
+  case "search":
+    Act::search($pr,$sr);
     break;
   default:
     Act::view($pr,$sr);
