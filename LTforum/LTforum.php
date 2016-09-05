@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 search command
  */
 
 /**
@@ -21,7 +21,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
     
     public function load() {
-      $inputKeys=array("act","begin","end","length","user","txt","comm","snap","del");
+      $inputKeys=array("act","begin","end","length","user","txt","comm","snap","del","query","searchLength","order");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
@@ -71,7 +71,7 @@ catch (Exception $e) {
   $pr->g("cardfile")->addMsg($m);
 }*/
 //$pr->g("cardfile")->deletePackMsg(1,15);
-$search=[" ак ","http","-IT"];//,"dvd"];"AR",
+/*$search=[" ак ","http","-IT"];//,"dvd"];"AR",
 $order="";//"desc";
 $limit=10;
 $results="";
@@ -82,8 +82,11 @@ foreach($toShow as $i=>$res) {
   //if(strpos(implode("  ",$res),$search[1])===false) print ("<!");
 }
 print($results);
-exit();
+exit();*/
 
+if ($pr->g("act")=="search") {
+  if ( strlen($pr->g("query"))<2 ) $pr->s("alert","Please, enter the search string");
+}
 
 $action=$pr->g("act");
 switch ($action) {

@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 search command
  */ 
 /**
  * Functions just for View, usually creating control elements.
@@ -9,6 +9,11 @@
  * @uses $vr ViewRegistry
  */
 class RollElements {
+
+  static function titleSuffix (ViewRegistry $context) {
+    $s=$context->g("begin")."..".$context->g("end")." (".$context->g("pageCurrent")."/".$context->g("pageEnd").")";
+    return ($s);
+  }
   /**
    * Adds an Edit link to the latest message, if it is allowed.
    */
@@ -25,7 +30,12 @@ class RollElements {
   static function idTitle ($msg) {
     if ( !empty($msg["id"]) ) return('<b title="'.$msg["id"].'">#</b>');
     return("");
-  }  
+  }
+  
+  static function localControls ($msg,ViewRegistry $context,PageRegistry $pageContext) {
+    $c=self::editLink($msg,$context,$pageContext).self::idTitle($msg);
+    return ($c);
+  } 
 
   static function oneMessage ($msg,$localControls) {
     $newline="<hr />\r\n";
@@ -156,6 +166,11 @@ class RollElements {
     $el='<a href="?act=new&amp;length='.$context->g("length").'">Write new</a>';
     return ($el);
   }
+  
+  static function searchLink (ViewRegistry $context) {
+    $el='<a href="?act=search&amp;query=&amp;length='.$context->g("length").'">Search</a>';
+    return ($el);
+  }
   /*
    * A small form to change page length.
    * Tries to keep upper/lower record in same place
@@ -192,6 +207,18 @@ class RollElements {
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" />";
     $form.="</p></form>";
     return ($form);
+  }
+  
+  static function onreadyScript () {
+    $s="<script>";
+    $s.="
+      var uri=window.location.toString();
+      if ( uri.indexOf(\"begin=\")<0 ) {
+        var footer=document.getElementById(\"footer\");
+        footer.scrollIntoView(false);
+      }";
+    $s.="</script>";
+    return($s);
   }
 }
 ?>
