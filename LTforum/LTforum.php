@@ -52,7 +52,9 @@ $pr->load();
 //$pr->s("forum",$forumName); // $forumName comes from index.php
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
-$pr->s( "viewLink",Act::addToQueryString($pr,"","length","user") );//
+$pr->s( "viewLink",Act::addToQueryString($pr,"end=-1","length","user")."#footer" );//
+//print ($pr->g( "viewLink"));
+//exit(0);
 
 try {
   $pr->s("cardfile",new CardfileSqlt($forumName,true));
@@ -73,6 +75,7 @@ catch (Exception $e) {
 //$pr->g("cardfile")->deletePackMsg(1,15);
 
 $action=$pr->g("act");
+if ( empty($action) && empty($pr->g("begin")) && empty($pr->g("end")) ) Act::redirectToView($pr);
 switch ($action) {
   case "new":
     Act::newMessage($pr,$sr);
