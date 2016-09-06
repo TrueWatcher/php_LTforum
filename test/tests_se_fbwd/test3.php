@@ -49,6 +49,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   static private $storedTotal=0;
   static private $storedMsg="";
   static private $storedForum="test";
+  static private $storedQuery="";
   
   public function test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
@@ -162,7 +163,18 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     print("\r\nAdd-Search-View sequence OK\r\n");
   }  
     
+  public function test_searchCaseInsensitive() {
+    $mySearchCyrInv="йЦУкеНГ";
+    $this->webDriver->get($this->searchUri.urlencode($mySearchCyrInv));    
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains($mySearchCyrInv,$title,"No search string in the title, maybe wrong page");
+    $this->assertContains("search",$title,"No \"search\" in the title -- wrong page");
+    $src=$this->webDriver->getPageSource();
+    $ids=$this->parseSearchIds ($src);
+    $this->assertNotEmpty($ids,"Empty search output for ".$mySearchCyrInv);
+    print("\r\nFound ".count($ids)." results, search is proved case-insensitive");    
     
-
+  }
 }
 ?>
