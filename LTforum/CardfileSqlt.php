@@ -177,11 +177,15 @@ class CardfileSqlt extends ForumDb {
     $stmt->execute();
     return ("");
   }
-  
-  public function yieldSearchResults (array $what,$order,$limit,$testTheString=["Act","searchInString"]) {
-    mb_internal_encoding("UTF-8");
-    
-    //$what=self::prepareTerms($what);
+  /**
+   * Gets all the text fields from DB and checks them against (external) search function; yields (as Generator) messages that satisfy that function.
+   * @param array $what array of search terms to be passed to test function
+   * @param string $order give results in ascending or descending order
+   * @param string|integer max number of results to give
+   * @param array class and method -- external search function ($haystack,$what)
+   * @returns Generator Object messages that passed the search function
+   */
+  public function yieldSearchResults (array $what,$order,$limit,$testTheString=["Act","searchInString"]) {    
     
     // simple query to select all
     $qAll="SELECT id, date, time, author, message, comment
@@ -199,7 +203,7 @@ class CardfileSqlt extends ForumDb {
       $haystack=mb_substr($haystack,$afterId);
       // search
       //$res=self::found($haystack,$what);
-      $res=$testTheString($haystack,$what);// test function is passed as argument
+      $res=$testTheString($haystack,$what);// test function was received as argument
       //print ("\r\n{$msg["id"]}--$res;");      
       if ($res) {
         $count++;

@@ -26,22 +26,26 @@ class SearchElements {
   } 
   
   static function oneMessage ($msg,$localControlsString,$context) {
-    // open up hrefs, because they are also search objects
-    $msg["message"]=str_replace("<a ","&lt;a ",$msg["message"]);
-    $msg["message"]=str_replace("</a>","&lt;/a>",$msg["message"]);
-    $msg["comment"]=str_replace("<a ","&lt;a ",$msg["comment"]);
-    $msg["comment"]=str_replace("</a>","&lt;/a>",$msg["comment"]);
-    // pad with spaces for highlighting
-    foreach ($msg as $k=>&$fld) {
-      if ( $k!="id" && !empty($fld) ) $fld=" ".$fld." ";
+    if ( $context->g("highlight") ) {
+      foreach ($msg as $key=>&$field) {
+        if ( $key!=="id" && !empty($field) ) {
+          $field=" ".$field." ";
+          $found=Act::searchInString($field,$context->g("searchTerms"));
+          if ( !empty($found) ) {
+            $field=self::openHrefs($field);
+            $field=self::highlight($field,$found,"h","#abc");
+          }
+        }
+      }
     }
-    // format it as usually
     $html=RollElements::oneMessage ($msg,$localControlsString);
-    // get the search terms and do highlighting
-    //$searches=ViewRegistry::getInstance(true,[])->g("searchTerms");
-    $searches=$context->g("searchTerms");
-    $html=self::highlight($html,$searches,"h","#abc");
     return($html);
+  }
+  
+  private static function openHrefs($str) {
+    $str=str_replace("<a ","&lt;a ",$str);
+    $str=str_replace("</a>","&lt;/a>",$str);
+    return($str);
   }
   
   static function fixOverlap (array &$s, array &$e) {
@@ -49,33 +53,28 @@ class SearchElements {
     if ( count($s)!=count($e) ) throw new UsageException("Array counts are different");
     for ($i=0;$i<count($s);$i++) {
       if ( !in_array($i,$blockList) ) {
-      for ($j=$i+1;$j<count($s);$j++) {
-        $collides=( ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) || ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) );
-        // start or end of one interval falls inside another interval
-        if ($collides) {
-          // try to extend the first interval
-          $s[$i]=min($s[$i],$s[$j],$e[$i],$e[$j]);
-          $e[$i]=max($s[$i],$s[$j],$e[$i],$e[$j]);
-          // dismiss the second interval
-          $blockList[]=$j;
+        for ($j=$i+1;$j<count($s);$j++) {
+          $collides=( ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) || ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) );
+          // start or end of one interval falls inside another interval
+          if ($collides) {
+            // try to extend the first interval
+            $s[$i]=min($s[$i],$s[$j],$e[$i],$e[$j]);
+            $e[$i]=max($s[$i],$s[$j],$e[$i],$e[$j]);
+            // dismiss the second interval
+            $blockList[]=$j;
+          }        
         }
-        // if ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) $blockList[]=$j;
-        // if ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) $blockList[]=$j;          
-      }
       }
     }  
     return ($blockList);
   }
   
-  static function highlight ($str,array $searches,$class,$color="blue") {
+  static function highlight ($str,array $found,$class,$color="blue") {
     $starts=[];
     $ends=[];
     $span0="<span style=\"background-color:".$color."\" class=\"".$class."\">";
     $span1="</span>";
     
-    // repeat the search on formatted message
-    $searches=cardfileSqlt::prepareTerms($searches);
-    $found=Act::searchInString($str,$searches);
     if ( !$found ) return ($str);// something is wrong with new search
     $starts=$found[0];
     sort($starts);    

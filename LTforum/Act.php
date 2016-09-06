@@ -150,8 +150,12 @@ class Act {
   }// end view
   
   public static function search (PageRegistry $pr, SessionRegistry $sr) {
-    $skipSearch=0;  
+    mb_internal_encoding("UTF-8");// ! important
+    $skipSearch=0;
+    
     $q=$pr->g("query");
+    $andTerms=[$q];
+    
     if ( strlen($q)<2 ) {
       $pr->s("alert","Please, enter the search string");
       $skipSearch=1;
@@ -160,13 +164,6 @@ class Act {
       $pr->s("alert","Sorry, your query \"".htmlspecialchars($q)."\" contains forbidden symbols");
       $skipSearch=1;  
     }
-    
-    if ( strpos($q," ")>0 && strrpos($q," ")<strlen($q)-1 ) $pr->s("alert","Use \"foo&bar\" to find messages containing both \"foo\" and \"bar\"<br/>Use \"foo bar\" to find messages containing  \"foo[SPACE]bar\"");
-    if ( strpos($q,"&")>0 && strrpos($q,"&")<strlen($q) ) $andTerms=explode("&",$q);
-    else $andTerms=[$q];
-    
-    $andTerms=self::prepareTerms($andTerms);
-    //print_r($andTerms);
 
     $lim=$pr->g("searchLength");
     if ( empty($lim) ) $lim=$pr->g("length");
@@ -175,14 +172,23 @@ class Act {
     if ( empty($order) ) $order="desc";
   
     if ($skipSearch) $toShow=null;
-    else $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
+    else {
+      // if SPACE  is present in the middle of the query, remind the rules  
+      if ( strpos($q," ")>0 && strrpos($q," ")<strlen($q)-1 ) $pr->s("alert","Use \"foo&bar\" to find messages containing both \"foo\" and \"bar\"<br/>Use \"foo bar\" to find messages containing  \"foo[SPACE]bar\"");
+      // if & is present in the middle of the query, break up the query into array
+      if ( strpos($q,"&")>0 && strrpos($q,"&")<strlen($q) ) $andTerms=explode("&",$q);
+      // do other good things to terms
+      $andTerms=self::prepareTerms($andTerms);
+      
+      $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
+    }
 
-    $vr=ViewRegistry::getInstance( 2, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms, "highlight"=>1  ) );
+    $vr=ViewRegistry::getInstance( 2, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms, "highlight"=>1 ) );
 
     //$vr->dump();
       
-    require ($sr->g("templatePath")."SearchElements.php");
-    include ($sr->g("templatePath")."roll.php");
+    require_once ( $sr->g("templatePath")."SearchElements.php" );
+    include (  $sr->g("templatePath")."roll.php" );
     exit(0);  
   }
   
@@ -242,7 +248,7 @@ class Act {
     return ($qs);
   }
   
-  public function prepareTerms($what) {
+  private function prepareTerms($what) {
     // remove quotes if present
     foreach ($what as $k=>&$andTerm ) {
       if ( strpos($andTerm,'"')===0 && strrpos($andTerm,'"')===(strlen($andTerm)-1) ) {
