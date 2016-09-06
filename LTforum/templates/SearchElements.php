@@ -16,7 +16,7 @@ class SearchElements {
 
   static function idLink ($msg,ViewRegistry $context) {
     $qs="act=&amp;begin=".$msg["id"]."&amp;length=".$context->g("length");
-    $link=RollElements::genericLink($qs,"#");
+    $link=RollElements::genericLink ( $qs,"#".$msg["id"] );
     return('<b title="View page">'.$link.'</b>&nbsp;');     
   }
   
@@ -98,6 +98,7 @@ class SearchElements {
   }
   
   static function prevPageLink (ViewRegistry $context,$anchor="View first page",$showDeadAnchor=false) {
+    $anchor="View first page";
     $qs="act=&amp;begin=1&amp;length=".$context->g("length");
     return( RollElements::genericLink($qs,$anchor) );    
   }
