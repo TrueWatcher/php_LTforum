@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 + search command
  */
 
 /**
@@ -167,7 +167,6 @@ class Act {
 
     $lim=$pr->g("searchLength");
     if ( empty($lim) ) $lim=$pr->g("length");
-  
     $order=$pr->g("order");
     if ( empty($order) ) $order="desc";
   
@@ -198,8 +197,12 @@ class Act {
     exit(0);
   }
 
-  // UTILITIES ----------------------------------  
+  // UTILITIES ---------------------------------- 
   
+  /**
+   * Filters texts, which were recieved from user.
+   * @uses MaskTags::mask_tags
+   */
   public static function prepareInputText($txt, SessionRegistry $sr) {
     if( strlen($txt) > $sr->g("maxMessageBytes") ) $txt=substr($txt,0,$sr->g("maxMessageBytes"));  
     require_once ($sr->g("mainPath")."MaskTags.php");
@@ -216,11 +219,20 @@ class Act {
     return ( array("author"=>$a,"message"=>$t,"comment"=>$c) );
   }
   
-  public static function charsInString($what,$charsString) {
-    if ( empty($what) ) return (false);
-    if (strtok($what,$charsString)!==$what) return (true);
+  /**
+   * Checks if a string contains any of given symbols.
+   * @param string $object string to test
+   * @param string $charsString "[symbol1][symbol2]..." like "<&'"
+   * @returns boolean true if found, false if not
+   */
+  public static function charsInString($object,$charsString) {
+    if ( empty($object) ) return (false);
+    if (strtok($object,$charsString)!==$object) return (true);
   }
   
+  /**
+   * Cleverly finds the basis for making absolute URIs from relative ones.
+   */
   public static function myAbsoluteUri () {
     $url = 'http://';
     if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
@@ -229,6 +241,9 @@ class Act {
     return ($url);
   }
   
+  /**
+   * Takes from the Page Registry the actual link to the viewer ( as query string, relative ), turns it into valid absolute address and sends it as REDIRECT header.
+   */
   public static function redirectToView (PageRegistry $pr) {
     $uri=$pr->g("viewLink");
     $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake
@@ -236,7 +251,15 @@ class Act {
     header("Location: ".$uri);
     exit(0);
   }
-
+  
+  /**
+   * Helps to create query string from Registry parametrs.
+   * @param 	PageRegistry 	$pr registry
+   * @param 	string 		$command this will be inserted as such
+   * @param 	string 		name of registry parameter, will be inserted as &name=value
+   * @param 	string 		more of these
+   * @returns string ready Query String with leading ? and middle ampersands as &amp;
+   */
   public static function addToQueryString (PageRegistry $pr,$command) {
     $qs=$command;
     for ($i=2;$i<func_num_args();$i++) {
@@ -263,18 +286,19 @@ class Act {
   }
   
   /** Does the searching.
-    * Performs AND on hits
-    * @param string $haystack string to search
-    * @param array $what array of search terms
-    * @returns array empty on failure, if all terms found:
+   * Performs AND on hits, collects their positions for highlighting.
+   * @param 	string 	$haystack string to search
+   * @param 	array 	$what array of search terms
+   * @returns 	array 	On failure: empty, if all terms found:
       [ [start1,start2,...], [end1,end2,...] ] -- positions of term1,term2,...
-    */
+   */
   public function searchInString ($haystack,array $what) {
     $starts=[];
     $ends=[];
  
     $res=true;
     $haystack=mb_strtolower($haystack);
+    
     foreach ($what as $j=>$andTermM ) {
       $pos=null;
       if (mb_substr($andTermM,0,1)==="-") {

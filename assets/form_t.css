@@ -24,6 +24,9 @@ table {
 fieldset {
   border: 2px solid #842;
   margin: 1%;
+  padding: 2%;
+  font-family: Arial, sans-serif;
+  font-size: 1.05em;
 }
 legend {
   color: #000;
@@ -35,7 +38,7 @@ textarea {
 }
 input#name,input#email {
   min-width: 95%;
-  width: 14em;
+  /*width: 14em;*/
 }
 input.submit {
   padding: .3em;
@@ -62,7 +65,7 @@ label,legend,input.submit {
   font-size: .8em;
   font-weight: bold;
 }
-input,textarea,select,checkbox {
+input,textarea,select {
   font-family: Arial, sans-serif;
   font-size: 1.05em;
   background-color: #abc;

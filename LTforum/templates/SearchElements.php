@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 search command
+ * @version 1.1 + search command
  */ 
 /**
  * Functions just for View (Search Results), usually creating control elements.
@@ -27,13 +27,14 @@ class SearchElements {
   
   static function oneMessage ($msg,$localControlsString,$context) {
     if ( $context->g("highlight") ) {
+      // repeat search on each field and insert highlighting tags into each field
       foreach ($msg as $key=>&$field) {
         if ( $key!=="id" && !empty($field) ) {
           $field=" ".$field." ";
           $found=Act::searchInString($field,$context->g("searchTerms"));
           if ( !empty($found) ) {
+            $field=self::highlight($field,$found,"h");
             $field=self::openHrefs($field);
-            $field=self::highlight($field,$found,"h","#abc");
           }
         }
       }
@@ -41,38 +42,31 @@ class SearchElements {
     $html=RollElements::oneMessage ($msg,$localControlsString);
     return($html);
   }
-  
+
+  /**
+   * Turns hyperlinks into pieces of text to make their addresses visible in search results
+   * @param string $str
+   * @returns string
+   */
   private static function openHrefs($str) {
     $str=str_replace("<a ","&lt;a ",$str);
     $str=str_replace("</a>","&lt;/a>",$str);
     return($str);
   }
-  
-  static function fixOverlap (array &$s, array &$e) {
-    $blockList=[];
-    if ( count($s)!=count($e) ) throw new UsageException("Array counts are different");
-    for ($i=0;$i<count($s);$i++) {
-      if ( !in_array($i,$blockList) ) {
-        for ($j=$i+1;$j<count($s);$j++) {
-          $collides=( ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) || ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) );
-          // start or end of one interval falls inside another interval
-          if ($collides) {
-            // try to extend the first interval
-            $s[$i]=min($s[$i],$s[$j],$e[$i],$e[$j]);
-            $e[$i]=max($s[$i],$s[$j],$e[$i],$e[$j]);
-            // dismiss the second interval
-            $blockList[]=$j;
-          }        
-        }
-      }
-    }  
-    return ($blockList);
-  }
-  
-  static function highlight ($str,array $found,$class,$color="blue") {
+
+  /**
+   * Wraps <span> tags around found entries.
+   * @param string $str object, usually a text+html field
+   * @param array $found results from Act::searchInString()
+   * @param string $class css class to be added to span
+   * @return string text with highlight tags
+   */
+  static function highlight ($str,array $found,$class,$color="") {
     $starts=[];
     $ends=[];
-    $span0="<span style=\"background-color:".$color."\" class=\"".$class."\">";
+    $span0="<span class=\"".$class."\"";
+    if (!empty($color)) $span0.=" style=\"background-color:".$color."\"";
+    $span0.=">";
     $span1="</span>";
     
     if ( !$found ) return ($str);// something is wrong with new search
@@ -97,6 +91,27 @@ class SearchElements {
     }
     $res.=mb_substr($str,$pos);
     return ($res);
+  }
+  
+  static function fixOverlap (array &$s, array &$e) {
+    $blockList=[];
+    if ( count($s)!=count($e) ) throw new UsageException("Array counts are different");
+    for ($i=0;$i<count($s);$i++) {
+      if ( !in_array($i,$blockList) ) {
+        for ($j=$i+1;$j<count($s);$j++) {
+          $collides=( ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) || ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) );
+          // start or end of one interval falls inside another interval
+          if ($collides) {
+            // try to extend the first interval
+            $s[$i]=min($s[$i],$s[$j],$e[$i],$e[$j]);
+            $e[$i]=max($s[$i],$s[$j],$e[$i],$e[$j]);
+            // dismiss the second interval
+            $blockList[]=$j;
+          }        
+        }
+      }
+    }  
+    return ($blockList);
   }
   
   static function prevPageLink (ViewRegistry $context,$anchor="View first page",$showDeadAnchor=false) {

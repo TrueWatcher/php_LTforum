@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 search command
+ * @version 1.1 + search command
  */
  /**
  * A View to display a list of messages plus some nice control elements.

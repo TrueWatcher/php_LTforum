@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 search command
+ * @version 1.1 + search command
  */ 
 /**
  * Functions just for View, usually creating control elements.
