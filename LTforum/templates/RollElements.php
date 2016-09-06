@@ -47,7 +47,7 @@ class RollElements {
     return ($newline);
   }
   
-  static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false) {
+  static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false,$fragment="") {
     $step = $context->g("length") - $context->g("overlay");
     $nextBegin = $context->g("begin") - $step;
     $nextEnd = $context->g("end") - $step;
@@ -69,7 +69,7 @@ class RollElements {
       break;
     default : throw new UsageException ("Illegal value at \"base\" key :".$context->g("base").'!');
     }// end switch
-    return ( self::genericLink($qs,$anchor) );
+    return ( self::genericLink($qs,$anchor,$fragment) );
   }
   
   static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
@@ -138,10 +138,11 @@ class RollElements {
   
   static function lastPageLink (ViewRegistry $context) {
     $qs="end=".$context->g("forumEnd")."&amp;length=".$context->g("length");
-    return ( self::genericLink($qs,$context->g("pageEnd")) );   
+    return ( self::genericLink($qs,$context->g("pageEnd"),"footer") );   
   }
   
-  static function genericLink ($queryString,$linkText) {
+  static function genericLink ($queryString,$linkText,$fragment="") {
+    if ( !empty($fragment) ) $queryString.="#".$fragment;
     $ahref="<a href=\"?%s\">%s</a>";
     return ( sprintf($ahref,$queryString,$linkText) );
   }
