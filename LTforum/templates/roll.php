@@ -21,7 +21,7 @@ require_once("RollElements.php");
 </head>
 <body>
 <table class="low"><tr>
-  <td><?php print ( RollElements::prevPageLink($vr) ); ?></td>
+  <td><?php print ( RollElements::prevPageLink($vr,"Previous page",false,"footer") ); ?></td>
   <td><?php print ( RollElements::numberForm($vr) ); ?></td>
 </tr></table>
 <?php
