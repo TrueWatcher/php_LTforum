@@ -10,7 +10,7 @@
 class SearchElements {
 
   static function titleSuffix (ViewRegistry $context) {
-    $s="search for ".$context->g("query");
+    $s="search for \"".$context->g("query")."\"";
     return ($s);
   }
 
@@ -142,7 +142,7 @@ class SearchElements {
   static function searchLinkForm (ViewRegistry $context) {
     //$orders=["asc"=>,"desc"];
   
-    $form="<form action=\"\" method=\"get\" id=\"resultsPerPage\"><p>Search: ";
+    $form="<form action=\"\" method=\"get\" id=\"search\"><p>Search: ";
     $form.="<input type=\"text\" name=\"query\" value='".$context->g("query")."'/>";
     $form.="</select> <input type=\"submit\" value=\"Search\"/><br/>";
     
