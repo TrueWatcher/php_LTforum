@@ -177,61 +177,11 @@ class CardfileSqlt extends ForumDb {
     $stmt->execute();
     return ("");
   }
-
-  /** Does the searching.
-    * Performs AND on hits
-    * @param string $haystack string to search
-    * @param array $what array of search terms
-    * @returns array empty on failure, if all terms found:
-      [ [start1,start2,...], [end1,end2,...] ] -- positions of term1,term2,...
-    */
-  public function found($haystack,array $what) {
-    $starts=[];
-    $ends=[];
- 
-    $res=true;
-    $haystack=mb_strtolower($haystack);
-    foreach ($what as $j=>$andTermM ) {
-      $pos=null;
-      if (mb_substr($andTermM,0,1)==="-") {
-        $andTermM=mb_substr($andTermM,1);
-        $andResult=( mb_strpos($haystack,$andTermM)===false );
-      }
-      else {
-        //$andResult=( mb_strpos($haystack,$andTermM)!==false );
-        $p=mb_strpos($haystack,$andTermM);
-        if ($p!==false) {
-          $andResult=true;
-          // add positions to hit lists
-          $starts[]=$p-1;
-          $ends[]=$p+mb_strlen($andTermM)-1;
-        }
-        else $andResult=false;
-      }
-      $res=($res && $andResult);
-    }
-    if ($res) return (array($starts,$ends));// all are Ok, return hit lists
-    return(false);
-  }
   
-  public function prepareTerms($what) {
-    // remove quotes if present
-    foreach ($what as $k=>&$andTerm ) {
-      if ( strpos($andTerm,'"')===0 && strrpos($andTerm,'"')===(strlen($andTerm)-1) ) {
-        $andTerm=trim($andTerm,'"');
-        //print("@$andTerm@");
-      }
-      if ( mb_strlen($andTerm)<=1 ) throw new UsageException ("Too short or empty search term in array ".implode(";",$what));
-      // make the search case-insensitive 
-      $andTerm=mb_strtolower($andTerm);
-    }
-    return($what);
-  }
-  
-  public function yieldSearchResults (array $what,$order,$limit) {
+  public function yieldSearchResults (array $what,$order,$limit,$testTheString=["Act","searchInString"]) {
     mb_internal_encoding("UTF-8");
     
-    $what=self::prepareTerms($what);
+    //$what=self::prepareTerms($what);
     
     // simple query to select all
     $qAll="SELECT id, date, time, author, message, comment
@@ -248,7 +198,8 @@ class CardfileSqlt extends ForumDb {
       $afterId=mb_strpos($haystack,"  ");
       $haystack=mb_substr($haystack,$afterId);
       // search
-      $res=self::found($haystack,$what);
+      //$res=self::found($haystack,$what);
+      $res=$testTheString($haystack,$what);// test function is passed as argument
       //print ("\r\n{$msg["id"]}--$res;");      
       if ($res) {
         $count++;

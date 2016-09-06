@@ -75,7 +75,7 @@ class SearchElements {
     
     // repeat the search on formatted message
     $searches=cardfileSqlt::prepareTerms($searches);
-    $found=cardfileSqlt::found($str,$searches);
+    $found=Act::searchInString($str,$searches);
     if ( !$found ) return ($str);// something is wrong with new search
     $starts=$found[0];
     sort($starts);    

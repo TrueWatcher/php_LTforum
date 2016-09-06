@@ -160,11 +160,14 @@ class Act {
       $pr->s("alert","Sorry, your query \"".htmlspecialchars($q)."\" contains forbidden symbols");
       $skipSearch=1;  
     }
+    
     if ( strpos($q," ")>0 && strrpos($q," ")<strlen($q)-1 ) $pr->s("alert","Use \"foo&bar\" to find messages containing both \"foo\" and \"bar\"<br/>Use \"foo bar\" to find messages containing  \"foo[SPACE]bar\"");
     if ( strpos($q,"&")>0 && strrpos($q,"&")<strlen($q) ) $andTerms=explode("&",$q);
     else $andTerms=[$q];
+    
+    $andTerms=self::prepareTerms($andTerms);
     //print_r($andTerms);
-  
+
     $lim=$pr->g("searchLength");
     if ( empty($lim) ) $lim=$pr->g("length");
   
@@ -174,7 +177,7 @@ class Act {
     if ($skipSearch) $toShow=null;
     else $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
 
-    $vr=ViewRegistry::getInstance( true, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms  ) );
+    $vr=ViewRegistry::getInstance( 2, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms, "highlight"=>1  ) );
 
     //$vr->dump();
       
@@ -238,6 +241,56 @@ class Act {
     if( !empty($qs) ) $qs="?".$qs;
     return ($qs);
   }
+  
+  public function prepareTerms($what) {
+    // remove quotes if present
+    foreach ($what as $k=>&$andTerm ) {
+      if ( strpos($andTerm,'"')===0 && strrpos($andTerm,'"')===(strlen($andTerm)-1) ) {
+        $andTerm=trim($andTerm,'"');
+        //print("@$andTerm@");
+      }
+      if ( mb_strlen($andTerm)<=1 ) throw new UsageException ("Too short or empty search term in array ".implode(";",$what));
+      // make the search case-insensitive 
+      $andTerm=mb_strtolower($andTerm);
+    }
+    return($what);
+  }
+  
+  /** Does the searching.
+    * Performs AND on hits
+    * @param string $haystack string to search
+    * @param array $what array of search terms
+    * @returns array empty on failure, if all terms found:
+      [ [start1,start2,...], [end1,end2,...] ] -- positions of term1,term2,...
+    */
+  public function searchInString ($haystack,array $what) {
+    $starts=[];
+    $ends=[];
+ 
+    $res=true;
+    $haystack=mb_strtolower($haystack);
+    foreach ($what as $j=>$andTermM ) {
+      $pos=null;
+      if (mb_substr($andTermM,0,1)==="-") {
+        $andTermM=mb_substr($andTermM,1);
+        $andResult=( mb_strpos($haystack,$andTermM)===false );
+      }
+      else {
+        //$andResult=( mb_strpos($haystack,$andTermM)!==false );
+        $p=mb_strpos($haystack,$andTermM);
+        if ($p!==false) {
+          $andResult=true;
+          // add positions to hit lists
+          $starts[]=$p-1;
+          $ends[]=$p+mb_strlen($andTermM)-1;
+        }
+        else $andResult=false;
+      }
+      $res=($res && $andResult);
+    }
+    if ($res) return (array($starts,$ends));// all are Ok, return hit lists
+    return(false);
+  }  
   
   
   
