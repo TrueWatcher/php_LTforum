@@ -156,8 +156,8 @@ class Act {
       $pr->s("alert","Please, enter the search string");
       $skipSearch=1;
     }
-    if ( Act::charsInString($q,"<>'") ) {
-      $pr->s("alert","Sorry, your query contains forbidden symbols");
+    if ( Act::charsInString($q,"<>'") ) { 
+      $pr->s("alert","Sorry, your query \"".htmlspecialchars($q)."\" contains forbidden symbols");
       $skipSearch=1;  
     }
     if ( strpos($q," ")>0 && strrpos($q," ")<strlen($q)-1 ) $pr->s("alert","Use \"foo&bar\" to find messages containing both \"foo\" and \"bar\"<br/>Use \"foo bar\" to find messages containing  \"foo[SPACE]bar\"");
@@ -173,7 +173,6 @@ class Act {
   
     if ($skipSearch) $toShow=null;
     else $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
-    //if ( count($toShow) ) print("!!".count($toShow));
 
     $vr=ViewRegistry::getInstance( true, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms  ) );
 
@@ -209,6 +208,7 @@ class Act {
   }
   
   public static function charsInString($what,$charsString) {
+    if ( empty($what) ) return (false);
     if (strtok($what,$charsString)!==$what) return (true);
   }
   

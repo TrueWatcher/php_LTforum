@@ -25,7 +25,7 @@ class SearchElements {
     return ($c);
   } 
   
-  static function oneMessage ($msg,$localControlsString) {
+  static function oneMessage ($msg,$localControlsString,$context) {
     // open up hrefs, because they are also search objects
     $msg["message"]=str_replace("<a ","&lt;a ",$msg["message"]);
     $msg["message"]=str_replace("</a>","&lt;/a>",$msg["message"]);
@@ -38,7 +38,8 @@ class SearchElements {
     // format it as usually
     $html=RollElements::oneMessage ($msg,$localControlsString);
     // get the search terms and do highlighting
-    $searches=ViewRegistry::getInstance(true,[])->g("searchTerms");
+    //$searches=ViewRegistry::getInstance(true,[])->g("searchTerms");
+    $searches=$context->g("searchTerms");
     $html=self::highlight($html,$searches,"h","#abc");
     return($html);
   }
@@ -47,6 +48,7 @@ class SearchElements {
     $blockList=[];
     if ( count($s)!=count($e) ) throw new UsageException("Array counts are different");
     for ($i=0;$i<count($s);$i++) {
+      if ( !in_array($i,$blockList) ) {
       for ($j=$i+1;$j<count($s);$j++) {
         $collides=( ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) || ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) );
         // start or end of one interval falls inside another interval
@@ -59,6 +61,7 @@ class SearchElements {
         }
         // if ( $s[$i]>=$s[$j] && $s[$i]<=$e[$j] ) $blockList[]=$j;
         // if ( $e[$i]>=$s[$j] && $e[$i]<=$e[$j] ) $blockList[]=$j;          
+      }
       }
     }  
     return ($blockList);
@@ -131,7 +134,7 @@ class SearchElements {
     $form.="<input type=\"hidden\" name=\"act\" value=\"search\"/>";
     $form.="<input type=\"hidden\" name=\"query\" value='".$context->g("query")."'/>";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\"/>";
-    $form.="<input type=\"hidden\" name=\"order\" value=\"".$context->g("order")."h\"/>";
+    $form.="<input type=\"hidden\" name=\"order\" value=\"".$context->g("order")."\"/>";
     $form.="</p></form>";
     return ($form);
   }
@@ -155,6 +158,11 @@ class SearchElements {
     $form.="<input type=\"hidden\" name=\"searchLength\" value=\"".$context->g("searchLength")."\"/>";
     $form.="</p></form>";
     return ($form);
+  }
+  
+  static function bottomAlert (PageRegistry $pageContext,$actualCount) {
+    if ( $actualCount==0 && !empty($pageContext->g("query")) ) return ("Sorry, no results");
+    if ( $actualCount>0 && $actualCount==$pageContext->g("searchLength") ) return ("Only ".$actualCount." results shown, there may be more. Increase the page length or change order" );
   }
   
 }

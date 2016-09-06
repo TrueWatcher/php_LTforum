@@ -242,7 +242,7 @@ class CardfileSqlt extends ForumDb {
     //$msgs=[];
 
     if ($limit<=0) $limit=1000000;
-    while ( $count<=$limit && ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
+    while ( $count<$limit && ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
       // concatenate all the interesting fields and add spaces
       $haystack=implode("  ",$msg)." ";
       $afterId=mb_strpos($haystack,"  ");

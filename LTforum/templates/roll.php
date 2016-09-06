@@ -29,13 +29,14 @@ $cc=$vr->g("controlsClass");
 </tr></table>
 <?php if( $pr->g("alert") ) print("<hr/><p class=\"n\">".$pr->g("alert")."</p>"); ?>
 <?php
-$i=0;
+$j=0;
 if ( !empty($vr->g("msgGenerator")) ) {
-  foreach ($vr->g("msgGenerator") as $i=>$msg) { 
-    print( $cc::oneMessage($msg,$cc::localControls($msg,$vr,$pr)) ); 
+  foreach ($vr->g("msgGenerator") as $j=>$msg) { 
+    print( $cc::oneMessage($msg,$cc::localControls($msg,$vr,$pr),$vr) );
   }
 }
 ?>
+<?php if( ($ba=$cc::BottomAlert($pr,$j)) ) print("<hr/><p class=\"n\">".$ba."</p>"); ?>
 <hr />
 <table class="low"><tr>
   <td><?php 
@@ -46,9 +47,9 @@ if ( !empty($vr->g("msgGenerator")) ) {
   <td><?php print ( $cc::lengthForm($vr) ); ?></td>
 </tr></table>
 <p id="footer"><?php 
-$outcome="viewed~".$i; 
+$outcome="viewed~".$j; 
 if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
 ?></p>
-<?php print ( $cc::onreadyScript() ); ?>
+<?php //print ( $cc::onreadyScript() ); ?>
 </body>
 </html>

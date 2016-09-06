@@ -37,7 +37,7 @@ class RollElements {
     return ($c);
   } 
 
-  static function oneMessage ($msg,$localControlsString) {
+  static function oneMessage ($msg,$localControlsString,$extra=null) {
     $newline="<hr />\r\n";
     $newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
     if ( $localControlsString ) $newline.='<b class="fr">'.$localControlsString.'</b>';
@@ -210,16 +210,9 @@ class RollElements {
     return ($form);
   }
   
-  static function onreadyScript () {
-    $s="<script>";
-    $s.="
-      var uri=window.location.toString();
-      if ( uri.indexOf(\"begin=\")<0 ) {
-        var footer=document.getElementById(\"footer\");
-        footer.scrollIntoView(false);
-      }";
-    $s.="</script>";
-    return($s);
-  }
+  static function onreadyScript () {}
+
+  static function bottomAlert () {}
+  
 }
 ?>
