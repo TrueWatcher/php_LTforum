@@ -1,14 +1,14 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 + search command
+ * @version 1.1.1 refactored View classes
  */ 
 /**
- * Functions just for View, usually creating control elements.
+ * Functions for View, creating control elements for exporting html files.
  * Need refactoring.
  * @uses $vr ViewRegistry
  */
-class ExportElements {
+class ExportElements extends ViewElements {
 
   static function titleSuffix (ViewRegistry $context) {
     $s=$context->g("begin")."..".$context->g("end");
@@ -24,12 +24,8 @@ class ExportElements {
     $c=self::idTitle($msg);
     return ($c);
   } 
-
-  static function oneMessage ($msg,$localControlsString,$extra=null) {
-    return (RollElements::oneMessage($msg,$localControlsString) );  
-  }
   
-  static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false,$fragment="") {
+  static function prevPageLink (ViewRegistry $context,$anchor,$showDeadAnchor=false,$fragment="") {
     return("<a href=\"\">Previous page</a>");
   }
   
@@ -37,23 +33,17 @@ class ExportElements {
     return("<a href=\"./?begin=".($context->g("end")+1)."\">Next page</a>");
   }
   
-  static function firstPageLink (ViewRegistry $context) {}
+  static function pagePanel (ViewRegistry $context) {} // element is disabled
   
-  static function lastPageLink (ViewRegistry $context) {}
-  
-  static function pagePanel (ViewRegistry $context) {}
-  
-  static function newMsgLink (ViewRegistry $context) {}
-  
-  static function searchLinkForm (ViewRegistry $context) {}
+  static function searchLinkForm (ViewRegistry $context) {} // element is disabled
 
-  static function lengthForm (ViewRegistry $context) {}
+  static function lengthForm (ViewRegistry $context) {}  // element is disabled
 
-  static function numberForm (ViewRegistry $context) {}
+  static function numberForm (ViewRegistry $context) {}  // element is disabled
   
-  static function onreadyScript () {}
+  static function onreadyScript () {}  // element is disabled
 
-  static function bottomAlert () {}
+  static function bottomAlert (PageRegistry $pageContext,$actualCount) {}  // element is disabled
   
 }
 ?>

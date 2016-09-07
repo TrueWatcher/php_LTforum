@@ -1,14 +1,15 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 + search command
+ * @version 1.1.1 refactored View classes
  */ 
 /**
  * Functions just for View, usually creating control elements.
  * Need refactoring.
  * @uses $vr ViewRegistry
  */
-class RollElements {
+ 
+class RollElements extends ViewElements {
 
   static function titleSuffix (ViewRegistry $context) {
     $s=$context->g("begin")."..".$context->g("end")." (".$context->g("pageCurrent")."/".$context->g("pageEnd").")";
@@ -36,18 +37,8 @@ class RollElements {
     $c=self::editLink($msg,$context,$pageContext).self::idTitle($msg);
     return ($c);
   } 
-
-  static function oneMessage ($msg,$localControlsString,$extra=null) {
-    $newline="<hr />\r\n";
-    $newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
-    if ( $localControlsString ) $newline.='<b class="fr">'.$localControlsString.'</b>';
-    $newline.="</address>\r\n";
-    $newline.='<p class="m">'.$msg['message']."</p>\r\n";
-    if ( !empty($msg['comment']) ) $newline.='<p class="n">'.$msg['comment']."</p>\r\n";
-    return ($newline);
-  }
   
-  static function prevPageLink (ViewRegistry $context,$anchor="Previous page",$showDeadAnchor=false,$fragment="") {
+  static function prevPageLink (ViewRegistry $context,$anchor,$showDeadAnchor=false,$fragment="") {
     $step = $context->g("length") - $context->g("overlay");
     $nextBegin = $context->g("begin") - $step;
     $nextEnd = $context->g("end") - $step;
@@ -129,8 +120,6 @@ class RollElements {
     return ( self::genericLink($qs,$anchor) );
   }
   
-
-  
   static function firstPageLink (ViewRegistry $context) {
     $qs="begin=".$context->g("forumBegin")."&amp;length=".$context->g("length");
     return ( self::genericLink($qs,"1") );
@@ -139,12 +128,6 @@ class RollElements {
   static function lastPageLink (ViewRegistry $context) {
     $qs="end=".$context->g("forumEnd")."&amp;length=".$context->g("length");
     return ( self::genericLink($qs,$context->g("pageEnd"),"footer") );   
-  }
-  
-  static function genericLink ($queryString,$linkText,$fragment="") {
-    if ( !empty($fragment) ) $queryString.="#".$fragment;
-    $ahref="<a href=\"?%s\">%s</a>";
-    return ( sprintf($ahref,$queryString,$linkText) );
   }
   
   /*
@@ -212,7 +195,7 @@ class RollElements {
   
   static function onreadyScript () {}
 
-  static function bottomAlert () {}
+  static function bottomAlert (PageRegistry $pageContext,$actualCount) {}
   
 }
 ?>

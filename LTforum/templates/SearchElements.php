@@ -1,13 +1,13 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 + search command
+ * @version 1.1.1 refactored View classes
  */ 
 /**
- * Functions just for View (Search Results), usually creating control elements.
- * @uses $vr ViewRegistry
+ * Functions just for View (Search Results), creating control elements and other useful things.
+ * @uses ViewRegistry  $context
  */
-class SearchElements {
+class SearchElements extends ViewElements {
 
   static function titleSuffix (ViewRegistry $context) {
     $s="search for \"".$context->g("query")."\"";
@@ -16,7 +16,7 @@ class SearchElements {
 
   static function idLink ($msg,ViewRegistry $context) {
     $qs="act=&amp;begin=".$msg["id"]."&amp;length=".$context->g("length");
-    $link=RollElements::genericLink ( $qs,"#".$msg["id"] );
+    $link=self::genericLink ( $qs,"#".$msg["id"] );
     return('<b title="View page">'.$link.'</b>&nbsp;');     
   }
   
@@ -39,7 +39,7 @@ class SearchElements {
         }
       }
     }
-    $html=RollElements::oneMessage ($msg,$localControlsString);
+    $html=parent::oneMessage ($msg,$localControlsString,$no=null);
     return($html);
   }
 
@@ -55,7 +55,7 @@ class SearchElements {
   }
 
   /**
-   * Wraps <span> tags around found entries.
+   * Wraps <span> tags around found needles entries.
    * @param string $str object, usually a text+html field
    * @param array $found results from Act::searchInString()
    * @param string $class css class to be added to span
@@ -93,6 +93,13 @@ class SearchElements {
     return ($res);
   }
   
+  /**
+   * Utility for solving highlight collisions if needles overlap.
+   * Tries to create one pair (start,end) from all the overlapping.
+   * @param array $s (input-output) sorted list of starting positions
+   * @param array $e (input-output) sorted list of ending positions
+   * @reurns array list of indexes to be ignored  
+   */
   static function fixOverlap (array &$s, array &$e) {
     $blockList=[];
     if ( count($s)!=count($e) ) throw new UsageException("Array counts are different");
@@ -114,22 +121,22 @@ class SearchElements {
     return ($blockList);
   }
   
-  static function prevPageLink (ViewRegistry $context,$anchor="View first page",$showDeadAnchor=false) {
+  static function prevPageLink (ViewRegistry $context,$anchor,$showDeadAnchor=false,$fragment="") {
     $anchor="View first page";
     $qs="act=&amp;begin=1&amp;length=".$context->g("length");
-    return( RollElements::genericLink($qs,$anchor) );    
+    return( self::genericLink($qs,$anchor) );    
   }
   
   static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="View last page",$showDeadAnchor=false) {
     $qs="act=&amp;end=-1&amp;length=".$context->g("length");
-    return( RollElements::genericLink($qs,$anchor) );   
+    return( self::genericLink($qs,$anchor) );   
   }
   
-  static function pagePanel (ViewRegistry $context) {}
+  static function pagePanel (ViewRegistry $context) {} // disable
     
-  static function onreadyScript () {}
+  static function onreadyScript () {} // disable
   
-  static function numberForm (ViewRegistry $context) {}
+  static function numberForm (ViewRegistry $context) {} // disable
   
   static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");

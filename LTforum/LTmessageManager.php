@@ -1,24 +1,18 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 + search command
+ * @version 1.1.1 refactored View classes
  */
 /**
  * LTforum Admin panel, common for all forum-threads.
  * Requires forumName and, if authentication is absent, PIN
  */
-
-//echo ("I'm LTforum/demo/index.php"); 
  
-
-
-//require_once ($mainPath."LTforum.php");
 require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AdminAct.php");
-require_once ($templatePath."RollElements.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error

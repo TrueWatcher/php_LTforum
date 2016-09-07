@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 + search command
+ * @version 1.1.1 refactored View classes
  */
 
 /**
@@ -15,7 +15,11 @@ class AdminAct {
     if ( !file_exists($apr->g("targetPath").".db") ) return ("You must specify a valid forum thread ".$apr->g("targetDb"));    
   }
   
-  public function exportHtml (PageRegistry $apr, SessionRegistry $asr) { 
+  public function exportHtml (PageRegistry $apr, SessionRegistry $asr) {
+    require_once($asr->g("templatePath")."ViewElements.php");
+    require_once($asr->g("templatePath")."ExportElements.php");    
+    //require_once($asr->g("templatePath")."RollElements.php");//will be removed
+    
     //Act::view($apr,$asr);
     if ( empty($apr->g("begin")) || ( empty($apr->g("end")) && empty($apr->g("kb")) )  ) Act::showAlert($apr,$asr,"You should give begin and end|kb");
     $begin=$apr->g("begin");
@@ -41,7 +45,7 @@ class AdminAct {
       $processed++;
       if ( $apr->g("newBegin") >= 1 ) $m["id"] = $apr->g("newBegin") + $processed - 1;
       if ( empty($apr->g("newBegin")) ) $m["id"] = "";
-      $html=RollElements::oneMessage($m,RollElements::idTitle($m));
+      $html=ExportElements::oneMessage ( $m,ExportElements::idTitle ($m),$no=null );
       
       $processedBytes+=strlen($html);
       //$messages.=$html;// remove this, only length is needed
@@ -84,9 +88,6 @@ class AdminAct {
     $apr->s("exportFileFull",$fullFile);    
 
     //---here comes the interception of the presentation ---
-        
-    require_once($asr->g("templatePath")."RollElements.php");
-    require_once($asr->g("templatePath")."ExportElements.php");
     
     ob_flush();
     ob_end_clean();
