@@ -28,6 +28,9 @@ class AdminAct {
     $i=$begin;
     $processed=0;
     $warning="";
+    $processedBytes=0; 
+    
+    $msgList=[];
     while (true) {
       $m=$apr->g("cardfile")->getOneMsg($i);
       if ( !$m ) {
@@ -39,8 +42,12 @@ class AdminAct {
       if ( $apr->g("newBegin") >= 1 ) $m["id"] = $apr->g("newBegin") + $processed - 1;
       if ( empty($apr->g("newBegin")) ) $m["id"] = "";
       $html=RollElements::oneMessage($m,RollElements::idTitle($m));
-      $messages.=$html;      
-      if ( $apr->g("kb")>=1 && ceil(strlen($messages)/1000)>=$apr->g("kb") ) {
+      
+      $processedBytes+=strlen($html);
+      //$messages.=$html;// remove this, only length is needed
+      
+      $msgList[]=$m;
+      if ( $apr->g("kb")>=1 && ceil($processedBytes/1000)>=$apr->g("kb") ) {
         //print("size exceeded");
         break;
       }
@@ -61,7 +68,37 @@ class AdminAct {
       $newBegin=$begin;
       $newEnd=$realEnd;
     }
-    //---here comes the presentation---
+    
+    $vr=ViewRegistry::getInstance(2,array("begin"=>$newBegin,"end"=>$newEnd,"msgGenerator"=>$msgList,"controlsClass"=>"ExportElements"
+    ));
+    $pr=PageRegistry::getInstance();
+    $sr=clone $asr;// need to change assetsPath  
+    $sr->s("assetsPath","../".$asr->g("assetsPath") );
+    
+    $file=$apr->g("obj");
+    if ( empty($file) ) $file=$apr->g("forum")."_".$newBegin."_".$newEnd;
+    $fullFile=$asr->g("forumsPath").$apr->g("forum")."/".$file.".html";
+    //print ($fullFile);
+    touch ($fullFile);
+    if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
+    $apr->s("exportFileFull",$fullFile);    
+
+    //---here comes the interception of the presentation ---
+        
+    require_once($asr->g("templatePath")."RollElements.php");
+    require_once($asr->g("templatePath")."ExportElements.php");
+    
+    ob_flush();
+    ob_end_clean();
+    ob_start(["AdminAct","obWrite"],4096);
+    
+    include ($asr->g("templatePath")."roll.php");
+    
+    ob_end_clean();
+    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil($processedBytes/1000)."KB. ".$warning);
+    
+    return;    
+    /* just history
     // $apr,$asr,$newBegin,$newEnd,$processed,$warning,$begin,$realEnd,$messages
     //print("!!".$asr->g("templatePath")."export.html");
     $template=file_get_contents($asr->g("templatePath")."export.html");
@@ -76,8 +113,23 @@ class AdminAct {
     //print ($fullFile);
     touch ($fullFile);
     if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
-    file_put_contents($fullFile,$template);
-    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil(strlen($template)/1000)."KB. ".$warning);    
+    file_put_contents($fullFile,$template);    
+    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil(strlen($template)/1000)."KB. ".$warning);*/    
+  }
+  
+  /**
+   * Writes php output buffer into export file after being called by ob_start.
+   * @param string $buffer by specification
+   * @returns string empty to clear buffer
+   */
+  public static function obWrite ($buffer) {
+    static $handler=null;
+    if ( empty($handler) ) {
+      $apr=PageRegistry::getInstance(0,[]);
+      $handler=fopen( $apr->g("exportFileFull"),"w" );
+    }
+    fwrite($handler,$buffer);
+    return("");// clear the buffer
   }
   
   public function importHtml (PageRegistry $apr, SessionRegistry $asr) {

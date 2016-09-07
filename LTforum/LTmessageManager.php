@@ -42,7 +42,8 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 }
 
 // instantiate and initialize Page Registry and Session Registry
-$asr=SessionRegistry::getInstance( 2, array( "lang"=>"en","viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath,"forumsPath"=>$forumsPath, "maxMessageBytes"=>"1200","pin"=>1 )
+// strict=1 required as assetsPath is modified for the export command
+$asr=SessionRegistry::getInstance( 1, array( "lang"=>"en","viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath,"forumsPath"=>$forumsPath, "maxMessageBytes"=>"1200","pin"=>1 )
 );
 
 $apr=PageRegistry::getInstance( 0,array() );
