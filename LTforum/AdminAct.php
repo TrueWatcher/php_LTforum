@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.1 refactored View classes
+ * @version 1.1.2 refactored Form classes
  */
 
 /**
@@ -220,14 +220,15 @@ class AdminAct {
     $targetId=$apr->g("end");
     if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
     $m=$apr->g("cardfile")->getOneMsg($targetId);
-  
-    $apr->s("txt",$m["message"]);
-    $apr->s("comm",$m["comment"]);
-    $apr->s("author",$m["author"]);    
+     
+    $pr=$apr;
+    $sr=$asr;
+    $vr=ViewRegistry::getInstance( 2, ["id"=>$targetId, "author"=>$m["author"], "message"=>$m["message"], "comment"=>$m["comment"], "controlsClass"=>"EditanyElements"] );
+    require_once($asr->g("templatePath")."FormElements.php");
+    require_once($asr->g("templatePath")."SubFormElements.php");    
     // show form
-    include ($asr->g("templatePath")."editany.php");
+    include ($asr->g("templatePath")."form.php");
     exit(0);  
-  
   }  
 
   public function updateAny (PageRegistry $apr, SessionRegistry $asr) {
