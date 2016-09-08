@@ -22,7 +22,7 @@ class RollElements extends ViewElements {
     if( $msg["id"]==$context->g("forumEnd") && strcmp($msg["author"],$pageContext->g("user"))==0 ) {
       $userParam="";
       if ( !empty($pageContext->g("user")) ) $userParam="&amp;user=".urlencode($pageContext->g("user"));
-      $qs="act=el".$userParam."&amp;end=".$msg["id"]."&amp;length=".$context->g("length");
+      $qs="act=el".$userParam."&amp;current=".$msg["id"]."&amp;length=".$context->g("length");
       $link=self::genericLink($qs,"§");
       return('<b title="Edit/Delete">'.$link.'</b>&nbsp;');
     }     

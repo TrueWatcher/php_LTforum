@@ -160,15 +160,15 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     
     $t=(string)time();
     //$msg="My_[u]second[/u],".$t."<br /> <i>second</i> <br>te<st <message> yes <s>yes";
-    $msg="my additional te<st <message> yes ".$t;
+    $msg="my additional te<st <message> also to <p>check</p> tags".$t;
     $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
     $this->assertNotEmpty($inputText,"A MESSAGE field not found");
     $inputText->sendKeys($msg);
     //$msgC="My_second,".$t."<br /> <i>second</i> <br>comment";
-    $msgC="My <p>good</p> co<mm>ent ".$t;
-    $inputComm=$this->webDriver->findElement(WebDriverBy::name("comm"));
-    $this->assertNotEmpty($inputComm,"A COMMENT field not found");
-    $inputComm->sendKeys($msgC);
+    //$msgC="My <p>good</p> co<mm>ent ".$t;
+    //$inputComm=$this->webDriver->findElement(WebDriverBy::name("comm"));
+    //$this->assertNotEmpty($inputComm,"A COMMENT field not found");
+    //$inputComm->sendKeys($msgC);
     $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));    
     $this->assertNotEmpty($subm,"A SUBMIT field not found");
     print("Info: submit edited message OK");
@@ -196,12 +196,12 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertContains("&lt;message>",$retr,"custom tag error");
     $this->assertContains("</s>",$retr,"auto close tag error");*/
     $this->assertContains($msg,$retr,"Message is altered");
-    $coms=$this->webDriver->findElements(WebDriverBy::xpath('//p[@class="n"]'));
-    $com=end($coms);
-    $retC=$com->getText();
-    $this->assertContains($t,$retC,"My new comment not found");
-    $comSame=(strpos($msgC,$retC)===0);
-    $this->assertTrue($comSame,"Comment is altered");
+    //$coms=$this->webDriver->findElements(WebDriverBy::xpath('//p[@class="n"]'));
+    //$com=end($coms);
+    //$retC=$com->getText();
+    //$this->assertContains($t,$retC,"My new comment not found");
+    //$comSame=(strpos($msgC,$retC)===0);
+    //$this->assertTrue($comSame,"Comment is altered");
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));// it's assertion
     print("Info: tag filter works, edit OK");
     self::$storedMsg=$msg;
@@ -401,15 +401,17 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $readLink->click();
     print("Info: ALERT after cleared SNAP OK");
     
-    // submit a form with a comment and cleared snap
+    // submit a form [with a comment] and cleared snap
     $titleNew1=$this->webDriver->getTitle();
     if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
     $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
     $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
     $this->assertContains("edit",$titleNew1,"Missed EDIT page");
-    $inputComm=$this->webDriver->findElement(WebDriverBy::name("comm"));
-    $msg3="My commentary";    
-    $inputComm->sendKeys($msg3);
+    $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
+    $inputText->sendKeys(" and some more text");
+    //$inputComm=$this->webDriver->findElement(WebDriverBy::name("comm"));
+    //$msg3="My commentary";    
+    //$inputComm->sendKeys($msg3);
     $checkSnap=$this->webDriver->findElement(WebDriverBy::name("snap"));
     $checkSnap->click();
     $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));

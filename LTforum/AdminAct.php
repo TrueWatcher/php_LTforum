@@ -77,7 +77,7 @@ class AdminAct {
     ));
     $pr=PageRegistry::getInstance();
     $sr=clone $asr;// need to change assetsPath  
-    $sr->s("assetsPath","../".$asr->g("assetsPath") );
+    $sr->s( "assetsPath","../".$asr->g("assetsPath") );
     
     $file=$apr->g("obj");
     if ( empty($file) ) $file=$apr->g("forum")."_".$newBegin."_".$newEnd;
@@ -217,7 +217,7 @@ class AdminAct {
   }
   
   public function editAny (PageRegistry $apr, SessionRegistry $asr) {
-    $targetId=$apr->g("end");
+    $targetId=$apr->g("current");
     if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
     $m=$apr->g("cardfile")->getOneMsg($targetId);
      
@@ -232,8 +232,8 @@ class AdminAct {
   }  
 
   public function updateAny (PageRegistry $apr, SessionRegistry $asr) {
-    $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum","pin","end") );  
-    $targetId=$apr->g("end");
+    $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum","pin","current") );  
+    $targetId=$apr->g("current");
     if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
     $m=$apr->g("cardfile")->getOneMsg($targetId);    
     // check input strings
@@ -253,7 +253,7 @@ class AdminAct {
     if ( !empty($apr->g("clear")) ) $m["time"]=$m["date"]="";// current date and time will be set
     $apr->g("cardfile")->addMsg($m,true);// true for overwrite
   
-    Act::showAlert ($apr,$asr,"Message ".$apr->g("end")." has been updated");    
+    Act::showAlert ($apr,$asr,"Message ".$apr->g("current")." has been updated");    
     
   }   
 }

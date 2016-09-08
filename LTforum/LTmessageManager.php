@@ -18,7 +18,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
     
     public function load() {
-      $inputKeys=array("act","forum","pin","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
+      $inputKeys=array("act","forum","pin","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");

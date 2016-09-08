@@ -24,19 +24,22 @@ abstract class FormElements {
   protected static function genericLabel ($name,$labelText) {
     return("<label for=\"".$name."\">".$labelText."</label>");
   }
-     
-  static function titleSuffix ($command, ViewRegistry $context) {
-    return ( $command." message ".$context->g("id") );
-  }
+  
+  abstract static function titleSuffix (ViewRegistry $context);
   
   abstract static function hiddenFields ($pageContext);
   
   static function idP ($context) {
     $label="Message ID : ";
-    return ( self::wrapRow (self::wrapFld($label).self::wrapFld($context->g("id")) ) );
+    return ( self::wrapRow ( self::wrapFld($label).self::wrapFld($context->g("id")) ) );
   }
   
-  static function authorInput ($label,$inputName,$authorName,$context) {
+  static function userP ($context) {
+    $label="Your name : ";
+    return ( self::wrapRow ( self::wrapFld($label).self::wrapFld($context->g("author")) ) );
+  }
+  
+  static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {
     $row=self::wrapFld( self::genericLabel($inputName,$label) );
     $row.=self::wrapFld( self::genericInput("text",$inputName,$authorName) );
     return ( self::wrapRow ($row) );
@@ -73,7 +76,7 @@ abstract class FormElements {
   static function snapChkbx () {
     $label="Go straight to forum after posting";
     $row=self::wrapFld( self::genericLabel("snap",$label) );    
-    $row.=self::wrapFld('<input type="checkbox" id="snap" name="snap" />');
+    $row.=self::wrapFld('<input type="checkbox" id="snap" name="snap" checked="checked" />');
     return ( self::wrapRow ($row) );     
   }
 
