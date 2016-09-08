@@ -18,7 +18,7 @@ $cc=$vr->g("controlsClass");
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title><?php print( $apr->g("title")." : ".$cc::titleSuffix("",$vr) ); ?></title>
+  <title><?php print( $pr->g("title")." : ".$cc::titleSuffix($vr) ); ?></title>
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."form.css") ?>" media="all" />
 </head>
 <body>
@@ -28,7 +28,7 @@ $cc=$vr->g("controlsClass");
     <table>
       <?php 
       print ( $cc::idP($vr) );
-      print ( $cc::authorInput(null,null,null,$vr) );
+      print ( $cc::authorInput(null,null,null,$vr,$pr) );
       print ( $cc::deleteChkbx () );
       print ( $cc::clearChkbx () );
       print ( $cc::txtText ($sr,$vr) );

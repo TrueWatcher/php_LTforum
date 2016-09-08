@@ -10,7 +10,10 @@
 class Act {
 
   public static function newMessage(PageRegistry $pr,SessionRegistry $sr) {
-    include ($sr->g("templatePath")."new.php");
+    $vr=ViewRegistry::getInstance( 2, [ "id"=>"", "message"=>"",  "controlsClass"=>"NewElements" ] );  
+    require_once ($sr->g("templatePath")."FormElements.php");
+    require_once ($sr->g("templatePath")."SubFormElements.php");
+    include ($sr->g("templatePath")."form.php");
     exit(0);
   }
 
@@ -19,12 +22,13 @@ class Act {
     //$pr->g("cardfile")=new CardfileSqlt( $pr->g("forum"), false);
     $lastMsg=$pr->g("cardfile")->getLastMsg();
     if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Access denied: user names are different !");  
-    if( $lastMsg["id"]!=$pr->g("end") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
     // transfer message and comment
-    $pr->s("txt",$lastMsg["message"]);
-    $pr->s("comm",$lastMsg["comment"]);
+    $vr=ViewRegistry::getInstance( 2, [ "id"=>$lastMsg["id"], "author"=>$lastMsg["author"], "message"=>$lastMsg["message"], "comment"=>$lastMsg["comment"], "controlsClass"=>"EditElements" ] );  
+    require_once ($sr->g("templatePath")."FormElements.php");
+    require_once ($sr->g("templatePath")."SubFormElements.php");
     // show form
-    include ($sr->g("templatePath")."edit.php");
+    include ($sr->g("templatePath")."form.php");
     exit(0);
   }
   
@@ -32,14 +36,14 @@ class Act {
     //$pr->dump();
     // check user -- same as act=el
     $lastMsg=$pr->g("cardfile")->getLastMsg();
-    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length","user","end") );   
+    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length","user","current") );   
     if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");  
-    if( $lastMsg["id"]!=$pr->g("end") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
   
     if ( !empty($pr->g("del")) ) {
       // simply delete
-      $pr->g("cardfile")->deletePackMsg($pr->g("end"),$pr->g("end"));
-      if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("end")." has been deleted by ".$pr->g("user"));
+      $pr->g("cardfile")->deletePackMsg($pr->g("current"),$pr->g("current"));
+      if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("current")." has been deleted by ".$pr->g("user"));
       self::redirectToView ($pr);
     }
     // check input strings 
@@ -54,7 +58,7 @@ class Act {
     $lastMsg["time"]=$lastMsg["date"]="";// current date and time will be set
     $pr->g("cardfile")->addMsg($lastMsg,true);// true for overwrite
   
-    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("end")." has been updated by ".$pr->g("user"));
+    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("current")." has been updated by ".$pr->g("user"));
     self::redirectToView ($pr);  
   } 
   
