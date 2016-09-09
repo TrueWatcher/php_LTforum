@@ -142,6 +142,7 @@ public static function mask_tags($in_str,$allowed_bbcode,$allowed_empty,$allowed
   }//end while 
   
   //print_r ($cuts);
+  //return( $in_str );// DEBUG
   return( self::mask_lt($in_str,$cuts) );
 }//end mask_tags
 }

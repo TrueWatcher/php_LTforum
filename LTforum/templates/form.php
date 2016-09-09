@@ -36,9 +36,9 @@ $cc=$vr->g("controlsClass");
       print ( $cc::snapChkbx () );      
       ?>
       <tr>
-        <td id="enter" colspan=2><input class="submit" type="submit" value="Submit" /></td>
+        <td id="enter" colspan="2"><input class="submit" type="submit" value="Submit" /></td>
       </tr>
-    </tr></table>
+    </table>
   </fieldset>
 </form>
 <?php

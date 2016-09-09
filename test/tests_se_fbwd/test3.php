@@ -132,6 +132,14 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $searchLink->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    if ( strpos($title,"search")===false && strpos($title,"/")>0 ) {
+      print (" Trying to go to new window ");
+      $handles = $this->webDriver->getWindowHandles();
+      //print_r($handles);
+      $this->webDriver->switchTo()->window($handles[1]);
+      $title=$this->webDriver->getTitle();      
+    }
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
     $this->assertContains("search",$title,"No \"search\" in the title -- wrong page");
     $searchForm=$this->webDriver->findElement( webDriverBy::id("search") );
     $queryInput=$searchForm->findElement( webDriverBy::name("query") );
@@ -173,7 +181,26 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $src=$this->webDriver->getPageSource();
     $ids=$this->parseSearchIds ($src);
     $this->assertNotEmpty($ids,"Empty search output for ".$mySearchCyrInv);
-    print("\r\nFound ".count($ids)." results, search is proved case-insensitive");    
+    print("\r\nFound ".count($ids)." results, search is proved case-insensitive");
+    
+    $mySearchCyr="ЙцуКЕнг";
+    $sub1="ЙцуКЕн";
+    $sub2="уК";
+    $sub3="Енг";
+    $q=$sub1."&".$sub2."&".$sub3;
+    $this->webDriver->get($this->searchUri.urlencode($q));    
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains($q,$title,"No search string in the title, maybe wrong page");
+    $this->assertContains("search",$title,"No \"search\" in the title -- wrong page");
+    $src=$this->webDriver->getPageSource();
+    $ids=$this->parseSearchIds ($src);
+    $this->assertNotEmpty($ids,"Empty search output for ".$q);
+    print(" Found ".count($ids)." results ");
+    $res=[];
+    $highlighted=(preg_match("~>\s*".$mySearchCyr."\s+</span>~",$src,$res) >0 );
+    $this->assertTrue($highlighted,"Highligthing goes wrong");
+    print("\r\nHightlight brackets for overlapping needles OK\r\n");   
     
   }
 }

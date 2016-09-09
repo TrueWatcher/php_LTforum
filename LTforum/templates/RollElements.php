@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.1 refactored View classes
+ * @version 1.1.2 refactored Form classes
  */ 
 /**
  * Functions just for View, usually creating control elements.
@@ -152,7 +152,7 @@ class RollElements extends ViewElements {
   }
   
   static function searchLinkForm (ViewRegistry $context) {
-    $el='<a href="?act=search&amp;query=&amp;length='.$context->g("length").'">Search</a>';
+    $el='<a href="?act=search&amp;query=&amp;length='.$context->g("length").'" target="_blank">Search</a>';
     return ($el);
   }
   /*

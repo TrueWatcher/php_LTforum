@@ -13,7 +13,11 @@ abstract class FormElements {
     return("<tr>".$str."</tr>");
   }
   
-  protected static function wrapFld ($str) {
+  protected static function wrapFldTh ($str) {
+    return("<th>".$str."</th>");
+  }
+  
+  protected static function wrapFldTd ($str) {
     return("<td>".$str."</td>");
   }  
 
@@ -29,54 +33,54 @@ abstract class FormElements {
   
   abstract static function hiddenFields ($pageContext);
   
-  static function idP ($context) {
+  static function idP (ViewRegistry $context) {
     $label="Message ID : ";
-    return ( self::wrapRow ( self::wrapFld($label).self::wrapFld($context->g("id")) ) );
+    return ( self::wrapRow ( self::wrapFldTh($label).self::wrapFldTd($context->g("id")) ) );
   }
   
-  static function userP ($context) {
+  static function userP (ViewRegistry $context) {
     $label="Your name : ";
-    return ( self::wrapRow ( self::wrapFld($label).self::wrapFld($context->g("author")) ) );
+    return ( self::wrapRow ( self::wrapFldTh($label).self::wrapFldTd($context->g("author")) ) );
   }
   
   static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {
-    $row=self::wrapFld( self::genericLabel($inputName,$label) );
-    $row.=self::wrapFld( self::genericInput("text",$inputName,$authorName) );
+    $row=self::wrapFldTh( self::genericLabel($inputName,$label) );
+    $row.=self::wrapFldTd( self::genericInput("text",$inputName,$authorName) );
     return ( self::wrapRow ($row) );
   }
   
   static function deleteChkbx () {
     $label="Delete this message ";
-    $row=self::wrapFld( self::genericLabel("clear",$label) );    
-    $row.=self::wrapFld( '<input type="checkbox" id="del" name="del" />' );
+    $row=self::wrapFldTh( self::genericLabel("del",$label) );    
+    $row.=self::wrapFldTd( '<input type="checkbox" id="del" name="del" />' );
     return ( self::wrapRow ($row) );   
   }
   
   static function clearChkbx () {
     $label="Set current date and time ";
-    $row=self::wrapFld( self::genericLabel("clear",$label) );    
-    $row.=self::wrapFld('<input type="checkbox" id="clear" name="clear" />');
+    $row=self::wrapFldTh( self::genericLabel("clear",$label) );    
+    $row.=self::wrapFldTd('<input type="checkbox" id="clear" name="clear" />');
     return ( self::wrapRow ($row) );    
   }
   
-  static function txtText ($settings,$context) {
+  static function txtText (SessionRegistry $settings,ViewRegistry $context,$labelText="Edit this text") {
     $maxMessageLetters=(int)( $settings->g("maxMessageBytes")/2 );
-    $label='<td colspan="2"><label for="txt">Edit this text (<span id="cnt">max '.$maxMessageLetters.' letters</span>):</label></td>';
+    $label='<th colspan="2"><label for="txt">'.$labelText.' (<span id="cnt">max '.$maxMessageLetters.' letters</span>):</label></th>';
     $textarea='<td colspan="2" id="t"><textarea id="txt" name="txt" rows="" cols="" maxlength="'.$maxMessageLetters.'" >'.$context->g("message").'</textarea></td>';
-    return( self::wrapRow ($label)."\r\n".$textarea );
+    return( self::wrapRow ($label)."\r\n".self::wrapRow  ($textarea)  );
   }
   
-  static function commText ($settings,$context) {
+  static function commText (SessionRegistry $settings,ViewRegistry $context) {
     $maxMessageLetters=(int)($settings->g("maxMessageBytes")/2);
-    $label='<td colspan="2"><label for="comm">Edit this commentary (<span id="cnt2">max '.$maxMessageLetters.' letters</span>):</label></td>';
+    $label='<th colspan="2"><label for="comm">Edit this commentary (<span id="cnt2">max '.$maxMessageLetters.' letters</span>):</label></th>';
     $textarea='<td colspan="2" id="c"><textarea id="comm" name="comm" rows="" cols="" maxlength="'.$maxMessageLetters.'" >'.$context->g("comment").'</textarea></td>';
-    return( self::wrapRow ($label)."\r\n".$textarea );
+    return( self::wrapRow ($label)."\r\n".self::wrapRow  ($textarea) );
   }
   
   static function snapChkbx () {
     $label="Go straight to forum after posting";
-    $row=self::wrapFld( self::genericLabel("snap",$label) );    
-    $row.=self::wrapFld('<input type="checkbox" id="snap" name="snap" checked="checked" />');
+    $row=self::wrapFldTh( self::genericLabel("snap",$label) );    
+    $row.=self::wrapFldTd('<input type="checkbox" id="snap" name="snap" checked="checked" />');
     return ( self::wrapRow ($row) );     
   }
 

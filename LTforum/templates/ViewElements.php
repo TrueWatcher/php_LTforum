@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.1 refactored View classes
+ * @version 1.1.2 refactored Form classes
  */ 
 /**
  * Common template for RollElements,SearchElements and ExportElements.
@@ -30,7 +30,7 @@ abstract class ViewElements {
   abstract static function pagePanel (ViewRegistry $context);
   
   abstract static function searchLinkForm (ViewRegistry $context);
-
+  
   abstract static function lengthForm (ViewRegistry $context);
 
   abstract static function numberForm (ViewRegistry $context);

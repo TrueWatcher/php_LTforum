@@ -56,6 +56,10 @@ class NewElements extends FormElements {
   static function clearChkbx () {} // disabled  
   
   static function deleteChkbx () {} // disabled
+  
+  static function txtText ($settings,$context,$labelText=null) {
+    return ( parent::txtText($settings,$context,"Your message") );
+  }  
 
   static function commText ($settings,$context) {} // disabled
   

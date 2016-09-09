@@ -163,16 +163,16 @@ class SearchElements extends ViewElements {
   static function searchLinkForm (ViewRegistry $context) {
     //$orders=["asc"=>,"desc"];
   
-    $form="<form action=\"\" method=\"get\" id=\"search\"><p>Search: ";
+    $form="<form action=\"\" method=\"post\" id=\"search\"><p>Search for : ";
     $form.="<input type=\"text\" name=\"query\" value='".$context->g("query")."'/>";
-    $form.="</select> <input type=\"submit\" value=\"Search\"/><br/>";
+    $form.="<input type=\"submit\" value=\"Search\"/><br/>";
     
-    $form.=" order : <input type=\"radio\" name=\"order\" value=\"desc\"";
+    $form.=" sort : <input type=\"radio\" name=\"order\" value=\"desc\"";
     if ( $context->g("order")==="desc" ) $form.=" checked=\"checked\"";
-    $form.=" /> from new to old, descending&nbsp;&nbsp;";  
+    $form.=" /> new ↘ old &nbsp;&nbsp;";  
     $form.="<input type=\"radio\" name=\"order\" value=\"asc\"";
     if ( $context->g("order")==="asc" ) $form.=" checked=\"checked\"";
-    $form.=" /> from old to new, ascending";
+    $form.=" /> old ↘ new";
    
     $form.="<input type=\"hidden\" name=\"act\" value=\"search\"/>";    
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\"/>";  
