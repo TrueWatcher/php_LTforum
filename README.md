@@ -64,14 +64,6 @@ If your have enough rights to set up HTTPS, your are advised to do it also ;).
 v.0.1.0    7 Aug 2016
 started
 
-v.0.1.5    20 Aug 2016
-view,write,edit messages
-needs cleaning
-
-v.0.2.0    21 Aug 2016
-refactored and cleaned
-now under testing
-
 v.0.3.3    28 Aug 2016
 cleaned and tested view-add-edit-delete, workable import-export-delRange-editAny
 need docs, more testing and .htaccess
@@ -79,12 +71,20 @@ need docs, more testing and .htaccess
 v.1.0.0    31 Aug 2016
 primary testing complete, ready for experimental deployment
 
+v.1.0.6    6 Sep 2016
+added "#footer" and fixed singletAssocWrapper
+ 
+v.1.1.0    6 Sep 2016
+"Search" command
+
+v.1.1.2    9 Sep 2016
+refactoring Viewers, new tests, improvements 
 
 #TODOs
-
-"Search" command and view  
-Conception of localization  
+ 
 Nice frontend, possibly on Bootstrap  
-Access controller  
-Users and threads manager  
+RSS generator/formatter
+Conception of localization  
+Access Controller  
+Users and threads Manager  
 
