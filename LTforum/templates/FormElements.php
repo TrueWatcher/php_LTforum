@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.2 refactored Form classes
+ * @version 1.1 added Search command, refactored View classes
  */ 
 /**
  * Common template for NewElements,EditElements and EditanyElements.

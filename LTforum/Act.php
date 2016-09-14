@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.1 refactored View classes
+ * @version 1.1 added Search command, refactored View classes
  */
 
 /**
@@ -145,9 +145,9 @@ class Act {
       //$vr->s("no_such_key",0);// check catch UsageException
 
       //$vr->dump();
-      require_once ($sr->g("templatePath")."ViewElements.php");      
+      require_once ($sr->g("templatePath")."SectionElements.php");      
       require_once ($sr->g("templatePath")."RollElements.php");
-      include ($sr->g("templatePath")."roll.php");
+      include ($sr->g("templatePath")."section.php");
       exit(0);
     }
     catch (Exception $e) {
@@ -191,9 +191,9 @@ class Act {
     $vr=ViewRegistry::getInstance( 2, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms, "highlight"=>1 ) );
 
     //$vr->dump();
-    require_once ($sr->g("templatePath")."ViewElements.php");  
+    require_once ($sr->g("templatePath")."SectionElements.php");  
     require_once ( $sr->g("templatePath")."SearchElements.php" );
-    include (  $sr->g("templatePath")."roll.php" );
+    include (  $sr->g("templatePath")."section.php" );
     exit(0);  
   }
   

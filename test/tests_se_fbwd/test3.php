@@ -136,8 +136,15 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
       print (" Trying to go to new window ");
       $handles = $this->webDriver->getWindowHandles();
       //print_r($handles);
-      $this->webDriver->switchTo()->window($handles[1]);
-      $title=$this->webDriver->getTitle();      
+      $this->webDriver->switchTo()->window($handles[0]);// sometimes it is $handles[1]
+      sleep(3);
+      $title=$this->webDriver->getTitle();
+      if (strpos($title,"search")===false ) {
+        print (" window 0 failed, trying window 1 ");
+        $this->webDriver->switchTo()->window($handles[1]);// sometimes it is $handles[1]
+        sleep(3);        
+        $title=$this->webDriver->getTitle();
+      }
     }
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
     $this->assertContains("search",$title,"No \"search\" in the title -- wrong page");
@@ -166,7 +173,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $titleView=$this->webDriver->getTitle();
     if (strlen($titleView)) print ("\r\ntitle found: $titleView \r\n");
     $srcView=$this->webDriver->getPageSource();
-    $this->assertContains($mySearchCyr,$srcView,"No needle found in view page");
+    $this->assertContains($mySearchCyr,$srcView,"No needle found in section page");
         
     print("\r\nAdd-Search-View sequence OK\r\n");
   }  

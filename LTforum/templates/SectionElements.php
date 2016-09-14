@@ -1,13 +1,13 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.2 refactored Form classes
+ * @version 1.1 added Search command, refactored View classes
  */ 
 /**
  * Common template for RollElements,SearchElements and ExportElements.
  * @uses  ViewRegistry $context
  */
-abstract class ViewElements {
+abstract class SectionElements {
 
   abstract static function titleSuffix (ViewRegistry $context);
   

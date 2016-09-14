@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 + search command
+ * @version 1.1 added Search command, refactored View classes
  */
  
   class AssocArrayWrapper {

@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.2 refactored Form classes
+ * @version 1.1 added Search command, refactored View classes
  */ 
 /**
  * Functions just for View, usually creating control elements.
@@ -9,7 +9,7 @@
  * @uses $vr ViewRegistry
  */
  
-class RollElements extends ViewElements {
+class RollElements extends SectionElements {
 
   static function titleSuffix (ViewRegistry $context) {
     $s=$context->g("begin")."..".$context->g("end")." (".$context->g("pageCurrent")."/".$context->g("pageEnd").")";

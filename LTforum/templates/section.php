@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.1 refactored View classes
+ * @version 1.1 added Search command, refactored View classes
  */
  /**
  * A View to display a list of messages plus some nice control elements.
@@ -12,7 +12,7 @@
  */
 
 $cc=$vr->g("controlsClass");
-
+if ( !is_subclass_of($cc,"SectionElements") ) throw new UsageException ("Layout form.php should be used with subclasses of SectionElements, where ".$cc." does not belong");
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">

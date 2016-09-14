@@ -1,13 +1,13 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.1 refactored View classes
+ * @version 1.1 added Search command, refactored View classes
  */ 
 /**
  * Functions just for View (Search Results), creating control elements and other useful things.
  * @uses ViewRegistry  $context
  */
-class SearchElements extends ViewElements {
+class SearchElements extends SectionElements {
 
   static function titleSuffix (ViewRegistry $context) {
     $s="search for \"".$context->g("query")."\"";

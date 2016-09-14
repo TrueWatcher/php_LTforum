@@ -1,14 +1,14 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.1 refactored View classes
+ * @version 1.1 added Search command, refactored View classes
  */ 
 /**
  * Functions for View, creating control elements for exporting html files.
  * Need refactoring.
  * @uses $vr ViewRegistry
  */
-class ExportElements extends ViewElements {
+class ExportElements extends SectionElements {
 
   static function titleSuffix (ViewRegistry $context) {
     $s=$context->g("begin")."..".$context->g("end");

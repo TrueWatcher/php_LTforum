@@ -83,7 +83,7 @@ refactoring Viewers, new tests, improvements
 #TODOs
  
 Nice frontend, possibly on Bootstrap  
-RSS generator/formatter
+RSS generator/formatter  
 Conception of localization  
 Access Controller  
 Users and threads Manager  

@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1.2 refactored Form classes
+ * @version 1.1 added Search command, refactored View classes
  */
 
 /**
@@ -16,7 +16,7 @@ class AdminAct {
   }
   
   public function exportHtml (PageRegistry $apr, SessionRegistry $asr) {
-    require_once($asr->g("templatePath")."ViewElements.php");
+    require_once($asr->g("templatePath")."SectionElements.php");
     require_once($asr->g("templatePath")."ExportElements.php");    
     //require_once($asr->g("templatePath")."RollElements.php");//will be removed
     
@@ -93,7 +93,7 @@ class AdminAct {
     ob_end_clean();
     ob_start(["AdminAct","obWrite"],4096);
     
-    include ($asr->g("templatePath")."roll.php");
+    include ($asr->g("templatePath")."section.php");
     
     ob_end_clean();
     Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil($processedBytes/1000)."KB. ".$warning);
