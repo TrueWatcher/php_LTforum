@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 added Search command, refactored View classes
  */
 
 /**
@@ -15,7 +15,11 @@ class AdminAct {
     if ( !file_exists($apr->g("targetPath").".db") ) return ("You must specify a valid forum thread ".$apr->g("targetDb"));    
   }
   
-  public function exportHtml (PageRegistry $apr, SessionRegistry $asr) { 
+  public function exportHtml (PageRegistry $apr, SessionRegistry $asr) {
+    require_once($asr->g("templatePath")."SectionElements.php");
+    require_once($asr->g("templatePath")."ExportElements.php");    
+    //require_once($asr->g("templatePath")."RollElements.php");//will be removed
+    
     //Act::view($apr,$asr);
     if ( empty($apr->g("begin")) || ( empty($apr->g("end")) && empty($apr->g("kb")) )  ) Act::showAlert($apr,$asr,"You should give begin and end|kb");
     $begin=$apr->g("begin");
@@ -28,6 +32,9 @@ class AdminAct {
     $i=$begin;
     $processed=0;
     $warning="";
+    $processedBytes=0; 
+    
+    $msgList=[];
     while (true) {
       $m=$apr->g("cardfile")->getOneMsg($i);
       if ( !$m ) {
@@ -38,9 +45,13 @@ class AdminAct {
       $processed++;
       if ( $apr->g("newBegin") >= 1 ) $m["id"] = $apr->g("newBegin") + $processed - 1;
       if ( empty($apr->g("newBegin")) ) $m["id"] = "";
-      $html=RollElements::oneMessage($m,RollElements::idTitle($m));
-      $messages.=$html;      
-      if ( $apr->g("kb")>=1 && ceil(strlen($messages)/1000)>=$apr->g("kb") ) {
+      $html=ExportElements::oneMessage ( $m,ExportElements::idTitle ($m),$no=null );
+      
+      $processedBytes+=strlen($html);
+      //$messages.=$html;// remove this, only length is needed
+      
+      $msgList[]=$m;
+      if ( $apr->g("kb")>=1 && ceil($processedBytes/1000)>=$apr->g("kb") ) {
         //print("size exceeded");
         break;
       }
@@ -61,7 +72,34 @@ class AdminAct {
       $newBegin=$begin;
       $newEnd=$realEnd;
     }
-    //---here comes the presentation---
+    
+    $vr=ViewRegistry::getInstance(2,array("begin"=>$newBegin,"end"=>$newEnd,"msgGenerator"=>$msgList,"controlsClass"=>"ExportElements"
+    ));
+    $pr=PageRegistry::getInstance();
+    $sr=clone $asr;// need to change assetsPath  
+    $sr->s( "assetsPath","../".$asr->g("assetsPath") );
+    
+    $file=$apr->g("obj");
+    if ( empty($file) ) $file=$apr->g("forum")."_".$newBegin."_".$newEnd;
+    $fullFile=$asr->g("forumsPath").$apr->g("forum")."/".$file.".html";
+    //print ($fullFile);
+    touch ($fullFile);
+    if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
+    $apr->s("exportFileFull",$fullFile);    
+
+    //---here comes the interception of the presentation ---
+    
+    ob_flush();
+    ob_end_clean();
+    ob_start(["AdminAct","obWrite"],4096);
+    
+    include ($asr->g("templatePath")."section.php");
+    
+    ob_end_clean();
+    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil($processedBytes/1000)."KB. ".$warning);
+    
+    return;    
+    /* just history
     // $apr,$asr,$newBegin,$newEnd,$processed,$warning,$begin,$realEnd,$messages
     //print("!!".$asr->g("templatePath")."export.html");
     $template=file_get_contents($asr->g("templatePath")."export.html");
@@ -76,8 +114,23 @@ class AdminAct {
     //print ($fullFile);
     touch ($fullFile);
     if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
-    file_put_contents($fullFile,$template);
-    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil(strlen($template)/1000)."KB. ".$warning);    
+    file_put_contents($fullFile,$template);    
+    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil(strlen($template)/1000)."KB. ".$warning);*/    
+  }
+  
+  /**
+   * Writes php output buffer into export file after being called by ob_start.
+   * @param string $buffer by specification
+   * @returns string empty to clear buffer
+   */
+  public static function obWrite ($buffer) {
+    static $handler=null;
+    if ( empty($handler) ) {
+      $apr=PageRegistry::getInstance(0,[]);
+      $handler=fopen( $apr->g("exportFileFull"),"w" );
+    }
+    fwrite($handler,$buffer);
+    return("");// clear the buffer
   }
   
   public function importHtml (PageRegistry $apr, SessionRegistry $asr) {
@@ -164,22 +217,23 @@ class AdminAct {
   }
   
   public function editAny (PageRegistry $apr, SessionRegistry $asr) {
-    $targetId=$apr->g("end");
+    $targetId=$apr->g("current");
     if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
     $m=$apr->g("cardfile")->getOneMsg($targetId);
-  
-    $apr->s("txt",$m["message"]);
-    $apr->s("comm",$m["comment"]);
-    $apr->s("author",$m["author"]);    
+     
+    $pr=$apr;
+    $sr=$asr;
+    $vr=ViewRegistry::getInstance( 2, ["id"=>$targetId, "author"=>$m["author"], "message"=>$m["message"], "comment"=>$m["comment"], "controlsClass"=>"EditanyElements"] );
+    require_once($asr->g("templatePath")."FormElements.php");
+    require_once($asr->g("templatePath")."SubFormElements.php");    
     // show form
-    include ($asr->g("templatePath")."editany.php");
+    include ($asr->g("templatePath")."form.php");
     exit(0);  
-  
   }  
 
   public function updateAny (PageRegistry $apr, SessionRegistry $asr) {
-    $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum","pin","end") );  
-    $targetId=$apr->g("end");
+    $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum","pin","current") );  
+    $targetId=$apr->g("current");
     if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
     $m=$apr->g("cardfile")->getOneMsg($targetId);    
     // check input strings
@@ -199,7 +253,7 @@ class AdminAct {
     if ( !empty($apr->g("clear")) ) $m["time"]=$m["date"]="";// current date and time will be set
     $apr->g("cardfile")->addMsg($m,true);// true for overwrite
   
-    Act::showAlert ($apr,$asr,"Message ".$apr->g("end")." has been updated");    
+    Act::showAlert ($apr,$asr,"Message ".$apr->g("current")." has been updated");    
     
   }   
 }

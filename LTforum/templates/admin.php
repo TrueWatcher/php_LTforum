@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 added Search command, refactored View classes
  */
  
 /**
@@ -45,7 +45,8 @@
     Import from html<br />
     file : <input type="text" name="obj" />.html<br />
     order : <input type="radio" name="order" value="desc" /> from new to old, descending&nbsp;&nbsp;  
-    <input type="radio" name="order" value="asc" checked="checked" /> from old to new, ascending<br /> 
+    <input type="radio" name="order" value="asc" checked="checked" /> from old to new, ascending<br />
+    Imported messages will be added on top of the present with fresh IDs.<br />
     <input type="hidden" name="act" value="imp" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
     <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
@@ -67,7 +68,7 @@
 <form action="" method="get" id="editAny">
   <fieldset>
     Edit any message<br />
-    id : <input type="text" name="end" /><br />
+    id : <input type="text" name="current" /><br />
     <input type="hidden" name="act" value="ea" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
     <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    

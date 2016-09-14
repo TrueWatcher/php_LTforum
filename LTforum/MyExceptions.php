@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 added Search command, refactored View classes
  */
 /**
  * My exception for file access errors.

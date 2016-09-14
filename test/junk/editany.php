@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 + search command
  */
  
 /**
@@ -18,8 +18,9 @@
   <link rel="stylesheet" type="text/css" href="<?php print($asr->g("assetsPath")."form_t.css") ?>" media="all" />
 </head>
 <body>
-<form action="?act=upd" method="post" >
+<form action="" method="post" >
   <fieldset>
+    
     <input type="hidden" name="act" value="ua" />
     <input type="hidden" name="end" value="<?php print ($apr->g("end")); ?>" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
@@ -49,7 +50,7 @@
         <td colspan="2" id="t"><textarea id="txt" name="txt" rows="" cols="" maxlength="<?php print($maxMessageLetters); ?>" ><?php print( $apr->g("txt") ); ?></textarea></td>
       </tr>
       <tr>
-        <th colspan="2"><label for="txt">Edit this comment (<span id="cnt2">max <?php $maxMessageLetters=(int)($asr->g("maxMessageBytes")/2); print($maxMessageLetters); ?> letters</span>):</label></th>
+        <th colspan="2"><label for="comm">Edit this comment (<span id="cnt2">max <?php $maxMessageLetters=(int)($asr->g("maxMessageBytes")/2); print($maxMessageLetters); ?> letters</span>):</label></th>
       </tr>
       <tr>
         <td colspan="2" id="c"><textarea id="comm" name="comm" rows="" cols="" maxlength="<?php print($maxMessageLetters); ?>" ><?php print( $apr->g("comm") ); ?></textarea></td>

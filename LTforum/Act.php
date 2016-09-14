@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 added Search command, refactored View classes
  */
 
 /**
@@ -10,7 +10,10 @@
 class Act {
 
   public static function newMessage(PageRegistry $pr,SessionRegistry $sr) {
-    include ($sr->g("templatePath")."new.php");
+    $vr=ViewRegistry::getInstance( 2, [ "id"=>"", "message"=>"",  "controlsClass"=>"NewElements" ] );  
+    require_once ($sr->g("templatePath")."FormElements.php");
+    require_once ($sr->g("templatePath")."SubFormElements.php");
+    include ($sr->g("templatePath")."form.php");
     exit(0);
   }
 
@@ -19,12 +22,13 @@ class Act {
     //$pr->g("cardfile")=new CardfileSqlt( $pr->g("forum"), false);
     $lastMsg=$pr->g("cardfile")->getLastMsg();
     if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Access denied: user names are different !");  
-    if( $lastMsg["id"]!=$pr->g("end") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
     // transfer message and comment
-    $pr->s("txt",$lastMsg["message"]);
-    $pr->s("comm",$lastMsg["comment"]);
+    $vr=ViewRegistry::getInstance( 2, [ "id"=>$lastMsg["id"], "author"=>$lastMsg["author"], "message"=>$lastMsg["message"], "comment"=>$lastMsg["comment"], "controlsClass"=>"EditElements" ] );  
+    require_once ($sr->g("templatePath")."FormElements.php");
+    require_once ($sr->g("templatePath")."SubFormElements.php");
     // show form
-    include ($sr->g("templatePath")."edit.php");
+    include ($sr->g("templatePath")."form.php");
     exit(0);
   }
   
@@ -32,14 +36,14 @@ class Act {
     //$pr->dump();
     // check user -- same as act=el
     $lastMsg=$pr->g("cardfile")->getLastMsg();
-    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length","user","end") );   
+    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length","user","current") );   
     if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");  
-    if( $lastMsg["id"]!=$pr->g("end") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
   
     if ( !empty($pr->g("del")) ) {
       // simply delete
-      $pr->g("cardfile")->deletePackMsg($pr->g("end"),$pr->g("end"));
-      if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("end")." has been deleted by ".$pr->g("user"));
+      $pr->g("cardfile")->deletePackMsg($pr->g("current"),$pr->g("current"));
+      if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("current")." has been deleted by ".$pr->g("user"));
       self::redirectToView ($pr);
     }
     // check input strings 
@@ -54,7 +58,7 @@ class Act {
     $lastMsg["time"]=$lastMsg["date"]="";// current date and time will be set
     $pr->g("cardfile")->addMsg($lastMsg,true);// true for overwrite
   
-    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("end")." has been updated by ".$pr->g("user"));
+    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("current")." has been updated by ".$pr->g("user"));
     self::redirectToView ($pr);  
   } 
   
@@ -136,12 +140,14 @@ class Act {
 
       $toShow=$pr->g("cardfile")->yieldPackMsg($begin,$end);
       
-      $vr=ViewRegistry::getInstance( true, array( "forumBegin"=>$forunBegin, "forumEnd"=>$forumEnd, "overlay"=>$overlay, "length"=>$length, "begin"=>$begin, "end"=>$end, "base"=>$base, "pageCurrent"=>$pageCurrent, "pageEnd"=>$pageEnd, "msgGenerator"=>$toShow
+      $vr=ViewRegistry::getInstance( true, array( "controlsClass"=>"RollElements", "forumBegin"=>$forunBegin, "forumEnd"=>$forumEnd, "overlay"=>$overlay, "length"=>$length, "begin"=>$begin, "end"=>$end, "base"=>$base, "pageCurrent"=>$pageCurrent, "pageEnd"=>$pageEnd, "msgGenerator"=>$toShow
       ) );
       //$vr->s("no_such_key",0);// check catch UsageException
 
       //$vr->dump();
-      include ($sr->g("templatePath")."roll.php");
+      require_once ($sr->g("templatePath")."SectionElements.php");      
+      require_once ($sr->g("templatePath")."RollElements.php");
+      include ($sr->g("templatePath")."section.php");
       exit(0);
     }
     catch (Exception $e) {
@@ -149,14 +155,60 @@ class Act {
     }
   }// end view
   
-  // UTILITIES ----------------------------------
+  public static function search (PageRegistry $pr, SessionRegistry $sr) {
+    mb_internal_encoding("UTF-8");// ! important
+    $skipSearch=0;
+    
+    $q=$pr->g("query");
+    $andTerms=[$q];
+    
+    if ( strlen($q)<2 ) {
+      $pr->s("alert","Please, enter the search string");
+      $skipSearch=1;
+    }
+    if ( Act::charsInString($q,"<>'") ) { 
+      $pr->s("alert","Sorry, your query \"".htmlspecialchars($q)."\" contains forbidden symbols");
+      $skipSearch=1;  
+    }
+
+    $lim=$pr->g("searchLength");
+    if ( empty($lim) ) $lim=$pr->g("length");
+    $order=$pr->g("order");
+    if ( empty($order) ) $order="desc";
+  
+    if ($skipSearch) $toShow=null;
+    else {
+      // if SPACE  is present in the middle of the query, remind the rules  
+      if ( strpos($q," ")>0 && strrpos($q," ")<strlen($q)-1 ) $pr->s("alert","Use \"foo&bar\" to find messages containing both \"foo\" and \"bar\"<br/>Use \"foo bar\" to find messages containing  \"foo[SPACE]bar\"");
+      // if & is present in the middle of the query, break up the query into array
+      if ( strpos($q,"&")>0 && strrpos($q,"&")<strlen($q) ) $andTerms=explode("&",$q);
+      // do other good things to terms
+      $andTerms=self::prepareTerms($andTerms);
+      
+      $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
+    }
+
+    $vr=ViewRegistry::getInstance( 2, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms, "highlight"=>1 ) );
+
+    //$vr->dump();
+    require_once ($sr->g("templatePath")."SectionElements.php");  
+    require_once ( $sr->g("templatePath")."SearchElements.php" );
+    include (  $sr->g("templatePath")."section.php" );
+    exit(0);  
+  }
   
   public static function showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
     $pr->s( "alert",$alertMessage );
     include ($sr->g("templatePath")."alert.php");
     exit(0);
   }
+
+  // UTILITIES ---------------------------------- 
   
+  /**
+   * Filters texts, which were recieved from user.
+   * @uses MaskTags::mask_tags
+   */
   public static function prepareInputText($txt, SessionRegistry $sr) {
     if( strlen($txt) > $sr->g("maxMessageBytes") ) $txt=substr($txt,0,$sr->g("maxMessageBytes"));  
     require_once ($sr->g("mainPath")."MaskTags.php");
@@ -173,10 +225,20 @@ class Act {
     return ( array("author"=>$a,"message"=>$t,"comment"=>$c) );
   }
   
-  public static function charsInString($what,$charsString) {
-    if (strtok($what,$charsString)!==$what) return (true);
+  /**
+   * Checks if a string contains any of given symbols.
+   * @param string $object string to test
+   * @param string $charsString "[symbol1][symbol2]..." like "<&'"
+   * @returns boolean true if found, false if not
+   */
+  public static function charsInString($object,$charsString) {
+    if ( empty($object) ) return (false);
+    if (strtok($object,$charsString)!==$object) return (true);
   }
   
+  /**
+   * Cleverly finds the basis for making absolute URIs from relative ones.
+   */
   public static function myAbsoluteUri () {
     $url = 'http://';
     if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
@@ -185,6 +247,9 @@ class Act {
     return ($url);
   }
   
+  /**
+   * Takes from the Page Registry the actual link to the viewer ( as query string, relative ), turns it into valid absolute address and sends it as REDIRECT header.
+   */
   public static function redirectToView (PageRegistry $pr) {
     $uri=$pr->g("viewLink");
     $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake
@@ -192,7 +257,15 @@ class Act {
     header("Location: ".$uri);
     exit(0);
   }
-
+  
+  /**
+   * Helps to create query string from Registry parametrs.
+   * @param 	PageRegistry 	$pr registry
+   * @param 	string 		$command this will be inserted as such
+   * @param 	string 		name of registry parameter, will be inserted as &name=value
+   * @param 	string 		more of these
+   * @returns string ready Query String with leading ? and middle ampersands as &amp;
+   */
   public static function addToQueryString (PageRegistry $pr,$command) {
     $qs=$command;
     for ($i=2;$i<func_num_args();$i++) {
@@ -203,6 +276,57 @@ class Act {
     if( !empty($qs) ) $qs="?".$qs;
     return ($qs);
   }
+  
+  private function prepareTerms($what) {
+    // remove quotes if present
+    foreach ($what as $k=>&$andTerm ) {
+      if ( strpos($andTerm,'"')===0 && strrpos($andTerm,'"')===(strlen($andTerm)-1) ) {
+        $andTerm=trim($andTerm,'"');
+        //print("@$andTerm@");
+      }
+      if ( mb_strlen($andTerm)<=1 ) throw new UsageException ("Too short or empty search term in array ".implode(";",$what));
+      // make the search case-insensitive 
+      $andTerm=mb_strtolower($andTerm);
+    }
+    return($what);
+  }
+  
+  /** Does the searching.
+   * Performs AND on hits, collects their positions for highlighting.
+   * @param 	string 	$haystack string to search
+   * @param 	array 	$what array of search terms
+   * @returns 	array 	On failure: empty, if all terms found:
+      [ [start1,start2,...], [end1,end2,...] ] -- positions of term1,term2,...
+   */
+  public function searchInString ($haystack,array $what) {
+    $starts=[];
+    $ends=[];
+ 
+    $res=true;
+    $haystack=mb_strtolower($haystack);
+    
+    foreach ($what as $j=>$andTermM ) {
+      $pos=null;
+      if (mb_substr($andTermM,0,1)==="-") {
+        $andTermM=mb_substr($andTermM,1);
+        $andResult=( mb_strpos($haystack,$andTermM)===false );
+      }
+      else {
+        //$andResult=( mb_strpos($haystack,$andTermM)!==false );
+        $p=mb_strpos($haystack,$andTermM);
+        if ($p!==false) {
+          $andResult=true;
+          // add positions to hit lists
+          $starts[]=$p-1;
+          $ends[]=$p+mb_strlen($andTermM)-1;
+        }
+        else $andResult=false;
+      }
+      $res=($res && $andResult);
+    }
+    if ($res) return (array($starts,$ends));// all are Ok, return hit lists
+    return(false);
+  }  
   
   
   

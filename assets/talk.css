@@ -84,3 +84,19 @@ table.low p {
 .fr {
   float: right;
 }
+.h {
+  background-color: #abc;  
+}
+input,select {
+  padding: .2em .5em;
+  margin: .3em;
+  background-color: #abc;
+  border: 2px solid #842;
+}
+input:hover,select:hover {
+  background-color: #eed;
+}
+fieldset {
+  padding: 1em;
+  margin: 1em;
+}

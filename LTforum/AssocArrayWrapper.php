@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 added Search command, refactored View classes
  */
  
   class AssocArrayWrapper {
@@ -72,7 +72,7 @@
     public function g($key) {
       if ( !array_key_exists($key,$this->arr) ) {
         if (!$this->strict) return ("");
-        else throw new Exception ("Reading by non-existent key".$key);
+        else throw new Exception ("Reading by non-existent key ".$key);
       }
       return( $this->arr[$key] );
     }

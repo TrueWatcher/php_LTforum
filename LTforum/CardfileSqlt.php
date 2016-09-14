@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 added Search command, refactored View classes
  */
 
 /**
@@ -176,6 +176,79 @@ class CardfileSqlt extends ForumDb {
     $stmt->bindValue(':high',$high,SQLITE3_INTEGER);
     $stmt->execute();
     return ("");
+  }
+  /**
+   * Gets all the text fields from DB and checks them against (external) search function; yields (as Generator) messages that satisfy that function.
+   * @param array $what array of search terms to be passed to test function
+   * @param string $order give results in ascending or descending order
+   * @param string|integer max number of results to give
+   * @param array class and method -- external search function ($haystack,$what)
+   * @returns Generator Object messages that passed the search function
+   */
+  public function yieldSearchResults (array $what,$order,$limit,$testTheString=["Act","searchInString"]) {    
+    
+    // simple query to select all
+    $qAll="SELECT id, date, time, author, message, comment
+      FROM '".self::$table."'" ;
+    if ( substr($order,0,1)==="d" ) $qAll.=" ORDER BY id DESC";
+    $result=parent::$forumDbo->query($qAll);
+    $count=0;
+    //$msgs=[];
+
+    if ($limit<=0) $limit=1000000;
+    while ( $count<$limit && ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
+      // concatenate all the interesting fields and add spaces
+      $haystack=implode("  ",$msg)." ";
+      $afterId=mb_strpos($haystack,"  ");
+      $haystack=mb_substr($haystack,$afterId);
+      // search
+      //$res=self::found($haystack,$what);
+      $res=$testTheString($haystack,$what);// test function was received as argument
+      //print ("\r\n{$msg["id"]}--$res;");      
+      if ($res) {
+        $count++;
+        //$msgs[]=$msg;
+        yield $count=>$msg;// not yield ($count=>$msg); !
+      }
+    }// end main cycle
+    //return $msgs;
+  }  
+  
+  private function defunct_yieldSearchResults ($what,$order,$limit) {
+    $qSearch="SELECT id, date, time, author, message, comment
+      FROM '".self::$table."' WHERE ";
+    if (! is_array($what) ) {}
+    foreach ($what as $i=>&$andTerm) {
+      if ($i>0) $qSearch.=" AND ";
+      /*$qSearch.="( instr( ' '||date||'  '||time||'  '||author||'  '||message||'  '||comment||' ' ,(:word".$i.") )";
+      if ( substr($andTerm,0,1)==="-" ) {
+        $qSearch.="=0 ) ";
+        $andTerm=substr($andTerm,1);
+      }
+      else $qSearch.=">0 ) ";*/
+      if ( substr($andTerm,0,1)==="-" ) {
+        $qSearch.=" NOT ";
+        $andTerm=substr($andTerm,1);
+      }
+      $qSearch.=" LIKE('%'||:word".$i."||'%',' '||date||'  '||time||'  '||author||'  '||message||'  '||comment||' ')=1";
+    }
+    if ( substr($order,0,1)==="d" ) $qSearch.=" ORDER BY id DESC";
+    $qSearch.=" LIMIT :limit";
+    print($qSearch);
+    print_r($what);
+    $stmt=parent::$forumDbo->prepare($qSearch);
+    foreach ($what as $j=>$andTermM) {
+      $stmt->bindValue(':word'.$i,$andTermM,SQLITE3_TEXT);
+    }
+    $stmt->bindValue(':limit',$limit,SQLITE3_INTEGER);
+    $result = $stmt->execute();
+    //$msgs=array();
+    $count=0;
+    while ( ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
+      //$msgs[]=$msg;
+      $count++;
+      yield $count=>$msg;// not yield ($count=>$msg); !
+    }
   }
   
 }// end CardfileSqlt

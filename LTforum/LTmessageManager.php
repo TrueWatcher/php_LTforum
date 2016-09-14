@@ -1,30 +1,24 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @version 1.1 added Search command, refactored View classes
  */
 /**
  * LTforum Admin panel, common for all forum-threads.
  * Requires forumName and, if authentication is absent, PIN
  */
-
-//echo ("I'm LTforum/demo/index.php"); 
  
-
-
-//require_once ($mainPath."LTforum.php");
 require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AdminAct.php");
-require_once ($templatePath."RollElements.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
     
     public function load() {
-      $inputKeys=array("act","forum","pin","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
+      $inputKeys=array("act","forum","pin","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
@@ -42,7 +36,8 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 }
 
 // instantiate and initialize Page Registry and Session Registry
-$asr=SessionRegistry::getInstance( 2, array( "lang"=>"en","viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath,"forumsPath"=>$forumsPath, "maxMessageBytes"=>"1200","pin"=>1 )
+// strict=1 required as assetsPath is modified for the export command
+$asr=SessionRegistry::getInstance( 1, array( "lang"=>"en","viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath,"forumsPath"=>$forumsPath, "maxMessageBytes"=>"1200","pin"=>1 )
 );
 
 $apr=PageRegistry::getInstance( 0,array() );
