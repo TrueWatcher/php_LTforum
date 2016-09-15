@@ -183,7 +183,15 @@ class Act {
       // if & is present in the middle of the query, break up the query into array
       if ( strpos($q,"&")>0 && strrpos($q,"&")<strlen($q) ) $andTerms=explode("&",$q);
       // do other good things to terms
-      $andTerms=self::prepareTerms($andTerms);
+      try {
+        $andTerms=self::prepareTerms($andTerms);
+      }
+      catch (OperationalException $oe) {
+        $searchLink=self::addToQueryString($pr,"act=search&amp;query=","searchLength","length","order");
+        $pr->s("formLink",$searchLink);
+        self::showAlert ( $pr,$sr,$oe->getMessage() );
+        exit(0);
+      }
       
       $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
     }
@@ -277,28 +285,38 @@ class Act {
     return ($qs);
   }
   
+  /**
+   * Performs conditioning on search terms.
+   * Removes quotes, checks length and turns to lower case
+   * @param 	array $what search terms
+   * @returns	array same array after workup
+   * @throws	OperationalException if meets a short or empty term
+   */  
   private function prepareTerms($what) {
     // remove quotes if present
-    foreach ($what as $k=>&$andTerm ) {
+    $res=[];
+    foreach ($what as $k=>$andTerm ) {
       if ( strpos($andTerm,'"')===0 && strrpos($andTerm,'"')===(strlen($andTerm)-1) ) {
         $andTerm=trim($andTerm,'"');
         //print("@$andTerm@");
       }
-      if ( mb_strlen($andTerm)<=1 ) throw new UsageException ("Too short or empty search term in array ".implode(";",$what));
+      if ( mb_strlen($andTerm)<=1 ) throw new OperationalException ("Too short or empty search term  \"".$andTerm.'"');
       // make the search case-insensitive 
       $andTerm=mb_strtolower($andTerm);
+      $res[]=$andTerm;
     }
-    return($what);
+    return($res);
   }
   
   /** Does the searching.
    * Performs AND on hits, collects their positions for highlighting.
    * @param 	string 	$haystack string to search
    * @param 	array 	$what array of search terms
-   * @returns 	array 	On failure: empty, if all terms found:
+   * @param 	boolean $collectAll tells to return all found positions disregarding the AND result
+   * @returns 	array 	On failure: empty, on success: array
       [ [start1,start2,...], [end1,end2,...] ] -- positions of term1,term2,...
    */
-  public function searchInString ($haystack,array $what) {
+  public function searchInString ($haystack,array $what,$collectAll=false) {
     $starts=[];
     $ends=[];
  
@@ -307,7 +325,7 @@ class Act {
     
     foreach ($what as $j=>$andTermM ) {
       $pos=null;
-      if (mb_substr($andTermM,0,1)==="-") {
+      if (mb_substr($andTermM,0,1)==="-") {// minus-word
         $andTermM=mb_substr($andTermM,1);
         $andResult=( mb_strpos($haystack,$andTermM)===false );
       }
@@ -324,7 +342,7 @@ class Act {
       }
       $res=($res && $andResult);
     }
-    if ($res) return (array($starts,$ends));// all are Ok, return hit lists
+    if ($res || $collectAll) return (array($starts,$ends));// all are Ok, return hit lists
     return(false);
   }  
   

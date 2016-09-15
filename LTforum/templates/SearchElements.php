@@ -31,7 +31,12 @@ class SearchElements extends SectionElements {
       foreach ($msg as $key=>&$field) {
         if ( $key!=="id" && !empty($field) ) {
           $field=" ".$field." ";
-          $found=Act::searchInString($field,$context->g("searchTerms"));
+          $found=Act::searchInString($field,$context->g("searchTerms"),true);
+          /*print(" K:".$key);
+          print(" T:");
+          print_r($context->g("searchTerms"));
+          print(" F:");
+          print_r($found);*/
           if ( !empty($found) ) {
             $field=self::highlight($field,$found,"h");
             $field=self::openHrefs($field);
