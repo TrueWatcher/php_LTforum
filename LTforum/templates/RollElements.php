@@ -162,7 +162,7 @@ class RollElements extends SectionElements {
   static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");
     
-    $form="<form action=\"\" method=\"get\" id=\"perPage\"><p>Per page: <select name=\"length\">";
+    $form="<form action=\"\" method=\"get\" id=\"perPage\" short=\"Per\"><p>Per page: <select name=\"length\">";
     $optList="";
     foreach ($lengths as $l) {
       $optList.="<option value=\"".$l."\"";
@@ -186,14 +186,22 @@ class RollElements extends SectionElements {
    * A small form to go to any message by its number.
    */
   static function numberForm (ViewRegistry $context) {
-    $form="<form action=\"\" method=\"get\" id=\"messageNumber\"><p>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
+    $form="<form action=\"\" method=\"get\" id=\"messageNumber\" short=\"Rec\"><p>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): "; 
     $form.="<input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" />";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" />";
     $form.="</p></form>";
     return ($form);
   }
   
-  static function onreadyScript () {}
+  static function onreadyScript (SessionRegistry $sessionContext) {
+    $s="<script>";
+    $s.="var src=\"".$sessionContext->g("assetsPath")."drawers.js"."\";";
+    $s.="var s=document.createElement('script'); s.setAttribute( 'src', src );
+  document.body.appendChild(s);";
+    //$s.="var d=drawers();";
+    $s.="</script>";
+    return ($s);
+  }
 
   static function bottomAlert (PageRegistry $pageContext,$actualCount) {}
   

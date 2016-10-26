@@ -35,7 +35,7 @@ abstract class SectionElements {
 
   abstract static function numberForm (ViewRegistry $context);
   
-  abstract static function onreadyScript ();
+  abstract static function onreadyScript (SessionRegistry $sessionContext);
 
   abstract static function bottomAlert (PageRegistry $pageContext,$actualCount);
   

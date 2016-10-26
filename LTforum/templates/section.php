@@ -50,6 +50,6 @@ if ( !empty($vr->g("msgGenerator")) ) {
 $outcome="viewed~".$j; 
 if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
 ?></p>
-<?php //print ( $cc::onreadyScript() ); ?>
+<?php print ( $cc::onreadyScript($sr) ); ?>
 </body>
 </html>

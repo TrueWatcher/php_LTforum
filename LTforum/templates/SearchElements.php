@@ -139,7 +139,7 @@ class SearchElements extends SectionElements {
   
   static function pagePanel (ViewRegistry $context) {} // disable
     
-  static function onreadyScript () {} // disable
+  static function onreadyScript (SessionRegistry $sessionContext) {} // disable
   
   static function numberForm (ViewRegistry $context) {} // disable
   

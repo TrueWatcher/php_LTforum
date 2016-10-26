@@ -1,4 +1,4 @@
-git checkout master
+git checkout master -f
 git merge maintn1
 git add *
 git rm -f \*.sh

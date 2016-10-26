@@ -41,7 +41,7 @@ class ExportElements extends SectionElements {
 
   static function numberForm (ViewRegistry $context) {}  // element is disabled
   
-  static function onreadyScript () {}  // element is disabled
+  static function onreadyScript (SessionRegistry $sessionContext) {}  // element is disabled
 
   static function bottomAlert (PageRegistry $pageContext,$actualCount) {}  // element is disabled
   
