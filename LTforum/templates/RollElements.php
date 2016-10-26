@@ -136,6 +136,7 @@ class RollElements extends SectionElements {
    */
   static function pagePanel (ViewRegistry $context) {
     $panel="";
+    $panel.="<a href=\"\" short=\"Pgs\"></a>";// marker for drawers.js
     $panel.=self::firstPageLink ($context)."&nbsp;&nbsp;";
     $panel.=self::genericRewind ($context,"-3",-3,true)."&nbsp;&nbsp;";
     $panel.=self::prevPageLink($context,"-1",true)."&nbsp;&nbsp;";
@@ -192,13 +193,18 @@ class RollElements extends SectionElements {
     $form.="</p></form>";
     return ($form);
   }
-  
+  /*
+   * Checks screen width and loads minifier script (drawers.js) if it is narrow
+   */  
   static function onreadyScript (SessionRegistry $sessionContext) {
     $s="<script>";
+    $s.="var wide=1800;";
+    $s.="var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;";
+    $s.="if ( width<wide ) {";
     $s.="var src=\"".$sessionContext->g("assetsPath")."drawers.js"."\";";
     $s.="var s=document.createElement('script'); s.setAttribute( 'src', src );
   document.body.appendChild(s);";
-    //$s.="var d=drawers();";
+    $s.="}";
     $s.="</script>";
     return ($s);
   }
