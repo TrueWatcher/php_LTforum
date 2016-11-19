@@ -198,9 +198,9 @@ class RollElements extends SectionElements {
    */  
   static function onreadyScript (SessionRegistry $sessionContext) {
     $s="<script>";
-    $s.="var wide=1800;";
+    $s.="var wide=640;";
     $s.="var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;";
-    $s.="if ( width<wide ) {";
+    $s.="if ( width<=wide ) {";
     $s.="var src=\"".$sessionContext->g("assetsPath")."drawers.js"."\";";
     $s.="var s=document.createElement('script'); s.setAttribute( 'src', src );
   document.body.appendChild(s);";

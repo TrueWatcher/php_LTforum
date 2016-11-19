@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Test JS unit "Drawer"</title>
+  <link rel="stylesheet" type="text/css" href="../assets/talk.css" media="all" />
+  
+  <script type="text/javascript">
+  
+function Drawer (elm,shortLabel) {
+  this.element=elm;
+  this.full=elm.innerHTML;
+  this.short=shortLabel;
+  this.isOpen=1;
+  
+  //var tthis=this;
+  var onclickToggle='toggle('+"'"+this.short+"'"+',d);return false;';
+  
+  this.close=function(){
+    this.element.innerHTML='<a href="javascript:void(0)" onclick="' + onclickToggle + '">' + this.short + "&raquo;" + "</a>";
+    this.isOpen=0;
+  };
+  
+  this.open=function(){
+    var closeLink='<a href="javascript:void(0)" onclick="' + onclickToggle + '">' + "&laquo;" + "</a>";
+    this.element.innerHTML=this.full+"&nbsp;&nbsp;"+closeLink;
+    this.isOpen=1;
+  };
+  
+  this.flip=function(){
+    if (this.isOpen) this.close();
+    else this.open();
+  };
+  
+  this.check=function(label){
+    if ( this.short === label ) return (true);
+    else return (false);    
+  };
+//*/  
+}// end Drawer
+
+</script>
+<script type="text/javascript">
+function makeDrawers(collection,drawers) {
+  var i,f,nd,sh;
+  for ( i=0; i<collection.length; i++ ) {
+    f=collection[i];
+    sh = ( f["short"] || f.short || f.getAttribute("short") || f.attributes["short"] );
+    if ( sh ) {
+    //if ( f.hasAttribute("short") ) {// find the parent and turn it into a Drawer
+      //alert(f.getAttribute("short"));
+      nd=new Drawer(f.parentNode,sh);
+      drawers.push(nd);
+    }
+  }
+}// end makeDrawers(collection)
+</script>
+<script type="text/javascript">  
+function toggle(shortLabel,drawers) {
+  for (var i=0;i<drawers.length;i++) {
+    if ( drawers[i].check(shortLabel) ) {
+      drawers[i].flip();
+      return;
+    }
+  }
+}// end toggle  
+</script>
+</head>
+<body>
+<table class="low"><tr>
+  <td></td>
+  <td><form action="" method="get" id="messageNumber" short="Rec"><p>Message&nbsp;(3..17): <input type="text" name="begin" style="width:5em;" value="3" /><input type="hidden" name="length" value="20" /></p></form></td>
+  <td><a href="?act=search&amp;query=&amp;length=20" target="_blank">Search</a></td>
+</tr></table>
+<hr />
+<address>TestPagination <em>wrote us on 31.08.2016 at 19-30</em>:<b class="fr"><b title="3">#</b></b></address>
+<p class="m">Test message 3</p>
+<hr />
+<table class="low"><tr>
+  <td><a href="?act=new&amp;length=20">Write new</a></td>
+  <td><a href="" short="Pgs"></a><a href="?begin=3&amp;length=20">1</a>&nbsp;&nbsp;-3&nbsp;&nbsp;-1&nbsp;&nbsp;Page:&nbsp;1&nbsp;&nbsp;1+&nbsp;&nbsp;3+&nbsp;&nbsp;<a href="?end=17&amp;length=20#footer">1</a></td>
+  <td><form action="" method="get" id="perPage" short="Per"><p>Per page: <select name="length"><option value="10">10</option><option value="20" selected="selected">20</option><option value="50">50</option><option value="100">100</option><option value="*">*</option></select> <input type="submit" value="Apply"/><input type="hidden" name="end" value="17"/></p></form></td>
+</tr></table>
+<p id="footer"><!--Outcome:viewed~15--></p>
+<script type="text/javascript">document.write(" Hi, I am JS! ");</script>
+<script type="text/javascript">
+  document.write(" Hi, I am JS once more! ");
+  var wide=1640;
+  var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+  
+  var height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+  document.write(" width="+width+" height="+height+" ");
+  if ( width<=wide ) {
+    var src="drawers.js";
+    var s=document.createElement('script');
+    s.setAttribute( 'src', src );
+    //document.body.appendChild(s);
+  }
+/*  
+function Drawer (elm,shortLabel) {
+  this.element=elm;
+  this.full=elm.innerHTML;
+  this.short=shortLabel;
+  this.isOpen=1;
+  
+  //var tthis=this;
+  var onclickToggle='toggle('+"'"+this.short+"'"+');return false;';
+  
+  this.close=function(){
+    this.element.innerHTML='<a href="javascript:void(0)" onclick="'+onclickToggle+'">'+this.short+"&raquo;"+"</a>";
+    this.isOpen=0;
+  };
+  
+  this.open=function(){
+    var closeLink='<a href="javascript:void(0)" onclick="'+onclickToggle+'">'+"&laquo;"+"</a>";
+    this.element.innerHTML=this.full+"&nbsp;&nbsp;"+closeLink;
+    this.isOpen=1;
+  };
+  
+  this.switch=function(){
+    if (this.isOpen) this.close();
+    else this.open();
+  };
+  
+  this.check=function(label){
+    if ( this.short === label ) return (true);
+    else return (false);    
+  };
+  
+}// end Drawer
+
+function makeDrawers(collection) {
+  var f;
+  for (var i=0;i<collection.length;i++) {
+    f=collection[i];
+    if ( f.hasAttribute("short") ) {// find the parent and turn it into a Drawer
+      //alert(f.getAttribute("short"));
+      nd=new Drawer(f.parentNode,f.getAttribute("short"));
+      d.push(nd);
+    }
+  }
+}// end makeDrawers(collection)
+*/
+var d=new Array;
+document.write(">"+d.length);
+document.write(" f>"+document.forms.length);
+document.write(" l>"+document.links.length);
+
+var df=document.forms;
+var dl=document.links;
+makeDrawers(document.forms,d);
+makeDrawers(document.links,d);
+
+document.write(">>"+d.length);
+
+for (var i=0;i<d.length;i++) {
+  d[i].close();  
+}
+
+
+
+/*function toggle(shortLabel) {
+  for (var i=0;i<d.length;i++) {
+    if ( d[i].check(shortLabel) ) {
+      d[i].switch();
+      return;
+    }
+  }
+}// end toggle*/
+
+</script>
+</body>
+</html>

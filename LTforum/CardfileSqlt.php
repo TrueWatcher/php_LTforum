@@ -72,7 +72,7 @@ class CardfileSqlt extends ForumDb {
     
     $qAddFirstMsg="INSERT INTO '".self::$table."' (
       date, time, author, message, comment ) VALUES ('".
-      $dateTime[0]."','".$dateTime[1]."','Creator', 'A new hangout \"".$dbFileName."\" have been prepared for your pleasure !',''
+      $dateTime[0]."','".$dateTime[1]."','Creator', 'A new hangout \"".$dbFileName."\" has been prepared for your pleasure !',''
     )";
     parent::$forumDbo->exec($qAddFirstMsg);
   }
