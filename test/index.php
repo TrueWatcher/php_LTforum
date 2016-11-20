@@ -8,8 +8,8 @@
  * Defines paths (possibly thread-specific), then passes to main module (common for all threads)
  */
 
-//echo ("I'm LTforum/demo/index.php"); 
- 
+//echo ("I'm LTforum/demo/index.php");
+
 $forumName="test";// canonical forum name
 $forumTitle="Dedicated tests thread";// page title
 $mainPath="../LTforum/";// relative to here

@@ -15,5 +15,5 @@ class UsageException extends Exception {}
  * My exception for exception in normal operations, like border situations.
  */
 class OperationalException extends Exception {}
- 
+
 ?>

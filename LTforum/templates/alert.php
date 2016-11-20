@@ -1,9 +1,9 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes 
+ * @version 1.1 added Search command, refactored View classes
  */
- 
+
 /**
  * Simplistic page to show alerts and error messages.
  * @uses PageRegistry $pr
@@ -33,10 +33,10 @@
   ?></td>
   </tr>
 </table>
-  
-<p id="footer"><?php 
-$outcome="alert~".$pr->g("alert"); 
-if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
-?></p>  
+
+<p id="footer"><?php
+$outcome="alert~".$pr->g("alert");
+if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->");
+?></p>
 </body>
 </html>

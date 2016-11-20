@@ -3,7 +3,7 @@
  * @pakage LTforum
  * @version 1.1 + search command
  */
- 
+
 /**
  * Form to edit existing record (privileged).
  * @uses PageRegistry $apr
@@ -20,17 +20,17 @@
 <body>
 <form action="" method="post" >
   <fieldset>
-    
+
     <input type="hidden" name="act" value="ua" />
     <input type="hidden" name="end" value="<?php print ($apr->g("end")); ?>" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
-    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" /> 
+    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />
     <legend>Edit message</legend>
     <table>
       <tr>
         <th>Message id: </th>
         <td><?php print ($apr->g("end")); ?></td>
-      </tr>    
+      </tr>
       <tr>
         <th><label for="author">Author: </label></th>
         <td><input type="text" id="author" name="author" value="<?php print ($apr->g("author")); ?>" /></td>
@@ -38,7 +38,7 @@
       <!--<tr>
         <th><label for="del">Delete this message</label></th>
         <td><input type="checkbox" id="del" name="del" /></td>
-      </tr>-->      
+      </tr>-->
       <tr>
         <th><label for="clear">Set current date and time</label></th>
         <td><input type="checkbox" id="clear" name="clear" /></td>

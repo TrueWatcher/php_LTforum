@@ -31,7 +31,7 @@ if ( !is_subclass_of($cc,"SectionElements") ) throw new UsageException ("Layout 
 <?php
 $j=0;
 if ( !empty($vr->g("msgGenerator")) ) {
-  foreach ($vr->g("msgGenerator") as $j=>$msg) { 
+  foreach ($vr->g("msgGenerator") as $j=>$msg) {
     print( $cc::oneMessage($msg,$cc::localControls($msg,$vr,$pr),$vr) );
   }
 }
@@ -39,17 +39,17 @@ if ( !empty($vr->g("msgGenerator")) ) {
 <?php if( ($ba=$cc::BottomAlert($pr,$j)) ) print("<hr/><p class=\"n\">".$ba."</p>"); ?>
 <hr />
 <table class="low"><tr>
-  <td><?php 
+  <td><?php
   print ( $cc::nextPageLink($vr,$lastPage) );
   if ($lastPage) print ( $cc::newMsgLink($vr) );
   ?></td>
   <td><?php print ( $cc::pagePanel($vr) ); ?></td>
   <td><?php print ( $cc::lengthForm($vr) ); ?></td>
 </tr></table>
-<p id="footer"><?php 
-$outcome="viewed~".$j; 
-if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->"); 
+<p id="footer"><?php
+$outcome="viewed~".$j;
+if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->");
 ?></p>
-<?php //print ( $cc::onreadyScript() ); ?>
+<?php print ( $cc::onreadyScript($sr) ); ?>
 </body>
 </html>

@@ -3,13 +3,13 @@
  * @pakage LTforum
  * @version 1.1 added Search command, refactored View classes
  */
- 
+
 /**
  * HTML tags filter ( function mask_tags ) and its satellites.
  * @author TrueWatcher 2011-2016
  */
 
-class MaskTags { 
+class MaskTags {
 //looks for ">" after seek position, without "<"
 private static function gt_present($start,$in_str) {
   $j=strpos($in_str,'>',$start+1);
@@ -50,8 +50,8 @@ private static function valid_tag($seek,$in_str,$allowed,&$closing) {
     if (strcmp($sub_i,$allowed[$i])===0) {
       $terminates=substr($sub_i,$l-1,1);
       if ($closing) {
-      	 if($terminates==" ") $closing='</'.substr($sub_i,0,$l-1).'>'; 
-         else $closing='</'.$sub_i.'>';
+        if($terminates==" ") $closing='</'.substr($sub_i,0,$l-1).'>';
+        else $closing='</'.$sub_i.'>';
       }
       //print("\ntag_found:".$sub_i.";");
       //print("OK,match:".$closing."_ends with:".$terminates."*");
@@ -89,16 +89,16 @@ private static function mask_lt ($in_str,$cuts) {
 //example: print ("\n".mask_tags ($input, array("[s]","[/s]","[i]","[/i]","[b]","[/b]"), array("br","br ","br/"), array("center","em","del","s","i","b","a ") ) );
 public static function mask_tags($in_str,$allowed_bbcode,$allowed_empty,$allowed_markup) {
   $cuts=array();
-  
+
   if (strlen($in_str)==0) return(FALSE);
-  
+
   if ((count($allowed_bbcode)+count($allowed_empty)+count($allowed_markup))==0) {
     return (str_replace("<","&lt;",$in_str));
   }
-  
+
   //replacing "<SPACE" with "&lt;SPACE"
   $in_str=str_replace("< ","&lt; ",$in_str);
-  
+
   //converting allowed BBCode tags to HTML
   $bbc2html=array_fill(0,count($allowed_bbcode),"");
   foreach($allowed_bbcode as $i=>$al_bc){
@@ -106,7 +106,7 @@ public static function mask_tags($in_str,$allowed_bbcode,$allowed_empty,$allowed
   }
   //print_r($bbc2html);
   $in_str=str_replace($allowed_bbcode,$bbc2html,$in_str);
-  
+
   $cuts_count=0;
   $pos_seek=strpos($in_str,'<');
   while (!($pos_seek===FALSE)) {
@@ -139,8 +139,8 @@ public static function mask_tags($in_str,$allowed_bbcode,$allowed_empty,$allowed
         $cuts_count++;
     }//end if valid
   $pos_seek=strpos($in_str,'<',$pos_seek+1);
-  }//end while 
-  
+  }//end while
+
   //print_r ($cuts);
   //return( $in_str );// DEBUG
   return( self::mask_lt($in_str,$cuts) );

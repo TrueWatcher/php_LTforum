@@ -3,14 +3,14 @@
  * @pakage LTforum
  * @version 1.1 added Search command, refactored View classes
  */
- 
+
 /**
  * Generic Form for new, editLast, editAny.
  * @uses ViewRegistry $vr
  * @uses PageRegistry $apr
  * @uses SessionRegistry $asr
  */
- 
+
 $cc=$vr->g("controlsClass");
 if ( !is_subclass_of($cc,"FormElements") ) throw new UsageException ("Layout form.php should be used with subclasses of FormElements, where ".$cc." does not belong");
 ?>
@@ -26,14 +26,14 @@ if ( !is_subclass_of($cc,"FormElements") ) throw new UsageException ("Layout for
   <fieldset>
     <?php print ( $cc::hiddenFields($pr) ); ?>
     <table>
-      <?php 
+      <?php
       print ( $cc::idP($vr) );
       print ( $cc::authorInput(null,null,null,$vr,$pr) );
       print ( $cc::deleteChkbx () );
       print ( $cc::clearChkbx () );
       print ( $cc::txtText ($sr,$vr) );
       print ( $cc::commText ($sr,$vr) );
-      print ( $cc::snapChkbx () );      
+      print ( $cc::snapChkbx () );
       ?>
       <tr>
         <td id="enter" colspan="2"><input class="submit" type="submit" value="Submit" /></td>
@@ -42,11 +42,10 @@ if ( !is_subclass_of($cc,"FormElements") ) throw new UsageException ("Layout for
   </fieldset>
 </form>
 <?php
-  print ( $cc::script1() ); 
+  print ( $cc::script1() );
   print ( $cc::script2() );
   print ( $cc::script3() );
 ?>
 </body>
 </html>
-  
-  
+
