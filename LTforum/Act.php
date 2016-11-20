@@ -334,16 +334,22 @@ class Act {
         $p=mb_strpos($haystack,$andTermM);
         if ($p!==false) {
           $andResult=true;
-          // add positions to hit lists
-          $starts[]=$p-1;
-          $ends[]=$p+mb_strlen($andTermM)-1;
+          if ($collectAll) { // add positions to hit lists
+            $starts[]=$p-1;
+            $ends[]=$p+mb_strlen($andTermM)-1;
+            while ( ($p=mb_strpos($haystack,$andTermM,$p+1))!==false ) {
+              $starts[]=$p-1;
+              $ends[]=$p+mb_strlen($andTermM)-1;            
+            }
+          }
         }
         else $andResult=false;
       }
       $res=($res && $andResult);
     }
-    if ($res || $collectAll) return (array($starts,$ends));// all are Ok, return hit lists
-    return(false);
+    if ($res && $collectAll) return (array($starts,$ends));
+    else return ($res);
+
   }
 
 }// end Act
