@@ -78,7 +78,13 @@ v.1.1.0    6 Sep 2016
 "Search" command
 
 v.1.1.2    9 Sep 2016
-refactoring Viewers, new tests, improvements 
+refactoring Viewers, new tests, improvements
+
+v.1.1.4   15  Sep 2016
+added Search feature, tests, bugfixing
+
+v.1.1.5   20 Nov 2016
+added new feature Drawers (minifying some controls on narrow screen)
 
 #TODOs
  
