@@ -4,39 +4,39 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>Test JS unit "Drawer"</title>
   <link rel="stylesheet" type="text/css" href="../assets/talk.css" media="all" />
-  
+
   <script type="text/javascript">
-  
+
 function Drawer (elm,shortLabel) {
   this.element=elm;
   this.full=elm.innerHTML;
   this.short=shortLabel;
   this.isOpen=1;
-  
+
   //var tthis=this;
   var onclickToggle='toggle('+"'"+this.short+"'"+',d);return false;';
-  
+
   this.close=function(){
     this.element.innerHTML='<a href="javascript:void(0)" onclick="' + onclickToggle + '">' + this.short + "&raquo;" + "</a>";
     this.isOpen=0;
   };
-  
+
   this.open=function(){
     var closeLink='<a href="javascript:void(0)" onclick="' + onclickToggle + '">' + "&laquo;" + "</a>";
     this.element.innerHTML=this.full+"&nbsp;&nbsp;"+closeLink;
     this.isOpen=1;
   };
-  
+
   this.flip=function(){
     if (this.isOpen) this.close();
     else this.open();
   };
-  
+
   this.check=function(label){
     if ( this.short === label ) return (true);
-    else return (false);    
+    else return (false);
   };
-//*/  
+//*/
 }// end Drawer
 
 </script>
@@ -55,7 +55,7 @@ function makeDrawers(collection,drawers) {
   }
 }// end makeDrawers(collection)
 </script>
-<script type="text/javascript">  
+<script type="text/javascript">
 function toggle(shortLabel,drawers) {
   for (var i=0;i<drawers.length;i++) {
     if ( drawers[i].check(shortLabel) ) {
@@ -63,7 +63,7 @@ function toggle(shortLabel,drawers) {
       return;
     }
   }
-}// end toggle  
+}// end toggle
 </script>
 </head>
 <body>
@@ -87,7 +87,7 @@ function toggle(shortLabel,drawers) {
   document.write(" Hi, I am JS once more! ");
   var wide=1640;
   var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-  
+
   var height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
   document.write(" width="+width+" height="+height+" ");
   if ( width<=wide ) {
@@ -96,37 +96,37 @@ function toggle(shortLabel,drawers) {
     s.setAttribute( 'src', src );
     //document.body.appendChild(s);
   }
-/*  
+/*
 function Drawer (elm,shortLabel) {
   this.element=elm;
   this.full=elm.innerHTML;
   this.short=shortLabel;
   this.isOpen=1;
-  
+
   //var tthis=this;
   var onclickToggle='toggle('+"'"+this.short+"'"+');return false;';
-  
+
   this.close=function(){
     this.element.innerHTML='<a href="javascript:void(0)" onclick="'+onclickToggle+'">'+this.short+"&raquo;"+"</a>";
     this.isOpen=0;
   };
-  
+
   this.open=function(){
     var closeLink='<a href="javascript:void(0)" onclick="'+onclickToggle+'">'+"&laquo;"+"</a>";
     this.element.innerHTML=this.full+"&nbsp;&nbsp;"+closeLink;
     this.isOpen=1;
   };
-  
+
   this.switch=function(){
     if (this.isOpen) this.close();
     else this.open();
   };
-  
+
   this.check=function(label){
     if ( this.short === label ) return (true);
-    else return (false);    
+    else return (false);
   };
-  
+
 }// end Drawer
 
 function makeDrawers(collection) {
@@ -154,7 +154,7 @@ makeDrawers(document.links,d);
 document.write(">>"+d.length);
 
 for (var i=0;i<d.length;i++) {
-  d[i].close();  
+  d[i].close();
 }
 
 
