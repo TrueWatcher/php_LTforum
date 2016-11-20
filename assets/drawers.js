@@ -1,57 +1,53 @@
-function Drawer (elm,shortLabel) {
-  var _full=elm.innerHTML;
-  var _isOpen=1;
-  var onclickToggle='toggle('+"'"+shortLabel+"'"+');return false;';
+"use strict";
+function Drawer(control,shortLabel) {
+  var _this=this;
+  var _isOpen=0;
+  var _labelCover=shortLabel+"&raquo;";
+  var _labelClose="&laquo;";
+  var _container=control.parentNode;
+  var _handle=document.createElement("a");
+  var _handleStyle=_handle.style;
+  var _controlStyle=control.style;
 
-  this.close=function(){
-    elm.innerHTML='<a href="javascript:void(0)" onclick="'+onclickToggle+'">'+shortLabel+"&raquo;"+"</a>";
-    _isOpen=0;
-  };
+  _handle.href="javascript:;";
+  _handle.innerHTML=_labelCover;
+  _handle.onclick=function() { _this.flip(); return false; };
+  _handleStyle.margin="0 0 0 1em";
+  _handleStyle.padding="0 0.2em 0 0.2em";
+  _controlStyle.display="none";
+  _container.appendChild(_handle);
 
-  this.open=function(){
-    var closeLink='<a href="javascript:void(0)" onclick="'+onclickToggle+'">'+"&laquo;"+"</a>";
-    elm.innerHTML=_full+"&nbsp;&nbsp;"+closeLink;
-    _isOpen=1;
-  };
-
-  this.flip=function(){
-    if (_isOpen) this.close();
-    else this.open();
-  };
-
-  this.check=function(label){
-    if ( shortLabel === label ) return (true);
-    else return (false);
+  this.flip=function() {
+    if (_isOpen) {
+      _controlStyle.display="none";
+      _handle.innerHTML=_labelCover;
+      _isOpen=0;
+    }
+    else {
+      _handle.innerHTML=_labelClose;
+      _controlStyle.display="";
+      _isOpen=1;
+    }
   };
 }// end Drawer
 
 function makeDrawers(collection) {
-  var i,f,sh,nd;
-  for (i=0;i<collection.length;i++) {
+  var i,f,sh;
+  for ( i=collection.length-1; i>=0; i-- ) {
     f=collection[i];
-    sh = ( f["short"] || f.short || f.getAttribute("short") || f.attributes["short"] );
-    if ( sh ) { // find the parent and turn it into a Drawer
-      nd=new Drawer(f.parentNode,sh);
-      d.push(nd);
-    }
+    sh = ( f["drawer"] || f.getAttribute("drawer") || f.attributes["drawer"] );
+    if (sh) { new Drawer(f,sh); }
   }
-}// end makeDrawers(collection)
-
-var d=[];// global
-
-makeDrawers(document.forms);
-makeDrawers(document.links);
-
-for (var i=0;i<d.length;i++) {
-  d[i].close();
 }
 
-function toggle(shortLabel) {
-  for (var i=0;i<d.length;i++) {
-    if ( d[i].check(shortLabel) ) {
-      d[i].flip();
-      return;
-    }
-  }
-}// end toggle
-
+var drawers=[];
+if ( typeof(document.querySelectorAll)=="function" ) {
+  drawers=document.querySelectorAll("[drawer]");// attribute selector
+}
+if ( drawers.length ) { makeDrawers(drawers); }
+else {
+  //alert ("dumb one");
+  makeDrawers(document.forms);
+  makeDrawers(document.links);
+  makeDrawers(document.getElementsByTagName("span"));
+}

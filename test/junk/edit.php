@@ -3,7 +3,7 @@
  * @pakage LTforum
  * @version 1.1 + search command
  */
- 
+
 /**
  * Form to edit existing record.
  * @uses PageRegistry $pr
@@ -23,13 +23,13 @@
     <input type="hidden" name="act" value="upd" />
     <input type="hidden" name="end" value="<?php print ($pr->g("end")); ?>" />
     <input type="hidden" name="user" value="<?php print ($pr->g("user")); ?>" />
-    <input type="hidden" name="length" value="<?php print ($pr->g("length")); ?>" /> 
+    <input type="hidden" name="length" value="<?php print ($pr->g("length")); ?>" />
     <legend>Edit message</legend>
     <table>
       <tr>
         <th>Message id: </th>
         <td><?php print ($pr->g("end")); ?></td>
-      </tr>    
+      </tr>
       <tr>
         <th>Your name: </th>
         <td><?php print ($pr->g("user")); ?></td>
@@ -37,7 +37,7 @@
       <tr>
         <th><label for="del">Delete this message</label></th>
         <td><input type="checkbox" id="del" name="del" /></td>
-      </tr>      
+      </tr>
       <tr>
         <th colspan="2"><label for="txt">Edit this text (<span id="cnt">max <?php $maxMessageLetters=(int)($sr->g("maxMessageBytes")/2); print($maxMessageLetters); ?> letters</span>):</label></th>
       </tr>
@@ -49,7 +49,7 @@
       </tr>
       <tr>
         <td colspan="2" id="c"><textarea id="comm" name="comm" rows="" cols="" maxlength="<?php print($maxMessageLetters); ?>" ><?php print( $pr->g("comm") ); ?></textarea></td>
-      </tr>      
+      </tr>
       <tr>
         <th><label for="snap">View forum after posting</label></th>
         <td><input type="checkbox" id="snap" name="snap" checked="checked" /></td>

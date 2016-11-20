@@ -3,13 +3,13 @@
  * @pakage LTforum
  * @version 1.1 added Search command, refactored View classes
  */
- 
+
 /**
  * Simplistic page to show alerts and error messages.
  * @uses PageRegistry $pr
  * @uses SessionRegistry $sr
  */
- 
+
   //print("Hi, I am admin.php");
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -32,7 +32,7 @@
     end : <input type="text" name="end" /> or max size (x1000B) : <input type="text" name="kb" /><br />
     new IDs start from (blank to discard IDs, * to copy from forum) :
     <input type="text" name="newBegin" /><br />
-    target file: <input type="text" name="obj" />.html<br />    
+    target file: <input type="text" name="obj" />.html<br />
     <input type="hidden" name="act" value="exp" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
     <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />
@@ -44,12 +44,12 @@
   <fieldset>
     Import from html<br />
     file : <input type="text" name="obj" />.html<br />
-    order : <input type="radio" name="order" value="desc" /> from new to old, descending&nbsp;&nbsp;  
+    order : <input type="radio" name="order" value="desc" /> from new to old, descending&nbsp;&nbsp;
     <input type="radio" name="order" value="asc" checked="checked" /> from old to new, ascending<br />
     Imported messages will be added on top of the present with fresh IDs.<br />
     <input type="hidden" name="act" value="imp" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
-    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
+    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />
     <input type="submit" value="Import" />
   </fieldset>
 </form>
@@ -60,8 +60,8 @@
     from : <input type="text" name="begin" /> to : <input type="text" name="end" value="<?php print( $apr->g("end") ) ?>" /><br />
     <input type="hidden" name="act" value="dr" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
-    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
-    <input type="submit" value="Delete" />    
+    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />
+    <input type="submit" value="Delete" />
   </fieldset>
 </form>
 
@@ -71,8 +71,8 @@
     id : <input type="text" name="current" /><br />
     <input type="hidden" name="act" value="ea" />
     <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
-    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />    
-    <input type="submit" value="Edit" />    
+    <input type="hidden" name="pin" value="<?php print( $apr->g("pin") ) ?>" />
+    <input type="submit" value="Edit" />
   </fieldset>
 </form>
 

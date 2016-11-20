@@ -20,14 +20,14 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
 
   protected $browser="htmlunit";
   protected $emulate="FIREFOX_45";// needed for JQuery and/or Bootstrap
-  // http://htmlunit.sourceforge.net/apidocs/index.html class 
+  // http://htmlunit.sourceforge.net/apidocs/index.html class
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
   protected $homeUri="http://LTforum/rulez.php?forum=test&pin=1";//"http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//
   //protected $filesystemPath="/home/alexander/www/LTforum/test/";
   protected $testDirUri="http://LTforum/test/";//"http://fs..net/new_ltforum/test/";//
-  
+
   public function setUp() {
     $host = 'http://localhost:4444/wd/hub'; // this is the default
     $this->webDriver = RemoteWebDriver::create(
@@ -39,20 +39,20 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
         )
      );
   }
-  
+
   public function tearDown() {
     $this->webDriver->quit();
   }
-  
+
   private $storedTitle;
-  
+
   public function _test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
     if ($this->JSenabled) print ("ON !");
     else print ("OFF !");
-    print ("\r\nSending request for ".$this->homeUri."..."); 
+    print ("\r\nSending request for ".$this->homeUri."...");
     $this->webDriver->get($this->homeUri);
-    print ("processing page..."); 
+    print ("processing page...");
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     else print ("title not found!\r\n");
@@ -60,7 +60,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     print("Info: first page OK");
     self::$storedTitle=$title;
   }
-  
+
   private function parseHtmlIds($pathName) {
     $idList=[];
     $buf=file_get_contents($pathName.".html");
@@ -69,7 +69,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     if( $ret ) $idList=$list[1];
     return($idList);
   }
-  
+
   private function export($begin,$end,$file,$newBegin,$kb="") {
     $this->webDriver->get($this->homeUri);
     $title=$this->webDriver->getTitle();
@@ -79,7 +79,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $form->findElement(webDriverBy::name("end"))->sendKeys($end);
     $form->findElement(webDriverBy::name("obj"))->sendKeys($file);
     if($newBegin) $form->findElement(webDriverBy::name("newBegin"))->sendKeys($newBegin);
-    if($kb) $form->findElement(webDriverBy::name("kb"))->sendKeys($kb);    
+    if($kb) $form->findElement(webDriverBy::name("kb"))->sendKeys($kb);
     $form->submit();
   }
 
@@ -87,24 +87,24 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $expected1="Exported messages ".$begin."..".$end." to ";
     $expected2=".html , total ".($end-$begin+1);
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $src=$this->webDriver->getPageSource();
     $this->assertContains($expected1,$src,"Messages numbers mismatch");
-    $this->assertContains($expected2,$src,"Given total mismatches");   
+    $this->assertContains($expected2,$src,"Given total mismatches");
   }
-  
+
   private function getExportResponce(&$begin,&$end) {
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $src=$this->webDriver->getPageSource();
     $ret=preg_match("~\s+(\d+)\.\.(\d+)\s+~",$src,$res);
     //print_r($res);
     $this->assertTrue($ret>0,"Something is wrong with parsing export responce");
     $begin=$res[1];
     $end=$res[2];
-  }  
-  
-  private function checkExport($begin,$end,$file2,$newBegin) {   
+  }
+
+  private function checkExport($begin,$end,$file2,$newBegin) {
     //$path=$this->filesystemPath;
     $path=$this->testDirUri;
     $idList=self::parseHtmlIds($path.$file2);
@@ -114,9 +114,9 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $this->assertEquals($newBegin+($end-$begin),end($idList),"End mismatches in ".$file2);
     print(" File check OK ");
     $size=strlen( file_get_contents($path.$file2.".html") );
-    return ($size);  
+    return ($size);
   }
-  
+
   public function test_simpleExport() {
     $file="e_1_11";
     $begin=1;
@@ -125,10 +125,10 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::export($begin,$end,$file,$newBegin);
     print(" Export demanded to ".$file);
     self::checkExportResponce($begin,$end);
-    print(" Responce OK ");    
+    print(" Responce OK ");
     self::checkExport($begin,$end,$file,$begin);
 
-    
+
     $path=$this->testDirUri;
     $buf=file_get_contents($path.$file.".html");
     preg_match("~text/css\"\s+href=\"(.+?)\"~",$buf,$matches);
@@ -140,20 +140,20 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $this->assertNotEmpty($css,"CSS link in exported file is incorrect");
     print ("\r\nCSS link OK\r\n");
   }
-  
+
   public function test_ImportExport() {
     $file1="e_1_11";
     $begin=12;
-    $end=22;    
+    $end=22;
     $this->webDriver->get($this->homeUri);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("import"));
     $form->findElement(webDriverBy::name("obj"))->sendKeys($file1);
     $form->submit();
-    print(" Import demanded ");    
+    print(" Import demanded ");
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $ok=$this->webDriver->findElement(webDriverBy::partialLinkText("Ok"));
     $ok->click();
     $title=$this->webDriver->getTitle();
@@ -163,8 +163,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::export($begin,$end,$file2,$newBegin);
     print(" Export demanded to ".$file2);
     self::checkExportResponce($begin,$end);
-    print(" Responce OK ");    
-    self::checkExport(1,11,$file2,$newBegin);    
+    print(" Responce OK ");
+    self::checkExport(1,11,$file2,$newBegin);
     //$path=$this->filesystemPath;
     $path=$this->testDirUri;
     $buf1=file_get_contents($path.$file1.".html");
@@ -172,16 +172,16 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $this->assertEquals($buf1,$buf2,"Files are different");
     //$this->assertFileEquals($path.$file1.".html",$path.$file2.".html","Files are different");
     print("\r\nExported files are equal, congratulations! \r\n");
-    
+
     $file3="e_3kb";
     $newBegin="*";
     $begin=2;
     $kb=3;
-    self::export($begin,"",$file3,$newBegin,$kb);    
+    self::export($begin,"",$file3,$newBegin,$kb);
     self::getExportResponce($recBegin,$recEnd);
     print(" Responce : ".$recBegin."..".$recEnd);
     $this->assertEquals($begin,$recBegin,"Begin numbers mismatch");
-    $this->assertLessThan(22,$recEnd,"End number too big, maybe kb limit not applied");   
+    $this->assertLessThan(22,$recEnd,"End number too big, maybe kb limit not applied");
     $s=self::checkExport($begin,$recEnd,$file3,$begin);
     print(" Export limited by ".$kb."KB : exported ".$s."KB ");
   }
@@ -192,30 +192,30 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("delRange"));
     $form->findElement(webDriverBy::name("begin"))->sendKeys(12);
-    $form->findElement(webDriverBy::name("end"))->sendKeys(22);    
+    $form->findElement(webDriverBy::name("end"))->sendKeys(22);
     $form->submit();
-    print(" Deleting 12..22 demanded ");    
+    print(" Deleting 12..22 demanded ");
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $ok=$this->webDriver->findElement(webDriverBy::partialLinkText("Ok"));
-    $ok->click();    
+    $ok->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("delRange"));
     $form->findElement(webDriverBy::name("begin"))->sendKeys(1);
-    $form->findElement(webDriverBy::name("end"))->sendKeys(2);    
+    $form->findElement(webDriverBy::name("end"))->sendKeys(2);
     $form->submit();
-    print(" Deleting 1..2 demanded ");    
+    print(" Deleting 1..2 demanded ");
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $ok=$this->webDriver->findElement(webDriverBy::partialLinkText("Ok"));
     $ok->click();
-    
+
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n"); 
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("editAny"));
     $toEdit=5;
-    $form->findElement(webDriverBy::name("current"))->sendKeys($toEdit);    
+    $form->findElement(webDriverBy::name("current"))->sendKeys($toEdit);
     $form->submit();
     print(" Edit ".$toEdit." demanded ");
     $title_edit=$this->webDriver->getTitle();
@@ -233,8 +233,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $comm=$this->webDriver->findElement(webDriverBy::name("comm"));
     $comm->sendKeys($myComm);
     $txt->submit();
-    print(" Edit ".$toEdit." submited ");    
-    
+    print(" Edit ".$toEdit." submited ");
+
     $file="e_3_11";
     $begin=3;
     $end=11;
@@ -248,16 +248,16 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     print ("\r\nDeletions OK\r\n");
     self::checkExport($begin,$end,$file,$begin);
     print (" Checking file ".$file." OK ");
-    
+
     //$path=$this->filesystemPath;
     $path=$this->testDirUri;
     $src=file_get_contents($path.$file.".html");
     $this->assertContains(">".$me,$src,"My dear authorName is missing");
-    $this->assertContains($add,$src,"My remark is missing");    
+    $this->assertContains($add,$src,"My remark is missing");
     //$this->assertContains($myComm,$src,"My comment is missing");
     print ("\r\nEdit OK\r\n");
   }
-  
+
   public function test_exportPartial() {
     $file="e_4_9";
     $begin=4;
@@ -266,22 +266,22 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::export($begin,$end,$file,$newBegin);
     print(" Export demanded to ".$file);
     self::checkExportResponce($begin,$end);
-    print(" Responce OK ");    
+    print(" Responce OK ");
     self::checkExport($begin,$end,$file,$begin);
     print (" Checking file".$file."OK ");
 
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $ok=$this->webDriver->findElement(webDriverBy::partialLinkText("Ok"));
-    $ok->click();    
+    $ok->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("import"));
     $form->findElement(webDriverBy::name("obj"))->sendKeys($file);
     $form->submit();
-    print(" Import demanded ");    
+    print(" Import demanded ");
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");   
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $file2="ee_4_9";
     $begin=12;
     $end=22;
@@ -289,19 +289,19 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::export($begin,$end,$file2,$newBegin);
     print(" Export demanded to ".$file2);
     self::getExportResponce($recBegin,$recEnd);
-    print(" Responce : ".$recBegin."..".$recEnd);         
+    print(" Responce : ".$recBegin."..".$recEnd);
     self::checkExport($begin,$recEnd,$file2,$newBegin);
     print (" Checking file ".$file2."OK ");
     //$path=$this->filesystemPath;
     $path=$this->testDirUri;
     $buf1=file_get_contents($path.$file.".html");
     $buf2=file_get_contents($path.$file2.".html");
-    $this->assertEquals($buf1,$buf2,"Files are different");    
+    $this->assertEquals($buf1,$buf2,"Files are different");
     //$this->assertFileEquals($path.$file.".html",$path.$file2.".html","Files are different");
-    print("\r\nExported files are equal, congratulations!\r\n");    
-  
+    print("\r\nExported files are equal, congratulations!\r\n");
+
   }
-  
+
 }
 
 ?>

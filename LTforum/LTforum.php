@@ -16,10 +16,10 @@ require_once ($mainPath."MyExceptions.php");
 
 // Classes and function, which have not found their own files
 
- 
+
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
-    
+
     public function load() {
       $inputKeys=array("act","current","begin","end","length","user","txt","comm","snap","del","query","searchLength","order");
       foreach ($inputKeys as $k) {
@@ -30,7 +30,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
       //else $this->s("user","Creator");
     }
 }
- 
+
 class SessionRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;
 }
@@ -44,7 +44,7 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // instantiate and initialize Page Registry and Session Registry
-$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "forum"=>$forumName)
+$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "narrowScreen"=>640, "forum"=>$forumName)
 );
 
 $pr=PageRegistry::getInstance( 0,array() );
@@ -60,7 +60,7 @@ try {
   $pr->s("cardfile",new CardfileSqlt($forumName,true));
 }
 catch (Exception $e) {
-  Act::showAlert ($pr,$sr,$e->getMessage()); 
+  Act::showAlert ($pr,$sr,$e->getMessage());
 }
 
 // some testing code
@@ -107,5 +107,5 @@ switch ($action) {
   default:
     Act::view($pr,$sr);
 }
-  
+
 ?>

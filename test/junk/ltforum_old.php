@@ -5,7 +5,7 @@
   class assocArrayWrapper {
     protected $arr;
     protected $strict;
-   
+
     public function s($key,$value) {
       $this->arr[$key]=$value;
     }
@@ -24,12 +24,12 @@
       if ( isset($arr) ) $this->arr=$arr;
     }
   }
- 
+
   class singletAssocArrayWrapper {
     protected $arr;
     protected $strict;
     //protected static $me=null;// this should be in child classes
-    
+
     public static function getInstance($strict=true,$arr=array()) {
       $sc=get_called_class();
       if ( empty( self::$me ) ) {
@@ -39,7 +39,7 @@
       }
       return $sc::$me;
     }
-   
+
     public function s($key,$value) {
       $this->arr[$key]=$value;
     }
@@ -61,10 +61,10 @@
       print_r($this->arr);
     }
   }
-   
+
   class inputVars extends singletAssocArrayWrapper {
     protected static $me=null;// private causes access error
-    
+
     public function load() {
       $inputKeys=array("act","page","rec","len");
       foreach ($inputKeys as $k) {
@@ -75,26 +75,26 @@
       else $this->s("user","UFO");
       $forum=( parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH) );
       $this->s("forum",$forum);
-      
+
       $this->s("forum","testDb");// DEBUG!!!
     }
   }
- 
+
   class settings extends singletAssocArrayWrapper {
     protected static $me=null;
   }
-  
+
   function makeMsg($a,$t,$c="") {
     return ( array("author"=>$a,"message"=>$t,"comment"=>$c) );
   }
-  
+
   require_once ("helperSqlite.php");
-  
+
   // main -----------------------------------------------
-  
+
   print ("\r\nHello, I'm LTforum's main program!\r\n");
   $ins=inputVars::getInstance( true,array("there"=>"4321") );
-  
+
   //$ins=inputVars::getInstance(true,array("there"=>"4321"));
   //print($ins->g("there"));
   //$ins->s(("here","a1234");
@@ -103,41 +103,41 @@
   //$ins->dump();
   //$inssss=inputVars::getInstance(true,array("down_there"=>"4321000"));
   //$inssss->dump();
-  
+
   $ins->load();
 
   $ins->dump();
   print("====");
-  
+
   $sets=settings::getInstance( true,array("near"=>"4-3-2-1") );
   $sets->dump();
-  
-  
-  
 
-  
-  //$dbo=singletDbo::getInstance( $ins->g("forum") );  
+
+
+
+
+  //$dbo=singletDbo::getInstance( $ins->g("forum") );
   //$firstMsg=helperSqlite::getOneMsg($dbo,1);
-  
+
   $c=new CardfileSqlt( $ins->g("forum"), true);
   //$d=new CardfileSqlt( $ins->g("forum"), true);// must cause exception
   //$c=new CardfileSqlt( $ins->g("forum")."oh_no", false);// must cause exception
   $firstMsg=$c->getOneMsg(1);
   //print_r ($firstMsg);
-  
+
   $msg2=makeMsg("Super","Bla bla bla bla bla bla bla bla!!!");
   //helperSqlite::addMsg($dbo,$msg2);
   $c->addMsg($msg2);
-  
+
   //$msg=helperSqlite::getOneMsg($dbo,2);
   //print_r ($msg);
-  
+
   $msg3=makeMsg("SuperPuper","Blablablablablablablabla!!!Blablablablablablablabla!!!");
   $msg3["date"]="12.34.2022";
   $msg3["time"]="12-34";
   $c->addMsg($msg3);
   //helperSqlite::addMsg($dbo,$msg3);
-  
+
   $msg1=$c->getOneMsg(1);
   $msg1["time"]="99-99";
   $msg1["comment"]="UAHAHAHA!!!";
@@ -149,20 +149,20 @@
   foreach ($ms as $i=>$m) {
     print_r ($m);
   }
-  
+
   $t=$c->getLimits($l,$h,true);
   print("\r\nLow:".$l.", high:".$h.", total:".$t."\r\n");
-  
-  //try {
-  
-  //} catch ()
-  
 
-  
- 
- 
- 
- 
- 
+  //try {
+
+  //} catch ()
+
+
+
+
+
+
+
+
 
 ?>

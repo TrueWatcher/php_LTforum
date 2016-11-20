@@ -7,7 +7,7 @@
  * LTforum Admin panel, common for all forum-threads.
  * Requires forumName and, if authentication is absent, PIN
  */
- 
+
 require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
@@ -16,7 +16,7 @@ require_once ($mainPath."AdminAct.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
-    
+
     public function load() {
       $inputKeys=array("act","forum","pin","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
       foreach ($inputKeys as $k) {
@@ -27,7 +27,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
       //else $this->s("user","Creator");
     }
 }
- 
+
 class SessionRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;
 }
@@ -56,7 +56,7 @@ try {
   $apr->s("cardfile",new CardfileSqlt($targetPath,false));
 }
 catch (Exception $e) {
-  Act::showAlert ($apr,$asr,$e->getMessage()); 
+  Act::showAlert ($apr,$asr,$e->getMessage());
 }
 
 $total=$apr->g("cardfile")->getLimits($forumBegin,$forumEnd,$a,true);
@@ -90,11 +90,11 @@ try {
       exit(0);
     case ("ua"):
       AdminAct::updateAny ($apr,$asr);
-      exit(0);    
+      exit(0);
   }
 } catch (AccessException $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());
-} 
+}
 
 
 include ($asr->g("templatePath")."admin.php");

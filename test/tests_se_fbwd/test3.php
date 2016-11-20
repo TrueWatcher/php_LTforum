@@ -20,7 +20,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
 
   protected $browser="htmlunit";
   protected $emulate="FIREFOX_45";// needed for JQuery and/or Bootstrap
-  // http://htmlunit.sourceforge.net/apidocs/index.html class 
+  // http://htmlunit.sourceforge.net/apidocs/index.html class
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
@@ -40,31 +40,31 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
         )
      );
   }
-  
+
   public function tearDown() {
     $this->webDriver->quit();
   }
-  
+
   static private $storedUsername="Test";
   static private $storedTotal=0;
   static private $storedMsg="";
   static private $storedForum="test";
   static private $storedQuery="";
-  
+
   public function test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
     if ($this->JSenabled) print ("ON !");
     else print ("OFF !");
-    print ("\r\nSending request for ".$this->homeUri."..."); 
+    print ("\r\nSending request for ".$this->homeUri."...");
     $this->webDriver->get($this->homeUri);
-    print ("processing page..."); 
+    print ("processing page...");
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     else print ("title not found!\r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
     print("Info: first page OK");
   }
-  
+
   public function parseViewTitle($t,&$begin,&$end,&$pageCurrent,&$pageEnd) {
     $begin=$end=$pageCurrent=$pageEnd="";
     $forumNumbers=explode(": ",$t);
@@ -84,7 +84,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $pageEnd=trim($currentMore[1],"() ");
     return($forum);
   }
-  
+
   public function parseSearchIds ($buf) {
     $idList=[];
     //$buf=file_get_contents($pathName.".html");
@@ -92,20 +92,20 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     // htmlunit adds \n after and before tags
     //print_r($list);
     if( $ret ) $idList=$list[1];
-    return($idList);  
+    return($idList);
   }
-  
+
   public function addOneMsg($j=1,$myMsg="") {
     //$this->webDriver->get($this->homeUri);// bad because sets length to default
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
     $addLink->click();
-    $titleNew2=$this->webDriver->getTitle();    
+    $titleNew2=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $titleNew2 \r\n");
     $this->assertContains(self::$storedForum,$titleNew2,"Not came to WRITE NEW page after ALERT");
     $this->assertContains("new message",$titleNew2,"Missed WRITE NEW page");
-    $me=self::$storedUsername;    
+    $me=self::$storedUsername;
     $msg="Test message ".$j." ".$myMsg;
     $inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
     //$this->assertNotEmpty($addLink,"A USER field not found");
@@ -118,15 +118,15 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     //$this->assertNotEmpty($subm,"A SUBMIT field not found");
     $subm->submit();
   }
-  
+
   public function test_searchSequence1() {
     $mySearchCyr="ЙцуКЕнг";
     $myTextCyr="Фыва ".$mySearchCyr."ячсмить";
-    $this->webDriver->get($this->homeUri);    
+    $this->webDriver->get($this->homeUri);
     $this->addOneMsg(0,$myTextCyr);
-    
+
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     //$this->webDriver->get($this->searchUri.urlencode($mySearchCyr));
     $searchLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Search") );
     $searchLink->click();
@@ -142,18 +142,18 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
       if (strpos($title,"search")===false ) {
         print (" window 0 failed, trying window 1 ");
         $this->webDriver->switchTo()->window($handles[1]);// sometimes it is $handles[1]
-        sleep(3);        
+        sleep(3);
         $title=$this->webDriver->getTitle();
       }
     }
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertContains("search",$title,"No \"search\" in the title -- wrong page");
     $searchForm=$this->webDriver->findElement( webDriverBy::id("search") );
     $queryInput=$searchForm->findElement( webDriverBy::name("query") );
     $queryInput->sendKeys($mySearchCyr);
     $searchForm->submit();
     print(" Search request submitted ");
-    
+
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertContains($mySearchCyr,$title,"No search string in the title, maybe wrong page");
@@ -167,20 +167,20 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $highlighted=(preg_match("~>\s*".$mySearchCyr."\s+</span>~",$src,$res) >0 );
     $this->assertTrue($highlighted,"Highligthing goes wrong");
     print("\r\nHightlight brackets OK\r\n");
-    
+
     $viewLink=$this->webDriver->findElement( webDriverBy::partialLinkText("#".$ids[0]) );
     $viewLink->click();
     $titleView=$this->webDriver->getTitle();
     if (strlen($titleView)) print ("\r\ntitle found: $titleView \r\n");
     $srcView=$this->webDriver->getPageSource();
     $this->assertContains($mySearchCyr,$srcView,"No needle found in section page");
-        
+
     print("\r\nAdd-Search-View sequence OK\r\n");
-  }  
-    
+  }
+
   public function test_searchCaseInsensitive() {
     $mySearchCyrInv="йЦУкеНГ";
-    $this->webDriver->get($this->searchUri.urlencode($mySearchCyrInv));    
+    $this->webDriver->get($this->searchUri.urlencode($mySearchCyrInv));
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertContains($mySearchCyrInv,$title,"No search string in the title, maybe wrong page");
@@ -189,13 +189,13 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $ids=$this->parseSearchIds ($src);
     $this->assertNotEmpty($ids,"Empty search output for ".$mySearchCyrInv);
     print("\r\nFound ".count($ids)." results, search is proved case-insensitive");
-    
+
     $mySearchCyr="ЙцуКЕнг";
     $sub1="ЙцуКЕн";
     $sub2="уК";
     $sub3="Енг";
     $q=$sub1."&".$sub2."&".$sub3;
-    $this->webDriver->get($this->searchUri.urlencode($q));    
+    $this->webDriver->get($this->searchUri.urlencode($q));
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertContains($q,$title,"No search string in the title, maybe wrong page");
@@ -207,8 +207,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $res=[];
     $highlighted=(preg_match("~>\s*".$mySearchCyr."\s+</span>~",$src,$res) >0 );
     $this->assertTrue($highlighted,"Highligthing goes wrong");
-    print("\r\nHightlight brackets for overlapping needles OK\r\n");   
-    
+    print("\r\nHightlight brackets for overlapping needles OK\r\n");
+
   }
 }
 ?>
