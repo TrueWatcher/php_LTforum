@@ -330,17 +330,14 @@ class Act {
         $andResult=( mb_strpos($haystack,$andTermM)===false );
       }
       else {
-        //$andResult=( mb_strpos($haystack,$andTermM)!==false );
         $p=mb_strpos($haystack,$andTermM);
         if ($p!==false) {
           $andResult=true;
           if ($collectAll) { // add positions to hit lists
-            $starts[]=$p-1;
-            $ends[]=$p+mb_strlen($andTermM)-1;
-            while ( ($p=mb_strpos($haystack,$andTermM,$p+1))!==false ) {
+            do {
               $starts[]=$p-1;
-              $ends[]=$p+mb_strlen($andTermM)-1;            
-            }
+              $ends[]=$p+mb_strlen($andTermM)-1;
+            } while ( ($p=mb_strpos($haystack,$andTermM,$p+1))!==false );
           }
         }
         else $andResult=false;
