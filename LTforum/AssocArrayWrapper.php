@@ -90,6 +90,10 @@
     public function dump() {// DEBUG
       print_r($this->arr);
     }
+    
+    public function export() {
+      return ($this->arr);
+    }
   }// end SingletAssocArrayWrapper
 
 ?>
