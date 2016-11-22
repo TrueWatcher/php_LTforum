@@ -37,7 +37,8 @@ abstract class AuthElements {
   abstract static function hiddenFields ($context);
 
   static function alertP (AuthRegistry $context) {
-    return ( self::wrapRow ( self::wrapFldTh("Alert:").self::wrapFldTd($context->g("alert")) ) );
+    if ( empty($context->g("alert")) ) return ("");
+    return ( self::wrapRow ( self::wrapFldTh("Alert :").self::wrapFldTd($context->g("alert")) ) );
   }
   
   static function realmP (AuthRegistry $context) {
@@ -51,9 +52,9 @@ abstract class AuthElements {
     return ( self::wrapRow ($row) );
   }
   
-  static function pswInput ($label,$inputName,$authorName,$context,$pageContext) {
+  static function pswInput ($label,$inputName,$pswValue,$context,$pageContext) {
     $row=self::wrapFldTh( self::genericLabel($inputName,$label) );
-    $row.=self::wrapFldTd( self::genericInput("text",$inputName,$authorName) );
+    $row.=self::wrapFldTd( self::genericInput("text",$inputName,$pswValue) );
     return ( self::wrapRow ($row) );
   }
 

@@ -23,14 +23,14 @@ if ( !is_subclass_of($cc,"AuthElements") ) throw new UsageException ("Layout aut
   <?php print ( $cc::scriptHelper() ); ?>  
 </head>
 <body>
-<form action="" method="post" >
+<form action="" method="post" id="authForm" >
   <fieldset>
     <?php print ( $cc::hiddenFields($ar) ); ?>
     <table>
       <?php
       print ( $cc::realmP($ar) );
       print ( $cc::authorInput("Your name :","user","",null,null) );
-      print ( $cc::pswInput("Your password","ps","",null,null) );
+      print ( $cc::pswInput("Your password :","ps","",null,null) );
       print ( $cc::plainChkbx () );
       print ( $cc::alertP ($ar) );      ?>
       <tr>
