@@ -61,7 +61,8 @@ abstract class AuthElements {
   static function plainChkbx () {
     $label="Send as plain text ";
     $row=self::wrapFldTh( self::genericLabel("plain",$label) );
-    $row.=self::wrapFldTd( '<input type="checkbox" id="plain" name="plain" />' );
+    $row.=self::wrapFldTd( '<input type="checkbox" id="plain" name="plain" checked="checked" />' );
+    // should be unchecked by javaScript
     return ( self::wrapRow ($row) );
   }
 

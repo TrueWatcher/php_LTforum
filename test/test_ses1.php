@@ -6,6 +6,11 @@
     protected static $me=null;
   }
   
+  /*class SessionRegistry extends SingletAssocArrayWrapper {
+    protected static $me=null;
+  }
+  $sr=SessionRegistry::getInstance(0,["forum"=>"myForum"]);*/
+  
   function checkTime() {
     if ( empty($_SESSION["notBefore"]) || empty($_SESSION["notAfter"]) ) return("Authentication without active session");
     $t=time();
@@ -67,9 +72,6 @@ if ( !array_key_exists("act",$_POST) && empty($_SESSION["authName"]) ) {
   require("AuthElements.php");
   require("SubAuthElements.php");
   $formSelect=[0=>"PlainAuthElements",1=>"OpportunisticAuthElements",2=>"StrictAuthElements"];
-  //$ar->s("controlsClass","PlainAuthElements");
-  //$ar->s("controlsClass","OpportunisticAuthElements");
-  //$ar->s("controlsClass","StrictAuthElements");
   $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
   include("authForm.php");
   exit(0);
@@ -85,10 +87,9 @@ if ( array_key_exists("act",$_POST) ) {
 if ($tryPlainText) {
   
   echo("Trying auth plaintext ");
-  $ct=checkTime();
-  if ( $ct!==true ) exit ($ct); 
+  if ( ($ct=checkTime()) !== true ) fail($ct); 
 
-  $ar=AuthRegistry::getInstance(0, $_SESSION["registry"]);
+  $ar=AuthRegistry::getInstance(1, $_SESSION["registry"]);
   if ( $ar->g("authMode") == 2 ) fail("Plaintext auth is turned off on the server");
   $realm=$ar->g("realm");
   $applicantName=$_POST["user"];
@@ -115,17 +116,16 @@ if ($tryPlainText) {
 if ($tryDigest) {
 
   echo(" Trying JS digest authentication ");
-  $ct=checkTime();
-  if ( $ct!==true ) exit ($ct); 
+  if ( ($ct=checkTime()) !== true ) fail($ct); 
   if ($_POST["user"] || $_POST["ps"]) fail("This mode takes no credentials ");
-  $ar=AuthRegistry::getInstance(0, $_SESSION["registry"]);
+  $ar=AuthRegistry::getInstance(1, $_SESSION["registry"]);
   if ( $ar->g("authMode") == 0 ) fail("Digest auth is turned off on the server");
   
   $realm=$ar->g("realm");
   if ( class_exists("SessionRegistry") ) {
     $sr_=SessionRegistry::getInstance(); 
     $realm_=$sr_->g("forum");
-    if ( $realm_ && $realm!=$realm_ ) throw new UsageException("Realm mismatch: "+$realm+" and "+$realm_ );
+    if ( $realm_ && $realm!=$realm_ ) throw new UsageException("Realm mismatch: ".$realm." and ".$realm_ );
   }
   $applicantNonce=$_POST["cn"];
   $applicantResp=$_POST["responce"];
@@ -178,6 +178,6 @@ if (empty($_SESSION['count'])) {
   <link rel="stylesheet" type="text/css" href="" media="all" />
 </head>
 <body>
-<p>Outcome: <?php print($outcome); ?> Counter: <?php print($_SESSION['count']); ?>, ID: <?php print(session_id()); ?></p>
+<p>Outcome: <?php print($outcome); ?>, Counter: <?php print($_SESSION['count']); ?>, ID: <?php print(session_id()); ?></p>
 </body>
 </html>

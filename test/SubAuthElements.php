@@ -20,6 +20,7 @@
     }
     static function scriptOnready() {
       $s="";
+      $s.="$(\"plain\").checked=false;";
       $s.="$(\"authForm\").onsubmit=function() {";
       $s.="if ( !($(\"plain\").checked) ) {";
       $s.="  doAll();";
