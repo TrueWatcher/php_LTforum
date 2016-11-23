@@ -20,7 +20,7 @@
   
   function fail($message) {
     session_destroy();
-    exit("Authentication failed: ".$message);
+    exit("Error: ".$message);
   }
   
   function makeHa1($userName,$realm,$password) {
@@ -50,22 +50,35 @@
   }
   
   function parseGroup($realm) {
-    $groupFile=".group";
+    $groupFile=".ini";
     $parsed=parse_ini_file($groupFile,true);
     //print_r($parsed);
     if (!array_key_exists($realm,$parsed)) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
     return($parsed[$realm]);
   }
   
+  function isAdmin($user) {
+    $admins=parseGroup("admins");
+    if ( array_key_exists($user,$admins) ) return true;
+    return false;
+  }
+  
   function addUser($userName,$realm,$password) {
+    $name=@$_SESSION["authName"];
+    if (!$name) throw new AccessException ("Cannot find name of the current user");
+    /*$name=@$context->g("authName");
+    if (!$name) $name=@$context->g("user");
+    if (!$name) throw new AccessException ("Cannot find name of the current user");*/
+    if ( !isAdmin($name) ) fail("You should be an Admin to do that");
     $nl="\n";
-    $groupFile=".group";
+    $groupFile=".ini";
     $buf=file_get_contents($groupFile);
     $buf=str_replace("\r","",$buf);
     $beginSection=strpos($buf,"[".$realm."]");
     if ($beginSection===false) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
     $ha=makeHa1($userName,$realm,$password);
-    $entry=$ha."=".$userName.$nl;
+    $entry=$userName."=".$ha.$nl;
+    if (strpos($buf,$entry,$beginSection)!==false) fail("This entry already exists");
     $head=substr($buf,0,$beginSection+strlen($realm)+3);
     $tail=substr($buf,$beginSection+strlen($realm)+3);
     $buf=$head.$entry.$tail;
@@ -73,14 +86,18 @@
   }
   
   function delUser($userName,$realm,$password) {
+    $name=@$_SESSION["authName"];
+    if (!$name) throw new AccessException ("Cannot find name of the current user");
+    if ( !isAdmin($name) ) fail("You should be an Admin to do that");
+    if ( $userName==$name ) fail("You should not delete your own record"); 
     $nl="\n";
-    $groupFile=".group";
+    $groupFile=".ini";
     $buf=file_get_contents($groupFile);
     $buf=str_replace("\r","",$buf);
     $section=strpos($buf,"[".$realm."]")-1;
     if ($section===false) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
     $ha=makeHa1($userName,$realm,$password);
-    $entry=$ha."=".$userName.$nl;
+    $entry=$userName."=".$ha.$nl;
     $where=strpos($buf,$entry,$section);
     if($where===false) return ("Missing or invalid entry. Try manual editing");
     $after=@substr($buf,$where+strlen($entry),1);
@@ -108,7 +125,11 @@ $users=[ $ha1_1=>$u1, $ha1_2=>$u2 ];*/
 
 print_r($_REQUEST);
 ini_set("session.serialize_handler","php_serialize");
+ini_set("session.use_only_cookies",1);
+ini_set("session.use_cookies",1);
+ini_set("session.use_strict_mode",1);
 session_start();
+//phpinfo();
 
 if ( array_key_exists("act",$_REQUEST) && $_REQUEST["act"]=="r" ) {
   unset($_SESSION);
@@ -117,18 +138,6 @@ if ( array_key_exists("act",$_REQUEST) && $_REQUEST["act"]=="r" ) {
 }
 
 print_r($_SESSION);
-
-if ( array_key_exists("act",$_REQUEST) && ($_REQUEST["act"]=="au" || $_REQUEST["act"]=="du" ) ) {
-  $user=$_REQUEST["user"];
-  $realm=$_REQUEST["realm"];
-  $ps=$_REQUEST["ps"];
-  if ($_REQUEST["act"]=="au") addUser($user,$realm,$ps);
-  else {
-    $r=delUser($user,$realm,$ps);
-    if ($r!==true) exit($r);
-  }
-  print_r(parse_ini_file(".group",true));
-}
 
 if ( !array_key_exists("act",$_POST) && empty($_SESSION["authName"]) ) {
   // initialize authentication
@@ -141,7 +150,7 @@ if ( !array_key_exists("act",$_POST) && empty($_SESSION["authName"]) ) {
   $_SESSION["notBefore"]=time()+$ar->g("minDelay");
   $_SESSION["notAfter"]=time()+$ar->g("maxDelayAuth");
   session_write_close ();
-
+  $ar->s("alert",session_id());
   // show form
   require("AuthElements.php");
   require("SubAuthElements.php");
@@ -173,8 +182,8 @@ if ($tryPlainText) {
   $foundName="";
   $users=parseGroup($ar->g("realm"));
   // simply use array as dictionary
-  if ( array_key_exists($applicantHa,$users) ) $foundName=$users[$applicantHa];
-  if ( $foundName!= $_POST["user"] ) {
+  if ( array_key_exists($applicantName,$users) && $users[$applicantName]===$applicantHa ) $foundName=$applicantName;
+  if ( !$foundName ) {
     fail("Access denied, sorry");
   }
   
@@ -183,6 +192,7 @@ if ($tryPlainText) {
   $ar->s("secret",$applicantHa);
   $_SESSION["registry"]=$ar->export();
   $_SESSION["notAfter"]=time()+$ar->g("maxDelayPage");
+  session_regenerate_id();
   session_write_close ();
   // registered OK, fall-through
   $outcome="Plaintext authentication OK";
@@ -209,7 +219,7 @@ if ($tryDigest) {
   $users=parseGroup($ar->g("realm"));  
   // hash -> proposed responce -> check -> user name
   // so no need to send name in open
-  foreach ($users as $ha=>$name) {
+  foreach ($users as $name=>$ha) {
     $tryResponse=makeResponse($ar->g("serverNonce"),$ha,$applicantNonce);
     if ( $tryResponse===$applicantResp ) {
       $foundName=$name;
@@ -230,6 +240,7 @@ if ($tryDigest) {
   if ( array_key_exists("pers",$_POST) ) $ar->s("persStorage",1);
   $_SESSION["registry"]=$ar->export();
   $_SESSION["notAfter"]=time()+$ar->g("maxDelayPage");
+  session_regenerate_id();
   session_write_close ();
   // registered OK
   $outcome="Digest authentication OK as ".$foundName;
@@ -242,6 +253,18 @@ if (empty($_SESSION['count'])) {
    $_SESSION['count'] = 1;
 } else {
    $_SESSION['count']++;
+}
+
+if ( array_key_exists("act",$_REQUEST) && ($_REQUEST["act"]=="au" || $_REQUEST["act"]=="du" ) ) {
+  $user=$_REQUEST["user"];
+  $realm=$_REQUEST["realm"];
+  $ps=$_REQUEST["ps"];
+  if ($_REQUEST["act"]=="au") addUser($user,$realm,$ps);
+  else {
+    $r=delUser($user,$realm,$ps);
+    if ($r!==true) exit($r);
+  }
+  //print_r(parse_ini_file(".ini",true));
 }
 
 ?>

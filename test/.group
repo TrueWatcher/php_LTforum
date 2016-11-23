@@ -1,9 +1,0 @@
-; must not contain empty lines and must end with NL !
-[testAdmin]
-f131bd113e54f7bdc64e99880c8b8e0a=a
-ee92013d7769b6bac3786d9633c90be=admin
-[testCopy]
-77341649e751a1904455d3713a94f883=test
-3cba150d2242d713d13f64b3314a7f89=Me
-[test]
-77341649e751a1904455d3713a94f883=test
