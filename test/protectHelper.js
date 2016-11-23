@@ -50,7 +50,7 @@ function stuffPS(cn,ha) {
     addHidden("pers","1");
     window.localStorage.clear();
     window.localStorage["cn"]=cn;
-    window.localStorage["sec"]=ha;
+    window.localStorage["sec"]=md5(ha+cn);
     window.localStorage["cc"]=1;
     window.localStorage["sc"]=1;
   }

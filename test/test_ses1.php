@@ -22,18 +22,89 @@
     session_destroy();
     exit("Authentication failed: ".$message);
   }
+  
+  function makeHa1($userName,$realm,$password) {
+    return ( md5($userName.$realm.$password) ); 
+  }
+  
+  function makeResponse($sn,$ha1,$cn) {
+    return ( md5($sn.$ha1.$cn) ); 
+  }
+  
+  function iterateSecret($secret,$cNonce) {
+    return ( md5($secret.$cNonce) );
+  }
+  
+  function makeServerNonce() {
+    if ( is_callable("openssl_random_pseudo_bytes") ) {
+      $openSslOutcome=false;
+      $sn=openssl_random_pseudo_bytes(16,$openSslOutcome);
+      //$ar->s("alert",$ar->g("alert")." tried secure:".$openSslOutcome." " );
+    }
+    else {
+      $sn0=(string)random_int(0,PHP_INT_MAX);
+      $sn=md5( $sn0.time(),true );// true for binary output
+    }
+    $sn=base64_encode($sn);
+    return($sn);
+  }
+  
+  function parseGroup($realm) {
+    $groupFile=".group";
+    $parsed=parse_ini_file($groupFile,true);
+    //print_r($parsed);
+    if (!array_key_exists($realm,$parsed)) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
+    return($parsed[$realm]);
+  }
+  
+  function addUser($userName,$realm,$password) {
+    $nl="\n";
+    $groupFile=".group";
+    $buf=file_get_contents($groupFile);
+    $buf=str_replace("\r","",$buf);
+    $beginSection=strpos($buf,"[".$realm."]");
+    if ($beginSection===false) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
+    $ha=makeHa1($userName,$realm,$password);
+    $entry=$ha."=".$userName.$nl;
+    $head=substr($buf,0,$beginSection+strlen($realm)+3);
+    $tail=substr($buf,$beginSection+strlen($realm)+3);
+    $buf=$head.$entry.$tail;
+    file_put_contents($groupFile,$buf);
+  }
+  
+  function delUser($userName,$realm,$password) {
+    $nl="\n";
+    $groupFile=".group";
+    $buf=file_get_contents($groupFile);
+    $buf=str_replace("\r","",$buf);
+    $section=strpos($buf,"[".$realm."]")-1;
+    if ($section===false) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
+    $ha=makeHa1($userName,$realm,$password);
+    $entry=$ha."=".$userName.$nl;
+    $where=strpos($buf,$entry,$section);
+    if($where===false) return ("Missing or invalid entry. Try manual editing");
+    $after=@substr($buf,$where+strlen($entry),1);
+    $before=@substr($buf,$where-2,1);
+    echo(" before:".$before."; after:".$after."; ");
+    if( ($before=="]" || $before===false) && ($after=="[" || $after===false ) ) return ("This seems to be the only record in that section. Create another one first");
+    $head=substr($buf,0,$where);
+    $tail=substr($buf,$where+strlen($entry));
+    $buf=$head.$tail;
+    file_put_contents($groupFile,$buf);
+    return(true);
+  }
 
 $authMode=1; // 0 - plain text, 1 - JS digest or plain text, 2 - only JS digest
 $outcome="Started... ";
   
 $realm="test";
-$u1="Me";
+/*$u1="Me";
 $p1="1234";
 $ha1_1=md5($u1.$realm.$p1);
 $u2="test";
 $p2="q";
 $ha1_2=md5($u2.$realm.$p2);
-$users=[ $ha1_1=>$u1, $ha1_2=>$u2 ];
+$users=[ $ha1_1=>$u1, $ha1_2=>$u2 ];*/
 
 print_r($_REQUEST);
 ini_set("session.serialize_handler","php_serialize");
@@ -47,20 +118,23 @@ if ( array_key_exists("act",$_REQUEST) && $_REQUEST["act"]=="r" ) {
 
 print_r($_SESSION);
 
+if ( array_key_exists("act",$_REQUEST) && ($_REQUEST["act"]=="au" || $_REQUEST["act"]=="du" ) ) {
+  $user=$_REQUEST["user"];
+  $realm=$_REQUEST["realm"];
+  $ps=$_REQUEST["ps"];
+  if ($_REQUEST["act"]=="au") addUser($user,$realm,$ps);
+  else {
+    $r=delUser($user,$realm,$ps);
+    if ($r!==true) exit($r);
+  }
+  print_r(parse_ini_file(".group",true));
+}
+
 if ( !array_key_exists("act",$_POST) && empty($_SESSION["authName"]) ) {
   // initialize authentication
   $ar=AuthRegistry::getInstance(0, ["realm"=>"test", "authName"=>"", "serverNonce"=>"", "clientNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>$authMode, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "persStorage"=>0, "alert"=>"Ok"] );
-  
-  if ( is_callable("openssl_random_pseudo_bytes") ) {
-    $openSslOutcome=false;
-    $sn=openssl_random_pseudo_bytes(16,$openSslOutcome);
-    $ar->s("alert",$ar->g("alert")." tried secure:".$openSslOutcome." " );
-  }
-  else {
-    $sn0=(string)random_int(0,PHP_INT_MAX);
-    $sn=md5( $sn0.time(),true );
-  }
-  $sn=base64_encode($sn);
+
+  $sn=makeServerNonce();
   $ar->s("serverNonce",$sn);
   
   $_SESSION["registry"]=$ar->export();
@@ -94,9 +168,10 @@ if ($tryPlainText) {
   $realm=$ar->g("realm");
   $applicantName=$_POST["user"];
   $applicantPsw=$_POST["ps"];
-  $applicantHa=md5($applicantName.$realm.$applicantPsw);
-    
+  $applicantHa=makeHa1($applicantName,$realm,$applicantPsw);
+  //echo(">".makeHa1($_REQUEST["user"],$ar->g("realm"),$_REQUEST["ps"])."<");// DEBUG  
   $foundName="";
+  $users=parseGroup($ar->g("realm"));
   // simply use array as dictionary
   if ( array_key_exists($applicantHa,$users) ) $foundName=$users[$applicantHa];
   if ( $foundName!= $_POST["user"] ) {
@@ -131,12 +206,12 @@ if ($tryDigest) {
   $applicantResp=$_POST["responce"];
   
   $foundName="";
+  $users=parseGroup($ar->g("realm"));  
   // hash -> proposed responce -> check -> user name
   // so no need to send name in open
   foreach ($users as $ha=>$name) {
-    $s=$ar->g("serverNonce").$ha.$applicantNonce;
-    $tryResponce=md5($s);
-    if ( $tryResponce===$applicantResp ) {
+    $tryResponse=makeResponse($ar->g("serverNonce"),$ha,$applicantNonce);
+    if ( $tryResponse===$applicantResp ) {
       $foundName=$name;
       break;
     }
@@ -148,8 +223,8 @@ if ($tryDigest) {
   
   $_SESSION["authName"]=$foundName;
   $ar->s("authName",$foundName);
-  $ar->s("secret",$ha);
-  $ar->s("clientNonce",$applicantNonce);
+  $ar->s("secret",iterateSecret($ha,$applicantNonce));
+  //$ar->s("clientNonce",$applicantNonce);
   $ar->s("clientCount",1);
   $ar->s("serverCount",1);
   if ( array_key_exists("pers",$_POST) ) $ar->s("persStorage",1);
@@ -168,6 +243,7 @@ if (empty($_SESSION['count'])) {
 } else {
    $_SESSION['count']++;
 }
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 

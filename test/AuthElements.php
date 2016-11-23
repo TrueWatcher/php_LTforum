@@ -9,7 +9,8 @@
  */
 abstract class AuthElements {
 
-  protected static function wrapRow ($str) {
+  protected static function wrapRow ($str,$id=null) {
+    if ($id) return('<tr id="'.$id.'">'.$str."</tr>");
     return("<tr>".$str."</tr>");
   }
 
@@ -17,7 +18,8 @@ abstract class AuthElements {
     return("<th>".$str."</th>");
   }
 
-  protected static function wrapFldTd ($str) {
+  protected static function wrapFldTd ($str,$id=null) {
+    if ($id) return('<td id="'.$id.'">'.$str."</td>");
     return("<td>".$str."</td>");
   }
 
