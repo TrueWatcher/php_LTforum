@@ -11,7 +11,6 @@
   require ("../LTforum/SessionManager.php");
   
   //$authMode=1; // 0 - plain text, 1 - JS digest or plain text, 2 - only JS digest
-  //$outcome="Started... ";
   //$realm="test";
 
   print_r($_REQUEST);
@@ -25,7 +24,7 @@
     session_start();
   }
   
-  $ar=AuthRegistry::getInstance(1, ["realm"=>"test", "admin"=>1, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+  $ar=AuthRegistry::getInstance(1, ["realm"=>"test","targetPath"=>"","templatePath"=>"../LTforum/templates/", "assetsPath"=>"../assests/", "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
   $sm=new SessionManager;
   $ret=$sm->go($ar);
   echo("\r\nTrace: ".$sm->trace." ");

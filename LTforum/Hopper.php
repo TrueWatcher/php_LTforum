@@ -1,5 +1,4 @@
 <?php
-require_once ("../LTforum/MyExceptions.php"); 
 
 class Hopper {
   protected $currentState;

@@ -15,8 +15,8 @@
       $h.=parent::genericInput ( "hidden","realm",$context->g("realm") );
       return ($h);
     }  
-    static function scriptHelper() {
-      return ( parent::scriptHelper("protectHelper.js") );
+    static function scriptHelper($context) {
+      return ( parent::scriptHelper($context,"protectHelper.js") );
     }
     static function scriptOnready() {
       $s="";
@@ -44,8 +44,8 @@
     static function pswInput ($label,$inputName,$pswValue,$context,$pageContext) {
       return ( parent::authorInput ($label,$inputName,"You need Javascript to register",$context,$pageContext) );
     }
-    static function scriptHelper() {
-      return ( parent::scriptHelper("protectHelper.js") );
+    static function scriptHelper($context) {
+      return ( parent::scriptHelper($context,"protectHelper.js") );
     }
     static function scriptOnready() {
       $s="";

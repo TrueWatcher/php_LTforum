@@ -33,7 +33,7 @@ abstract class AuthElements {
 
   //abstract static function titleSuffix (ViewRegistry $context);
   static function titleSuffix (AuthRegistry $context) {
-    return ( "authenticate to ".$context->g("realm") );
+    return ( "Login : ".$context->g("realm") );
   }
 
   abstract static function hiddenFields ($context);
@@ -72,9 +72,9 @@ abstract class AuthElements {
     return ("\r\n".'<script type="text/javascript">'."\r\n".$str."\r\n".'</script>'."\r\n");
   }
 
-  static function scriptHelper ($path=null) {
+  static function scriptHelper ($context,$path=null) {
     if (empty($path)) return ("");
-    $s="\r\n".'<script type="text/javascript" src="'.$path.'"></script>'."\r\n";
+    $s="\r\n".'<script type="text/javascript" src="'.$context->g("assetsPath").$path.'"></script>'."\r\n";
     return($s);
   }
 

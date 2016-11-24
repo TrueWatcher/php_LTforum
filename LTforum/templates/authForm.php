@@ -18,9 +18,9 @@ if ( !is_subclass_of($cc,"AuthElements") ) throw new UsageException ("Layout aut
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title><?php print( /*$pr->g("title").*/" : ".$cc::titleSuffix($ar) ); ?></title>
-  <link rel="stylesheet" type="text/css" href="<?php print(/*$sr->g("assetsPath").*/"form.css") ?>" media="all" />
-  <?php print ( $cc::scriptHelper() ); ?>  
+  <title><?php print( /*$pr->g("title")." : ".*/$cc::titleSuffix($ar) ); ?></title>
+  <link rel="stylesheet" type="text/css" href="<?php print($ar->g("assetsPath")."form.css") ?>" media="all" />
+  <?php print ( $cc::scriptHelper($ar) ); ?>  
 </head>
 <body>
 <form action="" method="post" id="authForm" >

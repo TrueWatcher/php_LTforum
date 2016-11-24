@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * @pakage LTforum
+ * @version 1.2 added SessionManager
+ */
+ 
   class AuthRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;
     
@@ -43,8 +47,10 @@
       return ( md5($secret.$cNonce) );
     }
     
-    static function parseGroup($realm) {
-      $groupFile=".ini";
+    static function parseGroup($realm,$context) {
+      $targetPath="";
+      if($context) $targetPath=$context->g("targetPath");
+      $groupFile=$targetPath.".ini";
       $parsed=parse_ini_file($groupFile,true);
       //print_r($parsed);
       if (!array_key_exists($realm,$parsed)) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
@@ -65,9 +71,9 @@
       return($sn);
     }
     
-    function isAdmin($user) {
-      $admins=self::parseGroup("admins");
-      print_r($admins);
+    function isAdmin($user,$context) {
+      $admins=self::parseGroup("admins",$context);
+      //print_r($admins);
       if ( array_key_exists($user,$admins) ) return (1);
       return (0);
     }
@@ -78,7 +84,15 @@
       ini_set("session.use_cookies",1);
       ini_set("session.use_strict_mode",1);
       session_start();
-    
+      
+      if ( array_key_exists("act",$_REQUEST) && $_REQUEST["act"]=="reset" ) {
+        unset($_SESSION);
+        session_destroy();
+        session_start();
+        $ar->s("alert"," Session aborted by user ");
+        //$this->next("requestLogin");
+        //return;      
+      }
       if( empty($_SESSION) || !array_key_exists("state",$_SESSION) ) {
         $this->next("requestLogin");
         return;
@@ -102,7 +116,7 @@
       if ( !array_key_exists("authName",$_SESSION) || $_SESSION["state"]!="auth" ) return ("Something is wrong");
       $user=$_SESSION["authName"];
       //echo ($user."====".(self::isAdmin($user)) );
-      if ( $ar->g("admin") && !(self::isAdmin($user)) ) return ("This area is for admins only");
+      if ( $ar->g("admin") && !(self::isAdmin($user,$ar)) ) return ("This area is for admins only");
       return (true);
     }
     
@@ -119,11 +133,11 @@
       session_write_close ();
       //$ar->s("alert",session_id());
       // show form
-      require("../LTforum/templates/AuthElements.php");
-      require("../LTforum/templates/SubAuthElements.php");
+      require($ar->g("templatePath")."AuthElements.php");
+      require($ar->g("templatePath")."SubAuthElements.php");
       $formSelect=[0=>"PlainAuthElements",1=>"OpportunisticAuthElements",2=>"StrictAuthElements"];
       $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
-      include("../LTforum/templates/authForm.php");
+      include($ar->g("templatePath")."authForm.php");
       $this->setBreak();// overly safe
       return(false);
     }
@@ -171,14 +185,14 @@
     
     function authPlain(AuthRegistry $ar) {
     
-      echo("Trying auth plaintext ");
+      //echo("Trying auth plaintext ");
       $realm=$ar->g("realm");
       $applicantName=$ar->g("user");
       $applicantPsw=$ar->g("ps");
       $applicantHa=self::makeHa1($applicantName,$realm,$applicantPsw);
       //echo(">".makeHa1($_REQUEST["user"],$ar->g("realm"),$_REQUEST["ps"])."<");// DEBUG  
       $foundName="";
-      $users=self::parseGroup($ar->g("realm"));
+      $users=self::parseGroup($ar->g("realm"),$ar);
       // simply use array as dictionary
       if ( array_key_exists($applicantName,$users) && $users[$applicantName]===$applicantHa ) $foundName=$applicantName;
       if ( !$foundName ) {// fail
@@ -196,9 +210,9 @@
     
     function authDigest(AuthRegistry $ar) {
     
-      echo(" Trying JS digest authentication ");
+      //echo(" Trying JS digest authentication ");
       $foundName="";
-      $users=self::parseGroup($ar->g("realm"));
+      $users=self::parseGroup($ar->g("realm"),$ar);
       //print_r($users);
       //echo("sn>".$sn);
       
@@ -229,7 +243,7 @@
     }
     
     function authSuccess(AuthRegistry $ar) {
-      if ( $ar->g("admin") && !self::isAdmin($ar->g("authName") ) ) {
+      if ( $ar->g("admin") && !self::isAdmin($ar->g("authName"),$ar ) ) {
         $this->next("requestLogin");
         $ar->s("alert","This is a restricted area");
         return;
