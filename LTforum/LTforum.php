@@ -51,14 +51,13 @@ $sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>2
 );
 
 // here goes the Session Manager
-  $ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
-  $sm=new SessionManager;
-  $smRet=$sm->go($ar);
-  //echo("\r\nTrace: ".$sm->trace." ");
-
-  //if ( $alert=$ar->g("alert") ) echo($alert);
-  if($smRet===false) exit;
-  //if($smRet!==true) exit($ret);// see after $pr
+$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$sm=new SessionManager;
+$smRet=$sm->go($ar);
+//echo("\r\nTrace: ".$sm->trace." ");
+//if ( $alert=$ar->g("alert") ) echo($alert);
+if($smRet===false) exit;
+//if($smRet!==true) exit($ret);// see after $pr
 
 $pr=PageRegistry::getInstance( 0,array() );
 $pr->load();
