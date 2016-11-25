@@ -18,7 +18,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
 
     public function load() {
-      $inputKeys=array("act","forum","pin","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
+      $inputKeys=array("act","forum","pin","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear","uEntry","user","aUser");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
@@ -37,6 +37,7 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 
 require_once ($mainPath."Hopper.php");
 require_once ($mainPath."SessionManager.php");
+require_once ($mainPath."UserManager.php");
 
 // instantiate and initialize Page Registry and Session Registry
 // strict=1 required as assetsPath is modified for the export command
@@ -106,6 +107,53 @@ try {
       AdminAct::updateAny ($apr,$asr);
       exit(0);
   }
+  
+  //print_r($_REQUEST);
+  UserManager::init($aar->g("targetPath"),$apr->g("forum"));
+  switch ( $apr->g("act") ) {  
+    case ("lu"):
+      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
+      break;
+    case ("la"):
+      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+      break;
+    case ("uAdd"):
+      $ret=UserManager::manageUser("add",$apr->g("uEntry"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
+      break;
+    case ("uDel"):
+      $ret=UserManager::manageUser("del",$apr->g("uEntry"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
+      break;
+    case ("aAdd"):
+      $ret=UserManager::manageAdmin("add",$apr->g("aUser"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+      break;
+    case ("aDel"):
+      $ret=UserManager::manageAdmin("del",$apr->g("aUser"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+      break; 
+    //default ;
+      //Act::showAlert ($apr,$asr,"Unknown command:".$apr->g("act"));
+  }
+  
+  
 } catch (AccessException $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());
 }

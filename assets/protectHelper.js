@@ -23,12 +23,13 @@ function clearCredentials() {
   $("user").value=$("ps").value="";
 }
 
-function addHidden (name,value) {
+function addHidden (name,value,formId) {
   var e=document.createElement("input");
   e.type="hidden";
   e.name=name;
   e.value=value;
-  document.forms[0].appendChild(e);
+  if (!formId) { document.forms[0].appendChild(e); }
+  else $(formId).appendChild(e);
 }
 
 function createCNonce() {

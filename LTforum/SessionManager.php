@@ -35,6 +35,8 @@
       $this->nextState="verifySession";
     }
     
+    static $groupFileName=".ini";
+    
     static function makeHa1($userName,$realm,$password) {
       return ( md5($userName.$realm.$password) ); 
     }
@@ -47,10 +49,25 @@
       return ( md5($secret.$cNonce) );
     }
     
+    static function createEmptyGroupFile($path,$forum) {
+      $nl="\n";
+      $s="";
+      $s.="; must not contain empty lines and must end with NL !".$nl;
+      $s.="[".$forum."]".$nl;
+      $s.="admin=".self::makeHa1("admin",$forum,"admin").$nl;
+      $s.="[".$forum."Admins]".$nl;
+      $s.="admin=";
+      file_put_contents( $path.self::$groupFileName, $s);
+    }
+    
     static function parseGroup($realm,$context) {
       $targetPath="";
       if($context) $targetPath=$context->g("targetPath");
-      $groupFile=$targetPath.".ini";
+      $groupFile=$targetPath.self::$groupFileName;
+      if ( !file_exists($groupFile) ) {
+        //throw new AccessException ("No such file:".$groupFile."!");
+        self::createEmptyGroupFile($targetPath,$context->g("realm"));
+      }
       $parsed=parse_ini_file($groupFile,true);
       //print_r($parsed);
       if (!array_key_exists($realm,$parsed)) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
@@ -72,7 +89,7 @@
     }
     
     function isAdmin($user,$context) {
-      $admins=self::parseGroup("admins",$context);
+      $admins=self::parseGroup( $context->g("realm")."Admins", $context );
       //print_r($admins);
       if ( array_key_exists($user,$admins) ) return (1);
       return (0);
