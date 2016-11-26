@@ -57,7 +57,24 @@ function stuffPS(cn,ha) {
   }
 }
 
+function highlight(element,clear) {
+  if (clear) element.style.border="";
+  else element.style.border="solid 1px red";
+}
+
+function checkEmpty(id) {  
+  var e=$(id);
+  highlight(e,true);
+  if ( !e.value ) {
+    highlight(e);
+    return(true);
+  }
+}
+
 function doAll() {
+  if ( checkEmpty("user") || checkEmpty("ps") ) {
+    return false;
+  }
   var cn=createCNonce();
   var ha=makeHa();
   responce( $("sn").value, cn, ha );

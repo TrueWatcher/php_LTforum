@@ -23,7 +23,7 @@
       $s.="$(\"plain\").checked=false;";
       $s.="$(\"authForm\").onsubmit=function() {";
       $s.="if ( !($(\"plain\").checked) ) {";
-      $s.="  doAll();";
+      $s.="  return( doAll() );";
       $s.=" };";
       $s.="}";
       return ( parent::scriptOnready($s) );
@@ -51,7 +51,7 @@
       $s="";
       $s.="clearCredentials();";
       $s.="$(\"authForm\").onsubmit=function() {";
-      $s.=" doAll();";
+      $s.=" return( doAll() );";
       $s.="}";
       return ( parent::scriptOnready($s) );
     }

@@ -1,0 +1,125 @@
+<?php
+// Web-Test suite for LTforum Autentication (since v.1.2)
+// All PHPUnit tests stop after first failure!
+// Uses PHPUnit + Selenium + FacebookWebDriver + HtmlUnit
+// And optionally XAMPP
+// (c) TrueWatcher August 2016
+
+//require_once("/home/alexander/vendor/autoload.php" );// needed, but present in ./bootstrap.php
+
+// important! (https://github.com/facebook/php-webdriver/blob/community/example.php)
+//namespace Facebook\WebDriver;
+use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\Remote\WebDriverCapabilityType;
+use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverSelect;
+//use PHPUnit\Framework\TestCase;
+
+class Test_LTforumMain extends PHPUnit_Framework_TestCase {
+
+  protected $browser="htmlunit";
+  protected $emulate="FIREFOX_45";// needed for JQuery and/or Bootstrap
+  // http://htmlunit.sourceforge.net/apidocs/index.html class
+  // com.gargoylesoftware.htmlunit   Class BrowserVersion
+  protected $JSenabled=true;//true;//false;;
+  protected $webDriver;
+
+
+  public function setUp() {
+    //$capabilities = array(\WebDriverCapabilityType::BROWSER_NAME => 'firefox');
+    //$this->webDriver = RemoteWebDriver::create('http://localhost:4444/wd/hub', $capabilities);
+    $host = 'http://localhost:4444/wd/hub'; // this is the default
+    $this->webDriver = RemoteWebDriver::create(
+        $host,
+        array(
+            WebDriverCapabilityType::BROWSER_NAME => $this->browser,
+            WebDriverCapabilityType::JAVASCRIPT_ENABLED => $this->JSenabled,
+            WebDriverCapabilityType::VERSION => $this->emulate
+        )
+     );
+  }
+
+  public function tearDown() {
+    $this->webDriver->quit();
+  }
+
+  static private $adminUri="http://LTforum/rulez.php?forum=test"; //"http://fs..net/new_ltforum/test/";//
+  static private  $resetUri="http://LTforum/rulez.php?forum=test&act=reset";
+  static private $storedUserName="Me";
+  static private $storedUserPassword="1234";
+  static private $storedAdminName="admin";
+  static private $storedAdminPassword="admin";
+  static private $storedForum="test";
+  static private $storedQuery="";
+
+  private function loginAs($user,$password) {
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys($user);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys($password);
+    $inputPs->submit();  
+  }
+  
+  public function test_loginPage() {
+    print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
+    if ($this->JSenabled) print ("ON !");
+    else print ("OFF !");
+    print ("\r\nSending request for ".self::$resetUri."...");
+    $this->webDriver->get(self::$resetUri);
+    print ("processing page...");
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print ("title not found!\r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");
+    $this->assertContains("Login",$title,"no <Login> in the title");
+    $this->assertContains(self::$storedForum,$title,"no <Login> in the title");
+    print("\r\nInfo: login page found");
+    
+    /*
+    sleep(10);
+    print ("\r\nSleeping 10 sec and sending request for ".self::$adminUri."...");
+    $this->webDriver->get(self::$adminUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");*/
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $this->assertNotEmpty($inputUser,"No <user> input -- wrong page");
+    $inputPlain=$this->webDriver->findElement(WebDriverBy::name("plain"));
+    $this->assertNotEmpty($inputPlain,"No <plain> checkbox -- please set authForm to 1");
+    print("\r\nInfo: assuming Digest mode");
+    
+    sleep(10);
+    $this->loginAs(self::$storedUserName,self::$storedUserPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $this->assertNotEmpty($inputUser,"Wrong response to non-admin login");
+    print("\r\nInfo: non-admin login test Ok");
+    
+    sleep(1);
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains("alert",$title,"Wrong responce to fast login");
+    print("\r\nInfo: fast admin login test Ok");
+    
+    $this->webDriver->get(self::$resetUri);    
+    sleep(10);
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("Login",$title,"Failed admin login");
+    print("\r\nInfo: admin login Ok");
+    
+    $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Sign out") );
+    $logOutLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains("Login",$title,"no <Login> in the title");
+    print("\r\nInfo: admin panel logout Ok");
+  }
+  
+}
+  
+?>
+    
