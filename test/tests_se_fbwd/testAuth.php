@@ -45,7 +45,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   static private $adminUri="http://LTforum/rulez.php?forum=test"; //"http://fs..net/new_ltforum/test/";//
-  static private  $resetUri="http://LTforum/rulez.php?forum=test&act=reset";
+  static private $resetUri="http://LTforum/rulez.php?forum=test&act=reset";
   static private $storedUserName="Me";
   static private $storedUserPassword="1234";
   static private $storedAdminName="admin";
@@ -243,8 +243,24 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");   
     $userList=$this->webDriver->findElement(WebDriverBy::id("userList"))->getAttribute("value");
     $this->assertNotContains(self::$storedUserName,$userList," userName ".self::$storedUserName." remained in the users list");
-    print("\r\nInfo: removing user Ok");    
+    print("\r\nInfo: removing user ".self::$storedUserName." Ok");    
     
+    $this->addUser("test","q");
+    $this->addUser("Test Robot","qq");
+    $this->addUser("Test Pagination","tp");
+    $this->addUser("Editor","eee");
+    $this->webDriver->findElement(WebDriverBy::name("aUser"))->sendKeys("Editor");
+    $this->webDriver->findElement(WebDriverBy::id("aAdd"))->click();   
+
+  }
+  
+  private function addUser($login,$password) {
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys($login);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys($password);
+    $buttonUAdd=$this->webDriver->findElement(WebDriverBy::id("uAdd"));
+    $buttonUAdd->click();    
   }
   
 }

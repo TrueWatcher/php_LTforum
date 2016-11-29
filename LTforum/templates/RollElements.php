@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @version 1.2 added Access Controller and User Manager
  */
 /**
  * Functions just for View, usually creating control elements.
@@ -21,7 +21,7 @@ class RollElements extends SectionElements {
   static function editLink ($msg,ViewRegistry $context,PageRegistry $pageContext) {
     if( $msg["id"]==$context->g("forumEnd") && strcmp($msg["author"],$pageContext->g("user"))==0 ) {
       $userParam="";
-      if ( !empty($pageContext->g("user")) ) $userParam="&amp;user=".urlencode($pageContext->g("user"));
+      //if ( !empty($pageContext->g("user")) ) $userParam="&amp;user=".urlencode($pageContext->g("user"));
       $qs="act=el".$userParam."&amp;current=".$msg["id"]."&amp;length=".$context->g("length");
       $link=self::genericLink($qs,"§");
       return('<b title="Edit/Delete">'.$link.'</b>&nbsp;');
@@ -193,6 +193,10 @@ class RollElements extends SectionElements {
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" />";
     $form.="</p></form>";
     return ($form);
+  }
+  
+  static function logoutLink() {
+    return ( "<td>" . self::genericLink("act=reset","Log out") . "</td>" );
   }
   /*
    * Checks screen width and loads minifier script (drawers.js) if it is narrow

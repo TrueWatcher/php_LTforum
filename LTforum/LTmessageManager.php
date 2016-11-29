@@ -50,22 +50,16 @@ $apr->s("title",$adminTitle);
 $targetPath=$forumsPath.$apr->g("forum")."/".$apr->g("forum");
 $apr->s("targetPath",$targetPath);
 
-/*if ( $error=AdminAct::checkThreadPin($apr,$asr) ) {
-  Act::showAlert($apr,$asr,$error);
-}*/
 $apr->s( "title",$adminTitle." : ".$apr->g("forum") );
 $apr->s( "viewLink",Act::addToQueryString($apr,"","forum","pin") );
 
-//echo(">>".$apr->g("targetPath"));
 // here goes the Session Manager
 $aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$forumsPath.$apr->g("forum")."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "admin"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>6, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
-$sm=new AccessController;
-$smRet=$sm->go($aar);// so short
-echo("\r\nTrace: ".$sm->trace." ");
-
-if ( $alert=$aar->g("alert") ) echo($alert);// DEBUG
-if($smRet===false) exit;
-if($smRet!==true) Act::showAlert($apr,$asr,$smRet); // exit($ret); 
+$ac=new AccessController;
+$acRet=$ac->go($aar);// so short
+echo("\r\nTrace: ".$ac->trace." ");
+if ( $alert = $aar->g("alert") ) echo($alert);// DEBUG
+if ( $acRet !== true ) exit($acRet); // exit($ret); 
 
 try {
   $apr->s("cardfile",new CardfileSqlt($targetPath,false));
@@ -153,11 +147,9 @@ try {
       //Act::showAlert ($apr,$asr,"Unknown command:".$apr->g("act"));
   }
   
-  
 } catch (AccessException $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());
 }
-
 
 include ($asr->g("templatePath")."admin.php");
 exit(0);

@@ -46,9 +46,20 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   static private $storedUsername="";
+  static private $storedPassword="";
   static private $storedTotal=0;
   static private $storedMsg="";
   static private $storedForum="";
+  static private $resetUri="http://LTforum/test?act=reset";
+  
+  private function loginAs($user,$password) {
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys($user);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys($password);
+    $inputPs->submit();  
+  }
+  
 
   public function test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
@@ -91,11 +102,19 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
+    $me="test";//"Robot_".time();
+    $myPs="q";
+    sleep(7);
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    
     $forum=self::parseViewTitle($title,$b,$lastMsg,$pc,$pe);
     self::$storedForum=$forum;
     //print("\r\nForum:$forum Total:$lastMsg\r\n");
 
-    $me="Robot_".time();
+    //$me="Robot_".time();
     $msg="My first test message, quite long ".time()."_";
     $msg.=$msg;
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
@@ -105,9 +124,9 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title_new=$this->webDriver->getTitle();
     if (strlen($title_new)) print ("\r\ntitle found: $title_new \r\n");
     $this->assertContains("new message",$title_new,"Missed WRITE NEW page");
-    $inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
-    $this->assertNotEmpty($addLink,"A USER field not found");
-    $inputAuthor->sendKeys($me);
+    //$inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
+    //$this->assertNotEmpty($addLink,"A USER field not found");
+    //$inputAuthor->sendKeys($me);
     $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
     $this->assertNotEmpty($inputText,"A MESSAGE field not found");
     $inputText->sendKeys($msg);
@@ -134,6 +153,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $msgSame=(strpos($mes->getText(),$msg)===0);
     $this->assertTrue($msgSame,"My good message not found");
     self::$storedUsername=$me;
+    self::$storedPassword=$myPs;
     self::$storedTotal=$lastMsg2;
     $addLink=$this->webDriver->findElement(WebDriverBy::xpath('//b[@title="Edit/Delete"]'));
     $this->assertNotEmpty($addLink,"No EDIT link after adding message: check URIs for user=User");
@@ -141,12 +161,17 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   public function test_Edit() {
-    $me=self::$storedUsername;
-    $qs="?user=".$me;
-    $this->webDriver->get( ($this->homeUri).$qs );
+    $this->webDriver->get( $this->homeUri );
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
+    $me=self::$storedUsername;
+    $myPs=self::$storedPassword;
+    sleep(7);
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $total=self::$storedTotal;
     $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
@@ -211,13 +236,25 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   public function test_Delete() {
-    // same as previous
+    $this->webDriver->get( $this->homeUri );
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");
     $me=self::$storedUsername;
+    $myPs=self::$storedPassword;
+    sleep(7);
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    
+    // same as previous
+    /*$me=self::$storedUsername;
     $qs="?user=".$me;
     $this->webDriver->get( ($this->homeUri).$qs );
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotEmpty($title,"Failed to connect to the site");
+    $this->assertNotEmpty($title,"Failed to connect to the site");*/
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $total=self::$storedTotal;
     $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
@@ -260,10 +297,21 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   public function test_ViewAddAlertView() {
-    $this->webDriver->get($this->homeUri);
+    $this->webDriver->get( $this->homeUri );
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
+    $me=self::$storedUsername;
+    $myPs=self::$storedPassword;
+    sleep(7);
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");  
+    /*$this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");*/
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     self::$storedForum=$forum;
     self::$storedTotal=$e;
@@ -299,22 +347,37 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
     $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
-    $addLink->click();
     print("Info: VIEW after ALERT OK");
-
+    
+    // log out and change user
+    $logoutLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Log out"));
+    $logoutLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains("Login",$title,"Failed to logout"); 
+    $me="Test Robot";
+    $myPs="qq";
+    self::$storedUsername=$me;
+    self::$storedPassword=$myPs;
+    sleep(7);
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");      
+    
+    $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
+    $addLink->click();
     // send a message with cleared snap
     $titleNew2=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $titleNew2 \r\n");
-    $this->assertContains(self::$storedForum,$titleNew2,"Not came to WRITE NEW page after ALERT");
+    $this->assertContains(self::$storedForum,$titleNew2,"Forum name not found");
     $this->assertContains("new message",$titleNew2,"Missed WRITE NEW page");
-    $me="Test Robot";
-    self::$storedUsername=$me;
     $msg="Test message 1";
     $checkSnap=$this->webDriver->findElement(WebDriverBy::name("snap"));
     $checkSnap->click();
-    $inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
+    //$inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
     //$this->assertNotEmpty($addLink,"A USER field not found");
-    $inputAuthor->sendKeys($me);
+    //$inputAuthor->sendKeys($me);
     $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
     //$this->assertNotEmpty($inputText,"A MESSAGE field not found");
     $inputText->sendKeys($msg);
@@ -344,12 +407,24 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   public function test_ViewEditAlertView() {
+    $this->webDriver->get( $this->homeUri );
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");
     $me=self::$storedUsername;
+    $myPs=self::$storedPassword;
+    sleep(7);
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    
+    /*$me=self::$storedUsername;
     $qs="?user=".$me;
     $this->webDriver->get( ($this->homeUri).$qs );
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotEmpty($title,"Failed to connect to the site");
+    $this->assertNotEmpty($title,"Failed to connect to the site");*/
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     self::$storedForum=$forum;
     self::$storedTotal=$e;
@@ -460,12 +535,12 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $titleNew2 \r\n");
     $this->assertContains(self::$storedForum,$titleNew2,"Not came to WRITE NEW page after ALERT");
     $this->assertContains("new message",$titleNew2,"Missed WRITE NEW page");
-    $me=self::$storedUsername;
+    //$me=self::$storedUsername;
     $msg="Test message ".$j;
-    $inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
+    //$inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
     //$this->assertNotEmpty($addLink,"A USER field not found");
-    $inputAuthor->clear();
-    $inputAuthor->sendKeys($me);
+    //$inputAuthor->clear();
+    //$inputAuthor->sendKeys($me);
     $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
     $this->assertNotEmpty($inputText,"A MESSAGE field not found");
     $inputText->sendKeys($msg);
@@ -475,13 +550,23 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   public function test_pageCountAcross10() {
-    $this->webDriver->get($this->homeUri);
+    $this->webDriver->get( $this->homeUri );
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the site");
+    self::$storedUsername="Test Pagination";
+    self::$storedPassword="tp";    
+    $me=self::$storedUsername;
+    $myPs=self::$storedPassword;
+    sleep(7);
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $this->assertLessThan(8,(int)$e-$b,"Too many messages in test database. Delete it manually");
     self::$storedForum=$forum;
-    self::$storedUsername="TestPagination";
     $selectLength=$this->webDriver->findElement(WebDriverBy::id("perPage"))->findElement(WebDriverBy::name("length"));
     $selector=new WebDriverSelect($selectLength);
     $selector->selectByVisibleText("10");

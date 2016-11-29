@@ -1,4 +1,6 @@
 #!/bin/bash
+rm ../.group
+phpunit testAuth
 rm ../test.db
 rm ../*.html
 phpunit test

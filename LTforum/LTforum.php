@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.2 added SessionManager
+ * @version 1.2 added Access Controller and User Manager
  */
 
 /**
@@ -20,14 +20,34 @@ require_once ($mainPath."MyExceptions.php");
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
 
-    public function load() {
-      $inputKeys=array("act","current","begin","end","length","user","txt","comm","snap","del","query","searchLength","order");
+    public function readInput() {
+      $inputKeys=[ "act", "current", "begin", "end", "length", "user", "txt", "comm", "snap", "del", "query", "searchLength", "order" ];
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
       }
       if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);
       //else $this->s("user","Creator");
+    }
+    
+    public function readSession() {
+      $keys=["authName"=>"user", "current"=>"current" ];
+      if ( !$_SESSION ) throw new UsageException("PageRegistry: no active session found !");//return(false);
+      $i=0;
+      foreach($keys as $sessKey=>$regKey) {
+        if ( array_key_exists($sessKey,$_SESSION) && $_SESSION[$sessKey] ) {
+          $this->s($regKey,$_SESSION[$sessKey]);
+          $i++;
+        }
+      }
+      return($i);
+    }
+    
+    public function exportToSession() {
+      $keys=[ /*"authName"=>"user",*/ "current"=>"current" ];
+      $regKey="current";
+      $sessKey=$keys[$regKey];
+      $_SESSION[$sessKey] = $this->g($regKey);
     }
 }
 
@@ -52,23 +72,22 @@ $sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>2
 
 // here goes the Session Manager
 $ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
-$sm=new AccessController;
-$smRet=$sm->go($ar);
+$ac=new AccessController;
+$acRet=$ac->go($ar);
 //echo("\r\nTrace: ".$sm->trace." ");
 //if ( $alert=$ar->g("alert") ) echo($alert);
-if($smRet===false) exit;
-//if($smRet!==true) exit($ret);// see after $pr
+if($acRet!==true) exit($acRet);
 
 $pr=PageRegistry::getInstance( 0,array() );
-$pr->load();
+$pr->readInput();
+$pr->readSession();
 //$pr->s("forum",$forumName); // $forumName comes from index.php
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
-$pr->s( "viewLink",Act::addToQueryString($pr,"end=-1","length","user")."#footer" );//
+$pr->s( "viewLink",Act::addToQueryString($pr,"end=-1","length"/*,"user"*/)."#footer" );//
 //print ($pr->g( "viewLink"));
 //exit(0);
 
-if($smRet!==true) Act::showAlert($pr,$sr,$smRet);
 
 try {
   $pr->s("cardfile",new CardfileSqlt($forumName,true));

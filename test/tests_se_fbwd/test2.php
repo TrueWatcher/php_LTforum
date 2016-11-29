@@ -24,9 +24,11 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
-  protected $homeUri="http://LTforum/rulez.php?forum=test&pin=1";//"http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//
+  protected $homeUri="http://LTforum/rulez.php?forum=test"; //"http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//
   //protected $filesystemPath="/home/alexander/www/LTforum/test/";
   protected $testDirUri="http://LTforum/test/";//"http://fs..net/new_ltforum/test/";//
+  protected static $adminName="admin";
+  protected static $adminPassword="admin";
 
   public function setUp() {
     $host = 'http://localhost:4444/wd/hub'; // this is the default
@@ -45,6 +47,14 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   private $storedTitle;
+  
+  private function loginAs($user,$password) {
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys($user);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys($password);
+    $inputPs->submit();  
+  }
 
   public function _test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
@@ -58,6 +68,11 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     else print ("title not found!\r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
     print("Info: first page OK");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
     self::$storedTitle=$title;
   }
 
@@ -118,6 +133,15 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   public function test_simpleExport() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");     
+  
     $file="e_1_11";
     $begin=1;
     $end=11;
@@ -127,7 +151,6 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     self::checkExportResponce($begin,$end);
     print(" Responce OK ");
     self::checkExport($begin,$end,$file,$begin);
-
 
     $path=$this->testDirUri;
     $buf=file_get_contents($path.$file.".html");
@@ -142,6 +165,14 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   public function test_ImportExport() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");  
+  
     $file1="e_1_11";
     $begin=12;
     $end=22;
@@ -183,13 +214,19 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $this->assertEquals($begin,$recBegin,"Begin numbers mismatch");
     $this->assertLessThan(22,$recEnd,"End number too big, maybe kb limit not applied");
     $s=self::checkExport($begin,$recEnd,$file3,$begin);
-    print(" Export limited by ".$kb."KB : exported ".$s."KB ");
+    print(" Export limited by ".$kb."KB : exported ".$s."B ");
   }
 
-  public function test_DeleteEditExport() {
+  public function test_DeleteEditExport() {  
+  
     $this->webDriver->get($this->homeUri);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");  
+  
     $form=$this->webDriver->findElement(webDriverBy::id("delRange"));
     $form->findElement(webDriverBy::name("begin"))->sendKeys(12);
     $form->findElement(webDriverBy::name("end"))->sendKeys(22);
@@ -214,15 +251,31 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("editAny"));
+    print(" Info: returned to adminPanel ");
+    
+    // log out and change user
+    $logoutLink=$this->webDriver->findElement(webDriverBy::partialLinkText("Log out"));
+    $logoutLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $me="Editor";
+    $myPs="eee";
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $form=$this->webDriver->findElement(webDriverBy::id("editAny"));
     $toEdit=5;
     $form->findElement(webDriverBy::name("current"))->sendKeys($toEdit);
     $form->submit();
-    print(" Edit ".$toEdit." demanded ");
+    print(" Edit arbitrary page ".$toEdit." demanded ");
     $title_edit=$this->webDriver->getTitle();
     if (strlen($title_edit)) print ("\r\ntitle found: $title_edit \r\n");
     $this->assertContains("edit message ".$toEdit,$title_edit,"Not came to editAny page");
     $t=time();
-    $me="Editor ".$t;
+
     $add=" added _".$t;
     $myComm="My comment _".$t;
     $author=$this->webDriver->findElement(webDriverBy::name("author"));
@@ -259,6 +312,14 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   public function test_exportPartial() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");   
+  
     $file="e_4_9";
     $begin=4;
     $end=9;

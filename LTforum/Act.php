@@ -9,59 +9,20 @@
  */
 class Act {
 
-  public static function newMessage(PageRegistry $pr,SessionRegistry $sr) {
+  /**
+   * Displays form to write a new message.
+   */
+   public static function newMessage(PageRegistry $pr,SessionRegistry $sr) {
     $vr=ViewRegistry::getInstance( 2, [ "id"=>"", "message"=>"",  "controlsClass"=>"NewElements" ] );
     require_once ($sr->g("templatePath")."FormElements.php");
     require_once ($sr->g("templatePath")."SubFormElements.php");
     include ($sr->g("templatePath")."form.php");
     exit(0);
   }
-
-  public static function editLast(PageRegistry $pr,SessionRegistry $sr) {
-    // checkings
-    //$pr->g("cardfile")=new CardfileSqlt( $pr->g("forum"), false);
-    $lastMsg=$pr->g("cardfile")->getLastMsg();
-    if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Access denied: user names are different !");
-    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
-    // transfer message and comment
-    $vr=ViewRegistry::getInstance( 2, [ "id"=>$lastMsg["id"], "author"=>$lastMsg["author"], "message"=>$lastMsg["message"], "comment"=>$lastMsg["comment"], "controlsClass"=>"EditElements" ] );
-    require_once ($sr->g("templatePath")."FormElements.php");
-    require_once ($sr->g("templatePath")."SubFormElements.php");
-    // show form
-    include ($sr->g("templatePath")."form.php");
-    exit(0);
-  }
-
-  public static function updateLast(PageRegistry $pr,SessionRegistry $sr) {
-    //$pr->dump();
-    // check user -- same as act=el
-    $lastMsg=$pr->g("cardfile")->getLastMsg();
-    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length","user","current") );
-    if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");
-    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
-
-    if ( !empty($pr->g("del")) ) {
-      // simply delete
-      $pr->g("cardfile")->deletePackMsg($pr->g("current"),$pr->g("current"));
-      if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("current")." has been deleted by ".$pr->g("user"));
-      self::redirectToView ($pr);
-    }
-    // check input strings
-    $txt=$pr->g("txt");
-    if( empty($txt) ) self::showAlert ($pr,$sr,"Please, leave something in the Message field");
-    $txt=self::prepareInputText($txt,$sr);
-    $comm=$pr->g("comm");
-    $comm=self::prepareInputText($comm,$sr);
-
-    $lastMsg["message"]=$txt;
-    $lastMsg["comment"]=$comm;
-    $lastMsg["time"]=$lastMsg["date"]="";// current date and time will be set
-    $pr->g("cardfile")->addMsg($lastMsg,true);// true for overwrite
-
-    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$pr->g("current")." has been updated by ".$pr->g("user"));
-    self::redirectToView ($pr);
-  }
-
+  
+  /**
+   * Processes form, presented by Act::newMessage
+   */
   public static function add(PageRegistry $pr,SessionRegistry $sr) {
     //$pr->dump();
     $user=$pr->g("user");
@@ -82,8 +43,73 @@ class Act {
 
     if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message from ".$user." has been added successfully");
     self::redirectToView ($pr);
+  }  
+  
+  /**
+   * Displays form to edit the last message, if its author is the current user.
+   * Stores that message's Id in SESSION to keep track
+   */
+  public static function editLast(PageRegistry $pr,SessionRegistry $sr) {
+    // checkings
+    //$pr->g("cardfile")=new CardfileSqlt( $pr->g("forum"), false);
+    $lastMsg=$pr->g("cardfile")->getLastMsg();
+    if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Editing is denied: user names are different !");
+    // $pr::"current" comes from an Edit link 
+    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with the message number. Looks like it's not the latest one now.");
+    // store Id in SESSION
+    $_SESSION["current"]=$lastMsg["id"];
+    // transfer message and comment
+    $vr=ViewRegistry::getInstance( 2, [ "id"=>$lastMsg["id"], "author"=>$lastMsg["author"], "message"=>$lastMsg["message"], "comment"=>$lastMsg["comment"], "controlsClass"=>"EditElements" ] );
+    require_once ($sr->g("templatePath")."FormElements.php");
+    require_once ($sr->g("templatePath")."SubFormElements.php");
+    // show form
+    include ($sr->g("templatePath")."form.php");
+    exit(0);
+  }
+  
+  /**
+   * Processes the Edit form, presented by Act::editLast.
+   * Takes Id from SESSION, so works even if there came some more messages.
+   * Clears Id from SESSION after updating.
+   */
+  public static function updateLast(PageRegistry $pr,SessionRegistry $sr) {
+    //$pr->dump();
+    // $pr::"current" comes from SESSION
+    $current=$pr->g("current");
+    $targetMsg = $pr->g("cardfile")->getOneMsg( $current );
+    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length"/*,"user"*/,"current") );
+    if( $targetMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");
+
+    if ( !empty($pr->g("del")) ) {
+      // check if it is still last
+      $lastMsg = $pr->g("cardfile")->getLastMsg();
+      if( $lastMsg["id"] != $current ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+      // simply delete
+      $pr->g("cardfile")->deletePackMsg($current,$current);
+      if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$current." has been deleted");
+      unset($_SESSION["current"]);
+      self::redirectToView ($pr);
+    }
+    // check input strings
+    $txt=$pr->g("txt");
+    if( empty($txt) ) self::showAlert ($pr,$sr,"Please, leave something in the Message field");
+    $txt=self::prepareInputText($txt,$sr);
+    $comm=$pr->g("comm");
+    $comm=self::prepareInputText($comm,$sr);
+
+    $targetMsg["message"]=$txt;
+    $targetMsg["comment"]=$comm;
+    $targetMsg["time"]=$targetMsg["date"]="";// current date and time will be set
+    $pr->g("cardfile")->addMsg($targetMsg,true);// true for overwrite
+
+    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$current." has been updated");
+    unset($_SESSION["current"]);
+    self::redirectToView ($pr);
   }
 
+  /**
+   * Displays a page of messages. Default View.
+   */
   public static function view (PageRegistry $pr,SessionRegistry $sr) {
     try {
       $pr->g("cardfile")->getLimits($forunBegin,$forumEnd,$a);
@@ -155,6 +181,9 @@ class Act {
     }
   }// end view
 
+  /**
+   * Displays the Search form and a page of found messages.
+   */
   public static function search (PageRegistry $pr, SessionRegistry $sr) {
     mb_internal_encoding("UTF-8");// ! important
     $skipSearch=0;
@@ -205,6 +234,9 @@ class Act {
     exit(0);
   }
 
+  /**
+   * Displays Alert message, possibly with Back and Ok links.
+   */
   public static function showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
     $pr->s( "alert",$alertMessage );
     include ($sr->g("templatePath")."alert.php");
