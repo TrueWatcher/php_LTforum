@@ -40,7 +40,7 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 }
 
 require_once ($mainPath."Hopper.php");
-require_once ($mainPath."SessionManager.php");
+require_once ($mainPath."AccessController.php");
 
 // MAIN
 
@@ -52,7 +52,7 @@ $sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>2
 
 // here goes the Session Manager
 $ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
-$sm=new SessionManager;
+$sm=new AccessController;
 $smRet=$sm->go($ar);
 //echo("\r\nTrace: ".$sm->trace." ");
 //if ( $alert=$ar->g("alert") ) echo($alert);
@@ -76,29 +76,6 @@ try {
 catch (Exception $e) {
   Act::showAlert ($pr,$sr,$e->getMessage());
 }
-
-// some testing code
-//$messages=new CardfileSqlt( $pr->g("forum"), true);
-
-//$firstMsg=$pr->g("cardfile")->getOneMsg(1);
-//print_r ($firstMsg);
-/*for ($j=2;$j<=100;$j++) {
-  $m = Act::makeMsg("Creator","This is message number ".$j);
-  $pr->g("cardfile")->addMsg($m);
-}*/
-//$pr->g("cardfile")->deletePackMsg(1,15);
-/*$search=[" ак ","http","-IT"];//,"dvd"];"AR",
-$order="";//"desc";
-$limit=10;
-$results="";
-$toShow=$pr->g("cardfile")->yieldSearchResults($search,$order,$limit);
-foreach($toShow as $i=>$res) {
-  $results.="<hr />".implode(":",$res)."<hr />";
-  //$results.= ("!".strpos(implode("  ",$res),$search[1]) );
-  //if(strpos(implode("  ",$res),$search[1])===false) print ("<!");
-}
-print($results);
-exit();*/
 
 $action=$pr->g("act");
 if ( empty($action) && empty($pr->g("begin")) && empty($pr->g("end")) ) Act::redirectToView($pr);

@@ -81,5 +81,12 @@ abstract class AuthElements {
   static function scriptOnready ($s=null) {
     if (empty($s)) return ("");
     return( self::wrapJs($s) );
-  }  
+  }
+  
+  static function submitButton () {
+    $s='<input class="submit" type="submit" value="Submit" />';
+    $s='<td id="enter" colspan="2">'.$s."</td>\r\n";
+    $s=self::wrapRow ($s);
+    return($s);
+  }
 }

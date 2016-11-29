@@ -32,10 +32,8 @@ if ( !is_subclass_of($cc,"AuthElements") ) throw new UsageException ("Layout aut
       print ( $cc::authorInput("Your name :","user","",null,null) );
       print ( $cc::pswInput("Your password :","ps","",null,null) );
       print ( $cc::plainChkbx () );
-      print ( $cc::alertP ($ar) );      ?>
-      <tr>
-        <td id="enter" colspan="2"><input class="submit" type="submit" value="Submit" /></td>
-      </tr>
+      print ( $cc::alertP ($ar) );
+      print ( $cc::submitButton() );?>
     </table>
   </fieldset>
 </form>

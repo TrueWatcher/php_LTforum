@@ -1,0 +1,5 @@
+; must not contain empty lines and must end with NL !
+[test]
+admin=d9e962916d902a0912607d77118f7686
+[testAdmins]
+admin=

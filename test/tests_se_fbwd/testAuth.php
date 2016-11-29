@@ -73,15 +73,9 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     else print ("title not found!\r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
     $this->assertContains("Login",$title,"no <Login> in the title");
-    $this->assertContains(self::$storedForum,$title,"no <Login> in the title");
+    $this->assertContains(self::$storedForum,$title,"no forumName in the title");
     print("\r\nInfo: login page found");
     
-    /*
-    sleep(10);
-    print ("\r\nSleeping 10 sec and sending request for ".self::$adminUri."...");
-    $this->webDriver->get(self::$adminUri);
-    $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");*/
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $this->assertNotEmpty($inputUser,"No <user> input -- wrong page");
     $inputPlain=$this->webDriver->findElement(WebDriverBy::name("plain"));
@@ -111,12 +105,146 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertNotContains("Login",$title,"Failed admin login");
     print("\r\nInfo: admin login Ok");
     
-    $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Sign out") );
+    $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Log out") );
     $logOutLink->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertContains("Login",$title,"no <Login> in the title");
     print("\r\nInfo: admin panel logout Ok");
+  }
+  
+  public function test_userManager() {
+    $this->webDriver->get(self::$adminUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    //$this->assertNotEmpty($title,"Failed to connect to the site");
+    $this->assertContains("Login",$title,"no <Login> in the title");
+    $this->assertContains(self::$storedForum,$title,"no forumName in the title");
+    print("\r\nInfo: login page found");
+
+    $inputPlain=$this->webDriver->findElement(WebDriverBy::name("plain"));
+    $this->assertNotEmpty($inputPlain,"No <plain> checkbox -- please set authForm to 1");
+    $inputPlain->click();
+    sleep(10);
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    print("\r\nInfo: registering in Plaintext mode");
+    
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $formManUser=$this->webDriver->findElement(WebDriverBy::id("manUser"));
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys(self::$storedUserName);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys(self::$storedUserPassword);
+    //$formManUser->submit(); // NO!
+    $buttonGen=$this->webDriver->findElement(WebDriverBy::id("genEntry"));
+    $buttonGen->click();
+    $areaUEntry=$this->webDriver->findElement(WebDriverBy::id("uEntry"));
+    //echo("user:".$inputUser->getText()." ");
+    //echo("user:".$inputUser->getAttribute("value")." ");
+    $this->assertContains(self::$storedUserName."=",$areaUEntry->getAttribute("value"),"failed to generate user's entry");
+    $buttonAdd=$this->webDriver->findElement(WebDriverBy::id("uAdd"));
+    $buttonAdd->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"test user ".self::$storedUserName." probably alresy exists, remove that entry manually");
+    $userList=$this->webDriver->findElement(WebDriverBy::id("userList"))->getAttribute("value");
+    $this->assertContains(self::$storedUserName,$userList,"no userName ".self::$storedUserName." in the users list");
+    print("\r\nInfo: adding user Ok");
+    
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys(self::$storedUserName);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys(self::$storedUserPassword);
+    $buttonAdd=$this->webDriver->findElement(WebDriverBy::id("uAdd"));
+    $buttonAdd->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains("alert",$title,"wrong response to repeated user add");
+    print("\r\nInfo: repeated user test Ok");
+    
+    $okLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Ok"));
+    $okLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
+
+    $formManAdmin=$this->webDriver->findElement(WebDriverBy::id("manAdmin"));
+    $inputAUser=$this->webDriver->findElement(WebDriverBy::name("aUser"));
+    $inputAUser->sendKeys(self::$storedUserName);
+    $buttonAAdd=$this->webDriver->findElement(WebDriverBy::id("aAdd"));
+    $buttonAAdd->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $adminList=$this->webDriver->findElement(WebDriverBy::id("adminList"))->getAttribute("value");
+    $this->assertContains(self::$storedUserName,$userList,"no userName ".self::$storedUserName." in the admins list");
+    print("\r\nInfo: promoting to admin Ok");
+    
+    $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Log out") );
+    $logOutLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(10);
+    // try logging in as the new-born admin
+    $this->loginAs(self::$storedUserName,self::$storedUserPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("Login",$title,"failed login");    
+    $this->assertNotContains("alert",$title,"failed login"); 
+    $formManAdmin=$this->webDriver->findElement(WebDriverBy::id("manAdmin"));
+    $inputAUser=$this->webDriver->findElement(WebDriverBy::name("aUser"));
+    $inputAUser->sendKeys(self::$storedUserName);
+    $buttonADel=$this->webDriver->findElement(WebDriverBy::id("aDel"));
+    $buttonADel->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    //$this->assertContains("Login",$title,"wrong response to current admin deletion");
+    $adminList=$this->webDriver->findElement(WebDriverBy::id("adminList"))->getAttribute("value");
+    $this->assertNotContains(self::$storedUserName,$adminList,"userName ".self::$storedUserName." remained in the admins list");
+    print("\r\nInfo: resign from admin Ok");
+    
+    $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Log out") );
+    $logOutLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains("Login",$title,"failed logout");
+    //$this->webDriver->get(self::$adminUri);
+    //$title=$this->webDriver->getTitle();
+    //if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(10);
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $buttonAdminsList=$this->webDriver->findElement(WebDriverBy::partialLinkText("admins list"));
+    $buttonAdminsList->click();
+    $adminList=$this->webDriver->findElement(WebDriverBy::id("adminList"))->getAttribute("value");
+    $this->assertEquals(self::$storedAdminName,$adminList,"there are some extra admins, delete the group file and repeat this test");
+    
+    
+    $formManAdmin=$this->webDriver->findElement(WebDriverBy::id("manAdmin"));
+    $inputAUser=$this->webDriver->findElement(WebDriverBy::name("aUser"));
+    $inputAUser->sendKeys(self::$storedAdminName);
+    $buttonADel=$this->webDriver->findElement(WebDriverBy::id("aDel"));
+    $buttonADel->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains("alert",$title,"wrong response to the-only-admin downgrade");
+    print("\r\nInfo: the-only-admin downgrade test Ok");
+    
+    $okLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Ok"));
+    $okLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n"); 
+    
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys(self::$storedUserName);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys(self::$storedUserPassword);
+    $buttonUDel=$this->webDriver->findElement(WebDriverBy::id("uDel"));
+    $buttonUDel->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");   
+    $userList=$this->webDriver->findElement(WebDriverBy::id("userList"))->getAttribute("value");
+    $this->assertNotContains(self::$storedUserName,$userList," userName ".self::$storedUserName." remained in the users list");
+    print("\r\nInfo: removing user Ok");    
+    
   }
   
 }

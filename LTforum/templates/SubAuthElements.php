@@ -8,6 +8,19 @@
     static function plainChkbx () {}// disabled
   }
 
+  class AlertAuthElements extends AuthElements {
+    static function hiddenFields($context) {}// disabled
+    static function scriptHelper($context) {}
+    static function scriptOnready() {}
+    static function plainChkbx () {}
+    static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {}
+    static function pswInput ($label,$inputName,$pswValue,$context,$pageContext) {}
+    static function submitButton() {}
+    static function titleSuffix() { return("Login : alert"); }
+    static function realmP($context) {}
+    // pAlert inherited
+  }  
+  
   class OpportunisticAuthElements extends AuthElements {
     static function hiddenFields($context) {
       $h=parent::genericInput ("hidden","act","authOpp");
@@ -16,7 +29,7 @@
       return ($h);
     }  
     static function scriptHelper($context) {
-      return ( parent::scriptHelper($context,"protectHelper.js") );
+      return ( parent::scriptHelper($context,"authHelper.js") );
     }
     static function scriptOnready() {
       $s="";
@@ -45,7 +58,7 @@
       return ( parent::authorInput ($label,$inputName,"You need Javascript to register",$context,$pageContext) );
     }
     static function scriptHelper($context) {
-      return ( parent::scriptHelper($context,"protectHelper.js") );
+      return ( parent::scriptHelper($context,"authHelper.js") );
     }
     static function scriptOnready() {
       $s="";

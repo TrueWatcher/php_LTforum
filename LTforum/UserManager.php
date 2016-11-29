@@ -6,16 +6,16 @@ class UserManager {
   protected static $users;
   protected static $admins;
   protected static $groupFile;
-  protected static $groupFileName=".ini";
+  //protected static $groupFileName=".group";
     
   static function init($path="",$forum="") {
     if ($path && $forum) {
       self::$forumName=$forum;
-      if (!class_exists("SessionManager")) throw new UsageException ("UserManager: please, include all dependencies");
-      self::$groupFile=$path.self::$groupFileName;
-      if (!file_exists(self::$groupFile)) {
-        //throw new AccessException ("No such file:".self::$groupFile."!");
-        //SessionManager::createEmptyGroupFile($path,$forum);
+      if (!class_exists("AccessController")) throw new UsageException ("UserManager: please, include all dependencies");
+      self::$groupFile = $path . AccessController::$groupFileName;//$path.self::$groupFileName;
+      if ( ! file_exists(self::$groupFile) ) {
+        throw new AccessException ("No such file:".self::$groupFile."!");
+        // this should not happen because of AccessController::createEmptyGroupFile($path,$forum);
       }
     }
     self::readGroup(self::$forumName,self::$users,self::$admins);
@@ -57,7 +57,7 @@ class UserManager {
     if ($beginSection===false) throw new AccessException ("Section ".$header." not found in the file ".$groupFile);
     
     $where=strpos($buf,$entry,$beginSection);
-    if($where===false) return ("Missing or invalid entry. Try manual editing");
+    if ($where===false) return ("Missing or invalid entry. Try manual editing");
     $after=@substr($buf,$where+strlen($entry),1);
     $before=@substr($buf,$where-2,1);
     echo(" before:".$before."; after:".$after."; ");
@@ -98,7 +98,7 @@ class UserManager {
       return ("Wrong command ".$addOrDel);
     }
     if ($ret) return ($ret);// something was wrong
-    self::init();
+    self::init();// success, re-read group file
     return ("");
   }
   
@@ -120,7 +120,7 @@ class UserManager {
       return ("Wrong command ".$addOrDel);
     }
     if ($ret) return ($ret);// something was wrong
-    self::init();
+    self::init();// success, re-read group file
     return ("");
   }    
   

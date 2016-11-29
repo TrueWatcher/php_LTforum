@@ -30,12 +30,12 @@
     }
   }
 
-  class SessionManager extends Hopper {
+  class AccessController extends Hopper {
     function __construct() {
       $this->nextState="verifySession";
     }
     
-    static $groupFileName=".ini";
+    static $groupFileName=".group";
     
     static function makeHa1($userName,$realm,$password) {
       return ( md5($userName.$realm.$password) ); 
@@ -125,15 +125,27 @@
         $this->next("requestLogin");
         return;      
       }
-      if ( $t < $_SESSION["notBefore"] ) return ("Please, try again later");
+      if ( $t < $_SESSION["notBefore"] ) {
+        $ar->s("alert","Please, try again later");
+        $this->next("showAuthAlert");
+        return; 
+      }
       if ( $_SESSION["state"]=="preAuth" ) {
         $this->next("selectAuth");
         return;
       }
-      if ( !array_key_exists("authName",$_SESSION) || $_SESSION["state"]!="auth" ) return ("Something is wrong");
+      if ( !array_key_exists("authName",$_SESSION) || $_SESSION["state"]!="auth" ) {
+        $ar->s("alert","Something is wrong");
+        $this->next("showAuthAlert");
+        return;
+      } 
       $user=$_SESSION["authName"];
       //echo ($user."====".(self::isAdmin($user)) );
-      if ( $ar->g("admin") && !(self::isAdmin($user,$ar)) ) return ("This area is for admins only");
+      if ( $ar->g("admin") && !(self::isAdmin($user,$ar)) ) {
+        $ar->s("alert","This area is for admins only");
+        $this->next("requestLogin");
+        return;      
+      }
       return (true);
     }
     
@@ -179,16 +191,18 @@
       // init authentication
       if ($tryPlainText) {
         if ( $ar->g("authMode") == 2 ) {
-          $this->setBreak();// overly safe      
-          return("Plaintext auth is turned off on the server");
+          $ar->s("alert","Plaintext auth is turned off on the server");
+          $this->next("requestLogin");
+          return;
         }
         $this->next("authPlain");
         return;       
       }
       else { // tryDigest
         if ( $ar->g("authMode") == 0 ) {
-          $this->setBreak();// overly safe      
-          return(" Digest auth is turned off on the server");
+          $ar->s("alert","Digest auth is turned off on the server");
+          $this->next("requestLogin");
+          return;        
         }
         if ( $ar->g("user") || $ar->g("ps") ) {
           $this->next("requestLogin");
@@ -274,5 +288,16 @@
       session_write_close ();
       return (true);
     }
+    
+    function showAuthAlert(AuthRegistry $ar) {
+      // show form
+      require($ar->g("templatePath")."AuthElements.php");
+      require($ar->g("templatePath")."SubAuthElements.php");
+      $ar->s( "controlsClass", "AlertAuthElements" );
+      include($ar->g("templatePath")."authForm.php");
+      $this->setBreak();// overly safe
+      return (false);
+    }
+    
   }// end SessionManager
 ?>

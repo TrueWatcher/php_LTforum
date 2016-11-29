@@ -80,16 +80,16 @@
 
 <div>
   <fieldset>
-    All users: <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=lu"><button type="button">Get List</button></a><br />
-    <input type="textarea" style="width:100%" name="userList" value="<?php print($apr->g("userList")); ?>" />
+    All users: <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=lu"><button type="button">Get users list</button></a><br />
+    <input type="textarea" style="width:100%" id="userList" value="<?php print($apr->g("userList")); ?>" />
 
     <br />
-    All admins: <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=la"><button type="button">Get List</button></a><br />
-    <input type="textarea" style="width:100%" name="userList" value="<?php print($apr->g("adminList")); ?>" />
+    All admins: <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=la"><button type="button">Get admins list</button></a><br />
+    <input type="textarea" style="width:100%" id="adminList" value="<?php print($apr->g("adminList")); ?>" />
   </fieldset>
 </div>
 
-<script src="<?php print($asr->g("assetsPath")."protectHelper.js"); ?>"></script>
+<script src="<?php print($asr->g("assetsPath")."authHelper.js"); ?>"></script>
 <form action="" method="post" id="manUser">
   <fieldset>
     User:<br />
@@ -150,7 +150,7 @@
 </script>
 
 <fieldset>
-  <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=reset"><button type="button">Sign out</button></a> 
+  <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=reset"><button type="button">Log out</button></a> 
 </fieldset>
 
 <p id="footer"></p>
