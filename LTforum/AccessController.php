@@ -126,7 +126,7 @@
         return;      
       }
       if ( $t < $_SESSION["notBefore"] ) {
-        $ar->s("alert","Please, try again later");
+        $ar->s("alert","Please, wait a few seconds and click \"Refresh\"");
         $this->next("showAuthAlert");
         return; 
       }
@@ -188,10 +188,15 @@
         $this->next("requestLogin");
         return;      
       }
-      // init authentication
+      // pre-authentication checks
       if ($tryPlainText) {
         if ( $ar->g("authMode") == 2 ) {
-          $ar->s("alert","Plaintext auth is turned off on the server");
+          $ar->s("alert"," Plaintext auth is turned off on the server ");
+          $this->next("requestLogin");
+          return;
+        }
+        if ( empty($ar->g("user")) || empty($ar->g("ps")) ) {
+          $ar->s("alert"," Empty username or password ");
           $this->next("requestLogin");
           return;
         }
@@ -200,15 +205,20 @@
       }
       else { // tryDigest
         if ( $ar->g("authMode") == 0 ) {
-          $ar->s("alert","Digest auth is turned off on the server");
+          $ar->s("alert"," Digest auth is turned off on the server ");
           $this->next("requestLogin");
           return;        
         }
         if ( $ar->g("user") || $ar->g("ps") ) {
-          $this->next("requestLogin");
           $ar->s("alert"," This mode takes no credentials ");
-        return;        
-      }
+          $this->next("requestLogin");          
+          return;        
+        }
+        if ( empty($ar->g("responce")) || empty($ar->g("cn")) ) {
+          $ar->s("alert"," Missing login data ");
+          $this->next("requestLogin");          
+          return;        
+        }
         $this->next("authDigest");
         return;       
       }

@@ -119,23 +119,30 @@
 <script>
   $("user").value=$("ps").value="";
   function genEntry() {
+    if ( checkEmpty("user") || checkEmpty("ps") ) {
+      return false;
+    }    
     var ha=makeHa();
     $("uEntry").value=$("user").value+"="+ha;
+    return true;
   }
   $("genEntry").onclick=function(){ genEntry(); };
   function clearPrivate() {
-    $("user").value=$("ps").value=$("realm").value=""; 
+    //$("user").value=$("ps").value=$("realm").value="";
+    remove("user");
+    remove("ps");
+    remove("realm");    
   }
   $("uAdd").onclick=function() { 
-    genEntry();
+    if ( !genEntry() ) return (false);
     addHidden("act","uAdd","manUser");
-    clearPrivate();
+    clearPrivate("manUser");
     $("manUser").submit();
   };
   $("uDel").onclick=function() { 
-    genEntry();
+    if ( !genEntry() ) return (false);
     addHidden("act","uDel","manUser");
-    clearPrivate();
+    clearPrivate("manUser");
     $("manUser").submit();
   };
   $("aUser").value="";
@@ -150,7 +157,8 @@
 </script>
 
 <fieldset>
-  <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=reset"><button type="button">Log out</button></a> 
+  <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=reset"><button type="button">Log out</button></a>
+  <?php echo("HttpHost:".$_SERVER['HTTP_HOST']." ,ServerName:".$_SERVER['SERVER_NAME']); ?>
 </fieldset>
 
 <p id="footer"></p>

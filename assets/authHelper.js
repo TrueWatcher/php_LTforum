@@ -16,7 +16,11 @@ function makeHa() {
 }
 
 function clearPrivate() {
-  $("user").value=$("realm").value=$("ps").value=$("sn").value="";
+  //$("user").value=$("realm").value=$("ps").value=$("sn").value="";
+  remove ("user");
+  remove ("realm");
+  remove ("ps");
+  remove ("sn");  
 }
 
 function clearCredentials() {
@@ -32,6 +36,12 @@ function addHidden (name,value,formId) {
   else $(formId).appendChild(e);
 }
 
+function remove (id) {
+  var e=$(id);
+  var pe=e.parentNode;
+  pe.removeChild(e);
+}
+
 function createCNonce() {
   var t=(new Date).getTime();
   t=md5("salt:)"+t);
@@ -39,9 +49,8 @@ function createCNonce() {
   return(t);
 }
 
-function responce(challenge,cNonce,ha1) {
-  var r=challenge+ha1+cNonce;
-  r=md5(r);
+function response(challenge,cNonce,ha1) {
+  var r=md5(challenge+ha1+cNonce);
   addHidden ("responce",r);
   return(r);  
 }
@@ -51,7 +60,7 @@ function stuffPS(cn,ha) {
     addHidden("pers","1");
     window.localStorage.clear();
     //window.localStorage["cn"]=cn;
-    window.localStorage["sec"]=md5(ha+cn);
+    window.localStorage["sec"]=md5(""+ha+cn);
     window.localStorage["cc"]=1;
     window.localStorage["sc"]=1;
   }
@@ -77,7 +86,7 @@ function doAll() {
   }
   var cn=createCNonce();
   var ha=makeHa();
-  responce( $("sn").value, cn, ha );
+  response( $("sn").value, cn, ha );
   clearPrivate();
   stuffPS(cn,ha);
 }
