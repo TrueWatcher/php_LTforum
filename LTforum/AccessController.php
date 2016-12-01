@@ -102,8 +102,8 @@
       ini_set("session.use_only_cookies",1);
       ini_set("session.use_cookies",1);
       ini_set("session.use_strict_mode",1);
-      //echo($_SERVER['DOCUMENT_ROOT']. '/sessions');
-      $sessionsDir= $_SERVER['DOCUMENT_ROOT'] . '/sessions';
+      $sessionsDir=realpath( __DIR__. '/../sessions');// absolute path required
+      //echo($sessionsDir);
       if ( !file_exists($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." not found");
       if ( !is_writable($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." is not writable, check the permissions");
       ini_set('session.save_path',$sessionsDir);
