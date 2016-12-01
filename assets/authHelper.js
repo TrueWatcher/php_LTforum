@@ -10,13 +10,15 @@ function $(id) {
 }
 
 function makeHa() {
-  var s=$("user").value+$("realm").value+$("ps").value;
+  var r=location.hostname.toLowerCase()+$("realm").value;
+  var s=$("user").value+r+$("ps").value;
   //alert ("all:"+s);
   return (md5(s));
 }
 
 function clearPrivate() {
   //$("user").value=$("realm").value=$("ps").value=$("sn").value="";
+  //return;
   remove ("user");
   remove ("realm");
   remove ("ps");

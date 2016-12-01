@@ -40,7 +40,7 @@ abstract class AuthElements {
 
   static function alertP (AuthRegistry $context) {
     if ( empty($context->g("alert")) ) return ("");
-    return ( self::wrapRow ( self::wrapFldTh("Alert :").self::wrapFldTd($context->g("alert")) ) );
+    return ( self::wrapRow ( self::wrapFldTh("Alert :").self::wrapFldTd($context->g("alert"),"alert") ) );
   }
   
   static function realmP (AuthRegistry $context) {

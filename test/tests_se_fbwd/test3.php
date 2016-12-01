@@ -77,6 +77,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$storedUsername."/".self::$storedPassword."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$storedUsername."/".self::$storedPassword."!");
     //self::$storedTitle=$title;
   }
 
@@ -146,6 +147,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains( "alert", $title, "Failed to log in as ". self::$storedUsername. "/" . self::$storedPassword. "!" );    
+    $this->assertNotContains( "Login", $title, "Failed to log in as ". self::$storedUsername. "/" . self::$storedPassword. "!" );
     
     $this->addOneMsg(0,$myTextCyr);
 
@@ -212,6 +214,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains ( "alert", $title, "Failed to log in as " . self::$storedUsername . "/" . self::$storedPassword. "!" );
+    $this->assertNotContains ( "Login", $title, "Failed to log in as " . self::$storedUsername . "/" . self::$storedPassword. "!" );
     
     $mySearchCyrInv="йЦУкеНГ";
     $this->webDriver->get($this->searchUri.urlencode($mySearchCyrInv));

@@ -54,6 +54,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   static private $storedQuery="";
 
   private function loginAs($user,$password) {
+    print ("\r\nLogging in as ".$user."/".$password." " );
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $inputUser->sendKeys($user);
     $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
@@ -65,12 +66,13 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
     if ($this->JSenabled) print ("ON !");
     else print ("OFF !");
+    //$this->webDriver->manage()->clearAppCache();
     print ("\r\nSending request for ".self::$resetUri."...");
     $this->webDriver->get(self::$resetUri);
     print ("processing page...");
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    else print ("title not found!\r\n");
+    else print (" title not found!\r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
     $this->assertContains("Login",$title,"no <Login> in the title");
     $this->assertContains(self::$storedForum,$title,"no forumName in the title");
@@ -81,11 +83,14 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $inputPlain=$this->webDriver->findElement(WebDriverBy::name("plain"));
     $this->assertNotEmpty($inputPlain,"No <plain> checkbox -- please set authForm to 1");
     print("\r\nInfo: assuming Digest mode");
-    
+    //$inputPlain->click();
+    //print("\r\nInfo: trying Plaintext mode");
     sleep(10);
     $this->loginAs(self::$storedUserName,self::$storedUserPassword);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" Error! failed to connect ");
+    $this->assertContains("Login",$title,"Wrong responce to non-admin login");
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $this->assertNotEmpty($inputUser,"Wrong response to non-admin login");
     print("\r\nInfo: non-admin login test Ok");
@@ -99,9 +104,12 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     
     $this->webDriver->get(self::$resetUri);    
     sleep(10);
+    //$this->webDriver->findElement(WebDriverBy::name("plain"))->click();
     $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    //$source=$this->webDriver->getPageSource();
+    //print ($source);
     $this->assertNotContains("Login",$title,"Failed admin login");
     print("\r\nInfo: admin login Ok");
     
@@ -147,7 +155,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $buttonAdd->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotContains("alert",$title,"test user ".self::$storedUserName." probably alresy exists, remove that entry manually");
+    $this->assertNotContains("alert",$title,"test user ".self::$storedUserName." probably already exists, remove that entry manually");
     $userList=$this->webDriver->findElement(WebDriverBy::id("userList"))->getAttribute("value");
     $this->assertContains(self::$storedUserName,$userList,"no userName ".self::$storedUserName." in the users list");
     print("\r\nInfo: adding user Ok");
@@ -261,6 +269,50 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $inputPs->sendKeys($password);
     $buttonUAdd=$this->webDriver->findElement(WebDriverBy::id("uAdd"));
     $buttonUAdd->click();    
+  }
+  
+  public function test_crossThread() {
+    $anotherThread="demo";
+    $anotherAdminUri=str_replace( "=".self::$storedForum, "=".$anotherThread, self::$adminUri );
+    $anotherUri=str_replace( "rulez.php?forum=".self::$storedForum, $anotherThread, self::$adminUri );
+    $this->webDriver->get($anotherUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");
+    $this->assertNotEmpty($title,"Failed to connect to the thread ".$anotherThread);
+    $this->assertContains("Login",$title,"no <Login> in the title");
+    $this->assertContains($anotherThread,$title,"no forumName in the title");
+    print("\r\nInfo: another login page found ");
+    
+    sleep(10);
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("Login",$title," failed login to ".$anotherThread);
+    print("\r\nInfo: logged in to another thread ");
+    
+    $this->webDriver->get($anotherAdminUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");
+    $this->assertNotContains("Login",$title," failed transit to adminPanel ");
+    print("\r\nInfo: transit to another thread's adminPanel ");
+    
+    $this->webDriver->get(self::$adminUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");
+    $this->assertContains("Login",$title," wrong response to cross-realm request");
+    print("\r\nInfo: cross-realm request test Ok ");
+    
+    sleep(10);
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("Login",$title," failed login to ".$anotherThread);
+    print("\r\nInfo: logged in to the ".self::$storedForum." adminPanel");
+    
+    $this->webDriver->get(self::$resetUri);
   }
   
 }

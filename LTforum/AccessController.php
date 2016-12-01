@@ -38,6 +38,8 @@
     static $groupFileName=".group";
     
     static function makeHa1($userName,$realm,$password) {
+      $realm=strtolower($_SERVER["SERVER_NAME"]).$realm;
+      //echo(">>".$userName.$realm.$password);
       return ( md5($userName.$realm.$password) ); 
     }
     
@@ -100,15 +102,23 @@
       ini_set("session.use_only_cookies",1);
       ini_set("session.use_cookies",1);
       ini_set("session.use_strict_mode",1);
+      //echo($_SERVER['DOCUMENT_ROOT']. '/sessions');
+      $sessionsDir= $_SERVER['DOCUMENT_ROOT'] . '/sessions';
+      if ( !file_exists($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." not found");
+      if ( !is_writable($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." is not writable, check the permissions");
+      ini_set('session.save_path',$sessionsDir);
+      ini_set('session.gc_probability',25);
+      ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));
       session_start();
       
       if ( array_key_exists("act",$_REQUEST) && $_REQUEST["act"]=="reset" ) {
-        unset($_SESSION);
-        session_destroy();
-        session_start();
+        //unset($_SESSION);
+        //session_destroy();
+        //session_start();
+        $_SESSION["state"]="aborted";
         $ar->s("alert"," Session aborted by user ");
-        //$this->next("requestLogin");
-        //return;      
+        $this->next("requestLogin");
+        return;      
       }
       if( empty($_SESSION) || !array_key_exists("state",$_SESSION) ) {
         $this->next("requestLogin");
@@ -122,6 +132,7 @@
       }
       if ( array_key_exists("realm",$_SESSION) && $_SESSION["realm"]!==$ar->g("realm") ) {
         $_SESSION["state"]="trip";
+        $ar->s("alert","You need to register for a new thread");
         $this->next("requestLogin");
         return;      
       }
@@ -149,7 +160,12 @@
       return (true);
     }
     
-    function requestLogin(AuthRegistry $ar) { 
+    function requestLogin(AuthRegistry $ar) {
+      if ($_SESSION) {
+        unset($_SESSION);
+        session_destroy();
+        session_start();        
+      }
       // initialize authentication
       $sn=self::makeServerNonce();
       $ar->s("serverNonce",$sn);// needed by form
@@ -159,7 +175,7 @@
       $_SESSION["notBefore"]=time()+$ar->g("minDelay");
       $_SESSION["notAfter"]=time()+$ar->g("maxDelayAuth");
       $_SESSION["state"]="preAuth";
-      session_write_close ();
+      //session_write_close ();
       //$ar->s("alert",session_id());
       // show form
       require($ar->g("templatePath")."AuthElements.php");
@@ -269,7 +285,7 @@
       if ( !$foundName ) {
         $this->next("requestLogin");
         sleep(5);
-        $ar->s("alert","Wrong login or/and password");
+        $ar->s("alert","Wrong login or/and password "/*." responce=".$ar->g("responce")*/);
         return;
       }
       // registered OK
@@ -295,7 +311,7 @@
       $_SESSION["state"]="auth";
       unset($_SESSION["serverNonce"]);
       session_regenerate_id();
-      session_write_close ();
+      //session_write_close ();
       return (true);
     }
     

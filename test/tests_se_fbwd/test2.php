@@ -73,7 +73,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
-    self::$storedTitle=$title;
+    $this->assertNotContains("Login",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
   }
 
   private function parseHtmlIds($pathName) {
@@ -140,7 +140,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $this->loginAs(self::$adminName,self::$adminPassword);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");     
+    $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
   
     $file="e_1_11";
     $begin=1;

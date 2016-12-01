@@ -109,6 +109,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
     
     $forum=self::parseViewTitle($title,$b,$lastMsg,$pc,$pe);
     self::$storedForum=$forum;
@@ -172,6 +173,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");    
+    
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $total=self::$storedTotal;
     $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
@@ -247,6 +250,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");    
     
     // same as previous
     /*$me=self::$storedUsername;
@@ -307,11 +311,9 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->loginAs($me,$myPs);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");  
-    /*$this->webDriver->get($this->homeUri);
-    $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotEmpty($title,"Failed to connect to the site");*/
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
+
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     self::$storedForum=$forum;
     self::$storedTotal=$e;
@@ -363,7 +365,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->loginAs($me,$myPs);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");      
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
     
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
     $addLink->click();
@@ -418,13 +421,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
     
-    /*$me=self::$storedUsername;
-    $qs="?user=".$me;
-    $this->webDriver->get( ($this->homeUri).$qs );
-    $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertNotEmpty($title,"Failed to connect to the site");*/
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     self::$storedForum=$forum;
     self::$storedTotal=$e;
@@ -563,6 +561,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
     
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $this->assertLessThan(8,(int)$e-$b,"Too many messages in test database. Delete it manually");
