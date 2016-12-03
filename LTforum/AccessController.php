@@ -31,18 +31,42 @@
   }
 
   class AccessController extends Hopper {
+  
     function __construct() {
       $this->nextState="verifySession";
     }
     
+    /**
+     * Name of a file in forum's folder, that contains users' names and password hashes
+     * Used also by UserManager
+     */
     static $groupFileName=".group";
     
+    /**
+     * Creates a password hash.
+     * Has a parallel function on the client side.
+     * Uses also host name.
+     * @see assets/authHelper.js makeHa
+     * @param string $userName
+     * @param string $realm
+     * @param string $password
+     * @returns string
+     */
     static function makeHa1($userName,$realm,$password) {
       $realm=strtolower($_SERVER["SERVER_NAME"]).$realm;
       //echo(">>".$userName.$realm.$password);
       return ( md5($userName.$realm.$password) ); 
     }
     
+    /**
+     * Creates the response for the Digest authentication.
+     * Has a parallel function on the client side.
+     * @see assets/authHelper.js makeResponse
+     * @param string $sn server nonce
+     * @param string $ha1 password hash
+     * @param string $cn client nonce
+     * @returns string
+     */
     static function makeResponse($sn,$ha1,$cn) {
       return ( md5($sn.$ha1.$cn) ); 
     }
@@ -51,6 +75,14 @@
       return ( md5($secret.$cNonce) );
     }
     
+    /**
+     * Initializes the new thread with admin/admin.
+     * Writes users data file in .ini format.
+     * @uses $groupFileName
+     * @param string $path path to the users file (formed on page initialization)
+     * @param string $forum forum name like "demo"
+     * @returns void
+     */
     static function createEmptyGroupFile($path,$forum) {
       $nl="\n";
       $s="";
@@ -62,6 +94,13 @@
       file_put_contents( $path.self::$groupFileName, $s);
     }
     
+    /**
+     * Reads users data file and creates an array of pairs "userName"=>"passwordHash"
+     * @uses $groupFileName
+     * @param string $realm forum name
+     * @param {object AuthRegistry} $context
+     * @returns array
+     */
     static function parseGroup($realm,$context) {
       $targetPath="";
       if($context) $targetPath=$context->g("targetPath");
@@ -76,6 +115,10 @@
       return($parsed[$realm]);
     }
     
+    /**
+     * Generates random server nonce for the Digest authentication.
+     * @returns string
+     */
     static function makeServerNonce() {
       if ( is_callable("openssl_random_pseudo_bytes") ) {
         $openSslOutcome=false;
@@ -90,13 +133,25 @@
       return($sn);
     }
     
+    /**
+     * Checks if the given user has admin rights.
+     * @uses parseGroup
+     * @param string $user user name
+     * @param {object AuthRegistry} $context
+     * @returns int 0 or 1
+     */
     function isAdmin($user,$context) {
       $admins=self::parseGroup( $context->g("realm")."Admins", $context );
-      //print_r($admins);
       if ( array_key_exists($user,$admins) ) return (1);
       return (0);
     }
     
+    /**
+     * If requested page has some parameters, saves them to SESSION.
+     * On successfull registration there'll be redirect (the PRG pattern).
+     * Commands for authentication itself (e.g. reg=reset) are stripped off.
+     * @returns string full absolute Uri or empty if no redirect requred
+     */
     function makeRedirectUri() {
       $qs=$_SERVER["QUERY_STRING"];
       $matches=[];
@@ -130,6 +185,12 @@
       return ($qs);
     }
     
+    /**
+     * Sets php.ini parametrs for session.
+     * The only place for all those settings.
+     * @param {object AuthRegistry} $context
+     * @returns void
+     */
     function iniSet(AuthRegistry $ar) {
       ini_set("session.serialize_handler","php_serialize");
       ini_set("session.use_only_cookies",1);
@@ -144,7 +205,14 @@
       ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));    
     }
     
-    function verifySession(AuthRegistry $ar) {
+    /**
+     * Initial session checks. 
+     * If no authentication required, finishes the job;
+     * otherwise passes to auth initialisation (requestLogin)
+     * @param {object AuthRegistry} $context
+     * @returns void
+     */     
+    function verifySession (AuthRegistry $ar) {
       self::iniSet($ar);
       session_start();
       
@@ -197,6 +265,12 @@
       return (true);
     }
     
+    /**
+     * Initializes authentication params, stores them to SESSION, and presents auth form according to the requred mode.
+     * Plaintext; opportunistic Digest; strict Digest
+     * @param {object AuthRegistry} $context
+     * @returns void
+     */
     function requestLogin(AuthRegistry $ar) {
       if ($_SESSION) {
         unset($_SESSION);
@@ -221,13 +295,20 @@
       // show form
       require($ar->g("templatePath")."AuthElements.php");
       require($ar->g("templatePath")."SubAuthElements.php");
-      $formSelect=[0=>"PlainAuthElements",1=>"OpportunisticAuthElements",2=>"StrictAuthElements"];
+      $formSelect= [ 0=>"PlainAuthElements",
+                     1=>"OpportunisticAuthElements",
+                     2=>"StrictAuthElements" ];
       $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
       include($ar->g("templatePath")."authForm.php");
       $this->setBreak();// overly safe
       return(false);
     }
     
+    /**
+     * Checks user form and selects the processing mode (PLaintext or Digest).
+     * @param {object AuthRegistry} $context
+     * @returns void
+     */     
     function selectAuth (AuthRegistry $ar) {
       $ar->readInput($_REQUEST);
       $ar->readSession();
@@ -281,6 +362,16 @@
       }
     }
     
+    /**
+     * Checks user form and performs PLaintext auth.
+     * Passes to authSuccess on success or back to requestLogin on failure
+     * @uses user name
+     * @uses user password
+     * @uses self::parseGroup
+     * @uses self::makeHa1
+     * @param {object AuthRegistry} $context
+     * @returns void
+     */     
     function authPlain(AuthRegistry $ar) {
     
       //echo("Trying auth plaintext ");
@@ -305,7 +396,17 @@
       $ar->s("alert","Plaintext authentication OK as ".$foundName);
       $this->next("authSuccess");
     }
-    
+
+    /**
+     * Checks user form and performs Digest auth.
+     * Passes to authSuccess on success or back to requestLogin on failure
+     * @uses client nonce
+     * @uses client response
+     * @uses self::parseGroup
+     * @uses self::makeResponse
+     * @param {object AuthRegistry} $context
+     * @returns void
+     */
     function authDigest(AuthRegistry $ar) {
     
       //echo(" Trying JS digest authentication ");
@@ -314,7 +415,7 @@
       //print_r($users);
       //echo("sn>".$sn);
       
-      // hash -> proposed response -> check -> user name
+      // Cycle: hash -> proposed response -> check -> user name
       // so no need to send name in open
       foreach ($users as $name=>$ha) {
         $tryResponse=self::makeResponse( $ar->g("serverNonce"), $ha, $ar->g("cn") );
@@ -340,6 +441,14 @@
       $this->next("authSuccess");
     }
     
+    /**
+     * Proceeds after-authentication affairs.
+     * If adminArea flag is set, checks additionally for admin rights.
+     * Fills SESSION data for verifySession
+     * If redirect is preset, makes it.
+     * @param {object AuthRegistry} $context
+     * @returns mixed void on adminAuth fail, some message on redirect, true on no-redirect finish (fall-through to main Controller)
+     */     
     function authSuccess(AuthRegistry $ar) {
       if ( $ar->g("isAdminArea") && !self::isAdmin($ar->g("authName"),$ar ) ) {
         $this->next("requestLogin");
@@ -364,6 +473,11 @@
       return (true);
     }
     
+    /**
+     * Displays page with one message and passes to finished state.
+     * @param {object AuthRegistry} $context
+     * @returns false
+     */     
     function showAuthAlert(AuthRegistry $ar) {
       // show form
       require($ar->g("templatePath")."AuthElements.php");

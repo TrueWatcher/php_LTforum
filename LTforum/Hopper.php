@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * An utility class implementing the State pattern.
+ * May be used to build State Machines or complicated multi-unit logic processors.
+ * Each State is a method in child class.
+ * Each state has the same single argument $context.
+ * Each State ends in $this->next(nextState) or $this->setNextAndBreak(nextState) or $this->setBreak() (and "return" after that).
+ * The first State is set in Superclass::__construct as $this->nextState="init".
+ * The main cycle is called as Superclass.go()
+ * Imposes a limit on cycles; keeps a trace of invoked States
+ * An example is given below.
+ */
 class Hopper {
   protected $currentState;
   protected $nextState;
@@ -7,25 +17,51 @@ class Hopper {
   protected $maxHops=10;
   public $trace=[];
   
+  /**
+   * Called by a State method to set the next State method to invoke immediately, like GoTo.
+   * @param string $nextHop neme of next State method
+   * @returns void
+   */
   protected function next($nextHop) {
     if( !method_exists($this,$nextHop) ) throw new UsageException("Cannot find the method ".$nextHop);
     $this->nextState=$nextHop;
   }
-  
+
+  /**
+   * Called by a State method to set the next State method to invoke on next go() call, like a State Machine. Stops main cycle.
+   * @param string $nextHop neme of next State method
+   * @returns void
+   */  
   protected function setNextAndBreak($nextHop) {
     $this->setBreak();
     $this->next($nextHop);
   }
   
+  /**
+   *  Called by a State method to stop the main cycle like Return.
+   */
   protected function setBreak() {
     $this->stopNow=1;  
   }
   
+  /**
+   * Translates a State name into the method call.
+   * @param string $hop current State name
+   * @param mixed $context common context
+   * @returns mixed return value of the called State
+   */
   protected function call($hop,$context) {
     $ret=$this->$hop($context);
     return($ret);
   }
 
+  /**
+   * Main cycle for multi-unit processors or one step for State Machine.
+   * @throws UsageException on exceeding cycles limit
+   * @param mixed $context common context of all States
+   * @param string $from name of the first State, if not set in __construct
+   * @returns mixed the return value of last called State method
+   */  
   public function go($context,$from=null) {
     $this->stopNow=0;
     $this->trace="";
