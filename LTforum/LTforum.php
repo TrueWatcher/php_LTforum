@@ -13,6 +13,8 @@ require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
+require_once ($mainPath."Hopper.php");
+require_once ($mainPath."AccessController.php");
 
 // Classes and function, which have not found their own files
 
@@ -59,9 +61,6 @@ class ViewRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;
 }
 
-require_once ($mainPath."Hopper.php");
-require_once ($mainPath."AccessController.php");
-
 // MAIN
 
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
@@ -71,7 +70,7 @@ $sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>2
 );
 
 // here goes the Session Manager
-$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
 $ac=new AccessController;
 $acRet=$ac->go($ar);
 //echo("\r\nTrace: ".$sm->trace." ");

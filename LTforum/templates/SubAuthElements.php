@@ -2,7 +2,7 @@
 
   class PlainAuthElements extends AuthElements {
     static function hiddenFields($context) {
-      $h=parent::genericInput ("hidden","act","authPlain");
+      $h=parent::genericInput ("hidden","reg","authPlain");
       return ($h);
     }
     static function plainChkbx () {}// disabled
@@ -23,7 +23,7 @@
   
   class OpportunisticAuthElements extends AuthElements {
     static function hiddenFields($context) {
-      $h=parent::genericInput ("hidden","act","authOpp");
+      $h=parent::genericInput ("hidden","reg","authOpp");
       $h.=parent::genericInput ( "hidden","sn",$context->g("serverNonce") );
       $h.=parent::genericInput ( "hidden","realm",$context->g("realm") );
       return ($h);
@@ -45,7 +45,7 @@
 
   class StrictAuthElements extends AuthElements {
     static function hiddenFields($context) {
-      $h=parent::genericInput ("hidden","act","authJs");
+      $h=parent::genericInput ("hidden","reg","authJs");
       $h.=parent::genericInput ( "hidden","sn",$context->g("serverNonce") );
       $h.=parent::genericInput ( "hidden","realm",$context->g("realm") );
       return ($h);

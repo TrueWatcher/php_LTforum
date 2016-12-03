@@ -17,7 +17,7 @@
     }
     
     function readInput($superGlobal) {
-      $what=["act","user","ps","cn","responce","plain","pers"];
+      $what=["reg","user","ps","cn","response","plain","pers"];
       $exp=[];
       foreach ($what as $k) {
         if ( array_key_exists($k,$superGlobal) ) $this->s($k,$superGlobal[$k]);
@@ -97,7 +97,40 @@
       return (0);
     }
     
-    function verifySession(AuthRegistry $ar) {
+    function makeRedirectUri() {
+      $qs=$_SERVER["QUERY_STRING"];
+      $matches=[];
+      $r1=preg_match("~\&(reg=[^&]*)~",$qs,$matches);
+      if ( !$r1 ) $r2=preg_match("~^(reg=[^&]*)~",$qs,$matches);
+      //print ($qs."\r\n");
+      //print_r($matches);
+      if ( !empty($matches) ) {
+        $qs=str_replace($matches[1],"",$qs);
+        if ( (strpos($qs,"&"))===0 ) $qs=ltrim($qs,"&");
+        if ( ($p=strpos($qs,"&&"))!==false ) $qs=str_replace("&&","&",$qs);
+        if ( (strrpos($qs,"&"))===(strlen($qs)-1) ) $qs=rtrim($qs,"&");
+      }
+      //echo(" qs=".$qs."! ");
+      if ( !empty($qs) ) {
+        /*$url = 'http://';
+        if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
+        $url .= $_SERVER['HTTP_HOST'];// Get the server
+        
+        $request=$url.$qs;*/
+        if (!class_exists("Act")) throw new UsageException ("AccessController: please, include all dependencies");
+        $parsedReqUri=parse_url($_SERVER["REQUEST_URI"]);
+        $path=$parsedReqUri["path"];
+        $file="";
+        $f="";
+        if (preg_match("~\/([^.\/]*\.php)~",$path,$f) ) $file=$f[1];
+        //print_r($f);
+        //echo (" path=".$path." file=".$file);
+        $qs=Act::myAbsoluteUri()."/".$file."?".$qs;
+      }
+      return ($qs);
+    }
+    
+    function iniSet(AuthRegistry $ar) {
       ini_set("session.serialize_handler","php_serialize");
       ini_set("session.use_only_cookies",1);
       ini_set("session.use_cookies",1);
@@ -108,10 +141,14 @@
       if ( !is_writable($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." is not writable, check the permissions");
       ini_set('session.save_path',$sessionsDir);
       ini_set('session.gc_probability',25);
-      ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));
+      ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));    
+    }
+    
+    function verifySession(AuthRegistry $ar) {
+      self::iniSet($ar);
       session_start();
       
-      if ( array_key_exists("act",$_REQUEST) && $_REQUEST["act"]=="reset" ) {
+      if ( array_key_exists("reg",$_REQUEST) && $_REQUEST["reg"]=="reset" ) {
         //unset($_SESSION);
         //session_destroy();
         //session_start();
@@ -152,7 +189,7 @@
       } 
       $user=$_SESSION["authName"];
       //echo ($user."====".(self::isAdmin($user)) );
-      if ( $ar->g("admin") && !(self::isAdmin($user,$ar)) ) {
+      if ( $ar->g("isAdminArea") && !(self::isAdmin($user,$ar)) ) {
         $ar->s("alert","This area is for admins only");
         $this->next("requestLogin");
         return;      
@@ -175,6 +212,10 @@
       $_SESSION["notBefore"]=time()+$ar->g("minDelay");
       $_SESSION["notAfter"]=time()+$ar->g("maxDelayAuth");
       $_SESSION["state"]="preAuth";
+      if ( $r=self::makeRedirectUri() ) $_SESSION["origUri"]=$r;
+      //echo(">".$r);
+      //exit();
+
       //session_write_close ();
       //$ar->s("alert",session_id());
       // show form
@@ -190,14 +231,14 @@
     function selectAuth (AuthRegistry $ar) {
       $ar->readInput($_REQUEST);
       $ar->readSession();
-      if ( !($ar->g("act")=="authPlain" || $ar->g("act")=="authOpp" || $ar->g("act")=="authJs") ) {
+      if ( !($ar->g("reg")=="authPlain" || $ar->g("reg")=="authOpp" || $ar->g("reg")=="authJs") ) {
         // only authentication should happen in preAuth state, so reset session
         $ar->s("alert"," Out-of-order request was discarded ");
         $this->next("requestLogin");
         return;      
       }
-      $tryPlainText=( $ar->g("act")=="authPlain" || ( $ar->g("act")=="authOpp" && $ar->g("plain") ) );
-      $tryDigest=( $ar->g("act")=="authJs" || ($ar->g("act")=="authOpp" && !$ar->g("plain") ) );
+      $tryPlainText=( $ar->g("reg")=="authPlain" || ( $ar->g("reg")=="authOpp" && $ar->g("plain") ) );
+      $tryDigest=( $ar->g("reg")=="authJs" || ($ar->g("reg")=="authOpp" && !$ar->g("plain") ) );
       if ( !$tryPlainText && !$tryDigest ) {
         // something strange
         $ar->s("alert"," Out-of-order request was discarded ");
@@ -230,7 +271,7 @@
           $this->next("requestLogin");          
           return;        
         }
-        if ( empty($ar->g("responce")) || empty($ar->g("cn")) ) {
+        if ( empty($ar->g("response")) || empty($ar->g("cn")) ) {
           $ar->s("alert"," Missing login data ");
           $this->next("requestLogin");          
           return;        
@@ -273,11 +314,11 @@
       //print_r($users);
       //echo("sn>".$sn);
       
-      // hash -> proposed responce -> check -> user name
+      // hash -> proposed response -> check -> user name
       // so no need to send name in open
       foreach ($users as $name=>$ha) {
         $tryResponse=self::makeResponse( $ar->g("serverNonce"), $ha, $ar->g("cn") );
-        if ( $tryResponse == $ar->g("responce") ) {
+        if ( $tryResponse == $ar->g("response") ) {
           $foundName=$name;
           break;
         }
@@ -285,7 +326,7 @@
       if ( !$foundName ) {
         $this->next("requestLogin");
         sleep(5);
-        $ar->s("alert","Wrong login or/and password "/*." responce=".$ar->g("responce")*/);
+        $ar->s("alert","Wrong login or/and password "/*." response=".$ar->g("response")*/);
         return;
       }
       // registered OK
@@ -300,7 +341,7 @@
     }
     
     function authSuccess(AuthRegistry $ar) {
-      if ( $ar->g("admin") && !self::isAdmin($ar->g("authName"),$ar ) ) {
+      if ( $ar->g("isAdminArea") && !self::isAdmin($ar->g("authName"),$ar ) ) {
         $this->next("requestLogin");
         $ar->s("alert","This is a restricted area");
         return;
@@ -312,6 +353,14 @@
       unset($_SESSION["serverNonce"]);
       session_regenerate_id();
       //session_write_close ();
+      if ( /*false &&*/ array_key_exists("origUri",$_SESSION) ) {
+        $r=$_SESSION["origUri"];
+        //unset($_SESSION["origUri"]);
+        header( "Location: ".$r );
+        echo ( "redirected to ".$r );
+        $this->setBreak();
+        return ( "redirected to ".$r );
+      }
       return (true);
     }
     

@@ -196,7 +196,7 @@ class RollElements extends SectionElements {
   }
   
   static function logoutLink() {
-    return ( "<td>" . self::genericLink("act=reset","Log out") . "</td>" );
+    return ( "<td>" . self::genericLink("reg=reset","Log out") . "</td>" );
   }
   /*
    * Checks screen width and loads minifier script (drawers.js) if it is narrow

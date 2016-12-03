@@ -24,7 +24,7 @@
     session_start();
   }
   
-  $ar=AuthRegistry::getInstance(1, ["realm"=>"test","targetPath"=>"","templatePath"=>"../LTforum/templates/", "assetsPath"=>"../assests/", "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+  $ar=AuthRegistry::getInstance(1, ["realm"=>"test","targetPath"=>"","templatePath"=>"../LTforum/templates/", "assetsPath"=>"../assests/", "admin"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
   $sm=new SessionManager;
   $ret=$sm->go($ar);
   echo("\r\nTrace: ".$sm->trace." ");

@@ -50,7 +50,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   static private $storedTotal=0;
   static private $storedMsg="";
   static private $storedForum="";
-  static private $resetUri="http://LTforum/test?act=reset";
+  static private $resetUri="http://LTforum/test?reg=reset";
   
   private function loginAs($user,$password) {
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));

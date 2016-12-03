@@ -213,11 +213,11 @@ if ($tryDigest) {
     if ( $realm_ && $realm!=$realm_ ) throw new UsageException("Realm mismatch: ".$realm." and ".$realm_ );
   }
   $applicantNonce=$_POST["cn"];
-  $applicantResp=$_POST["responce"];
+  $applicantResp=$_POST["response"];
   
   $foundName="";
   $users=parseGroup($ar->g("realm"));  
-  // hash -> proposed responce -> check -> user name
+  // hash -> proposed response -> check -> user name
   // so no need to send name in open
   foreach ($users as $name=>$ha) {
     $tryResponse=makeResponse($ar->g("serverNonce"),$ha,$applicantNonce);

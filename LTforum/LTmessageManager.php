@@ -13,6 +13,9 @@ require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AdminAct.php");
+require_once ($mainPath."Hopper.php");
+require_once ($mainPath."AccessController.php");
+require_once ($mainPath."UserManager.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
@@ -35,10 +38,6 @@ class ViewRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;
 }
 
-require_once ($mainPath."Hopper.php");
-require_once ($mainPath."AccessController.php");
-require_once ($mainPath."UserManager.php");
-
 // instantiate and initialize Page Registry and Session Registry
 // strict=1 required as assetsPath is modified for the export command
 $asr=SessionRegistry::getInstance( 1, array( "lang"=>"en","viewOverlay"=>1, "toPrintOutcome"=>1,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath,"forumsPath"=>$forumsPath, "maxMessageBytes"=>"1200","pin"=>1 )
@@ -47,6 +46,14 @@ $asr=SessionRegistry::getInstance( 1, array( "lang"=>"en","viewOverlay"=>1, "toP
 $apr=PageRegistry::getInstance( 0,array() );
 $apr->load();
 $apr->s("title",$adminTitle);
+if ( empty( $apr->g("forum") ) ) {
+  // look for the target forum name in SESSION
+  if ( !isset($_SESSION) || !array_key_exists("realm",$_SESSION) ) {
+    sleep(10);
+    exit("You should specify the target forum");
+  }
+  else $apr->s("forum",$_SESSION["realm"]);
+}
 $targetPath=$forumsPath.$apr->g("forum")."/".$apr->g("forum");
 $apr->s("targetPath",$targetPath);
 
@@ -54,7 +61,7 @@ $apr->s( "title",$adminTitle." : ".$apr->g("forum") );
 $apr->s( "viewLink",Act::addToQueryString($apr,"","forum","pin") );
 
 // here goes the Session Manager
-$aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$forumsPath.$apr->g("forum")."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "admin"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>6, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "responce"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$forumsPath.$apr->g("forum")."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>6, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
 $ac=new AccessController;
 $acRet=$ac->go($aar);// so short
 echo("\r\nTrace: ".$ac->trace." ");
@@ -142,9 +149,11 @@ try {
         exit;
       }
       $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
-      break; 
-    //default ;
-      //Act::showAlert ($apr,$asr,"Unknown command:".$apr->g("act"));
+      break;
+    case (""):
+      break;
+    default ;
+      Act::showAlert ($apr,$asr,"Unknown admin command:".$apr->g("act"));
   }
   
 } catch (AccessException $e) {

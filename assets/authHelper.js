@@ -53,7 +53,7 @@ function createCNonce() {
 
 function response(challenge,cNonce,ha1) {
   var r=md5(challenge+ha1+cNonce);
-  addHidden ("responce",r);
+  addHidden ("response",r);
   return(r);  
 }
 

@@ -44,8 +44,10 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->webDriver->quit();
   }
 
-  static private $adminUri="http://LTforum/rulez.php?forum=test"; //"http://fs..net/new_ltforum/test/";//
-  static private $resetUri="http://LTforum/rulez.php?forum=test&act=reset";
+  static private $adminUri="http://LTforum/rulez.php?forum=test";
+  //"http://fs..net/new_ltforum/test/";//
+  static private $homeUri="http://LTforum/test";
+  static private $resetUri="http://LTforum/rulez.php?forum=test&reg=reset";
   static private $storedUserName="Me";
   static private $storedUserPassword="1234";
   static private $storedAdminName="admin";
@@ -90,7 +92,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     else print (" Error! failed to connect ");
-    $this->assertContains("Login",$title,"Wrong responce to non-admin login");
+    $this->assertContains("Login",$title,"Wrong response to non-admin login");
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $this->assertNotEmpty($inputUser,"Wrong response to non-admin login");
     print("\r\nInfo: non-admin login test Ok");
@@ -99,7 +101,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertContains("alert",$title,"Wrong responce to fast login");
+    $this->assertContains("alert",$title,"Wrong response to fast login");
     print("\r\nInfo: fast admin login test Ok");
     
     $this->webDriver->get(self::$resetUri);    
@@ -121,7 +123,49 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     print("\r\nInfo: admin panel logout Ok");
   }
   
+  public function test_passCommands() {
+    // pass RESET and LIST_USERS on registration to admin panel
+    $resetUriPlusLu=self::$resetUri."&act=lu";
+    $this->webDriver->get($resetUriPlusLu);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");
+    $this->assertContains("Login",$title," no login page");
+    sleep(10);
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");
+    $this->assertNotContains("Login",$title," failed login to adminPanel");
+    // check admin's name in uaerList
+    $userList=$this->webDriver->findElement(WebDriverBy::id("userList"))->getAttribute("value");
+    $this->assertContains(self::$storedAdminName,$userList," No my name in userList !");
+    print("\r\nInfo: passing command to admin panel Ok");
+    
+    // reset
+    $this->webDriver->get(self::$homeUri."?reg=reset");
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");    
+    sleep(10);
+    
+    // pass NEW on registration to forum
+    $this->webDriver->get(self::$homeUri."?act=new");
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");
+    sleep(10);    
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    else print (" title not found!\r\n");
+    $this->assertContains("new message",$title," The NEW command was lost ");
+    print("\r\nInfo: passing command to forum Ok");
+    
+  }
+  
   public function test_userManager() {
+    // get login page
     $this->webDriver->get(self::$adminUri);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
@@ -130,13 +174,15 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertContains(self::$storedForum,$title,"no forumName in the title");
     print("\r\nInfo: login page found");
 
+    // set Plaintext mode and log in as admin/admin
     $inputPlain=$this->webDriver->findElement(WebDriverBy::name("plain"));
     $this->assertNotEmpty($inputPlain,"No <plain> checkbox -- please set authForm to 1");
     $inputPlain->click();
     sleep(10);
     $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
     print("\r\nInfo: registering in Plaintext mode");
-    
+
+    // try generating user entry for Me/1234
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $formManUser=$this->webDriver->findElement(WebDriverBy::id("manUser"));
@@ -144,13 +190,13 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $inputUser->sendKeys(self::$storedUserName);
     $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
     $inputPs->sendKeys(self::$storedUserPassword);
-    //$formManUser->submit(); // NO!
+    //$formManUser->submit(); // NO submit! just click on buttons
     $buttonGen=$this->webDriver->findElement(WebDriverBy::id("genEntry"));
     $buttonGen->click();
     $areaUEntry=$this->webDriver->findElement(WebDriverBy::id("uEntry"));
-    //echo("user:".$inputUser->getText()." ");
-    //echo("user:".$inputUser->getAttribute("value")." ");
     $this->assertContains(self::$storedUserName."=",$areaUEntry->getAttribute("value"),"failed to generate user's entry");
+    
+    // add new user Me/1234
     $buttonAdd=$this->webDriver->findElement(WebDriverBy::id("uAdd"));
     $buttonAdd->click();
     $title=$this->webDriver->getTitle();
@@ -160,6 +206,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertContains(self::$storedUserName,$userList,"no userName ".self::$storedUserName." in the users list");
     print("\r\nInfo: adding user Ok");
     
+    // try add Me/1234 once again
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $inputUser->sendKeys(self::$storedUserName);
     $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
@@ -171,11 +218,13 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertContains("alert",$title,"wrong response to repeated user add");
     print("\r\nInfo: repeated user test Ok");
     
+    // this must be an alert page
     $okLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Ok"));
     $okLink->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");    
 
+    // promote Me/1234 to admin
     $formManAdmin=$this->webDriver->findElement(WebDriverBy::id("manAdmin"));
     $inputAUser=$this->webDriver->findElement(WebDriverBy::name("aUser"));
     $inputAUser->sendKeys(self::$storedUserName);
@@ -187,17 +236,25 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertContains(self::$storedUserName,$userList,"no userName ".self::$storedUserName." in the admins list");
     print("\r\nInfo: promoting to admin Ok");
     
+    // log out admin/admin
     $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Log out") );
     $logOutLink->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     sleep(10);
-    // try logging in as the new-born admin
+    
+    // try logging in as Me, the new-born admin
     $this->loginAs(self::$storedUserName,self::$storedUserPassword);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("Login",$title,"failed login");    
-    $this->assertNotContains("alert",$title,"failed login"); 
+    $this->assertNotContains("alert",$title,"failed login");
+    
+    // decouple from reg=reset, shoud not be needed
+    $this->webDriver->get(self::$adminUri);
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    
+    // remove Me from admins
     $formManAdmin=$this->webDriver->findElement(WebDriverBy::id("manAdmin"));
     $inputAUser=$this->webDriver->findElement(WebDriverBy::name("aUser"));
     $inputAUser->sendKeys(self::$storedUserName);
@@ -210,6 +267,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertNotContains(self::$storedUserName,$adminList,"userName ".self::$storedUserName." remained in the admins list");
     print("\r\nInfo: resign from admin Ok");
     
+    // log out Me/1234
     $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Log out") );
     $logOutLink->click();
     $title=$this->webDriver->getTitle();
@@ -218,14 +276,18 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     //$this->webDriver->get(self::$adminUri);
     //$title=$this->webDriver->getTitle();
     //if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    
+    // log in again as admin/admin
     sleep(10);
     $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    
+    // check that Me/1234 has been removed and admin is the only administrator
     $buttonAdminsList=$this->webDriver->findElement(WebDriverBy::partialLinkText("admins list"));
     $buttonAdminsList->click();
     $adminList=$this->webDriver->findElement(WebDriverBy::id("adminList"))->getAttribute("value");
     $this->assertEquals(self::$storedAdminName,$adminList,"there are some extra admins, delete the group file and repeat this test");
     
-    
+    // try to remove admin/admin from admins
     $formManAdmin=$this->webDriver->findElement(WebDriverBy::id("manAdmin"));
     $inputAUser=$this->webDriver->findElement(WebDriverBy::name("aUser"));
     $inputAUser->sendKeys(self::$storedAdminName);
@@ -236,11 +298,13 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertContains("alert",$title,"wrong response to the-only-admin downgrade");
     print("\r\nInfo: the-only-admin downgrade test Ok");
     
+    // this must be an alert page
     $okLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Ok"));
     $okLink->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n"); 
     
+    // remove Me/1234 from users
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $inputUser->sendKeys(self::$storedUserName);
     $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
@@ -253,6 +317,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertNotContains(self::$storedUserName,$userList," userName ".self::$storedUserName." remained in the users list");
     print("\r\nInfo: removing user ".self::$storedUserName." Ok");    
     
+    // add more users for tests to follow
     $this->addUser("test","q");
     $this->addUser("Test Robot","qq");
     $this->addUser("Test Pagination","tp");
