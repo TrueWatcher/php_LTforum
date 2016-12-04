@@ -153,6 +153,22 @@
      * @returns string full absolute Uri or empty if no redirect requred
      */
     function makeRedirectUri() {
+      $ru=$_SERVER["REQUEST_URI"];
+      $matches=[];
+      $r1=preg_match("~\&(reg=[^&]*)~",$ru,$matches);
+      if ( !$r1 ) $r2=preg_match("~\?(reg=[^&]*)~",$ru,$matches);
+      if ( !empty($matches) ) {
+        $ru=str_replace($matches[1],"",$ru);
+        if ( (strpos($ru,"?&"))!==false ) $ru=str_replace("?&","?",$ru);
+        if ( ($p=strpos($ru,"&&"))!==false ) $ru=str_replace("&&","&",$ru);
+        $ru=rtrim($ru,"&? ");
+      }      
+      $url = 'http://';
+      if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
+      $url .= $_SERVER['HTTP_HOST'];// Get the server
+      $target=$url.$ru;
+      return($target);
+      
       $qs=$_SERVER["QUERY_STRING"];
       $matches=[];
       $r1=preg_match("~\&(reg=[^&]*)~",$qs,$matches);
@@ -165,7 +181,8 @@
         if ( ($p=strpos($qs,"&&"))!==false ) $qs=str_replace("&&","&",$qs);
         if ( (strrpos($qs,"&"))===(strlen($qs)-1) ) $qs=rtrim($qs,"&");
       }
-      //echo(" qs=".$qs."! ");
+      echo(" qs=".$qs."! target=".$target."!");
+      exit;
       if ( !empty($qs) ) {
         /*$url = 'http://';
         if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
@@ -286,7 +303,8 @@
       $_SESSION["notBefore"]=time()+$ar->g("minDelay");
       $_SESSION["notAfter"]=time()+$ar->g("maxDelayAuth");
       $_SESSION["state"]="preAuth";
-      if ( $r=self::makeRedirectUri() ) $_SESSION["origUri"]=$r;
+      if ( !empty($_SERVER["QUERY_STRING"]) ) $_SESSION["origUri"]=self::makeRedirectUri();
+      //if ( $r=self::makeRedirectUri() ) $_SESSION["origUri"]=$r;
       //echo(">".$r);
       //exit();
 
@@ -464,9 +482,9 @@
       //session_write_close ();
       if ( /*false &&*/ array_key_exists("origUri",$_SESSION) ) {
         $r=$_SESSION["origUri"];
-        //unset($_SESSION["origUri"]);
+        unset($_SESSION["origUri"]);
         header( "Location: ".$r );
-        echo ( "redirected to ".$r );
+        //echo ( "redirected to ".$r );
         $this->setBreak();
         return ( "redirected to ".$r );
       }

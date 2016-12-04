@@ -47,12 +47,9 @@ $apr=PageRegistry::getInstance( 0,array() );
 $apr->load();
 $apr->s("title",$adminTitle);
 if ( empty( $apr->g("forum") ) ) {
-  // look for the target forum name in SESSION
-  if ( !isset($_SESSION) || !array_key_exists("realm",$_SESSION) ) {
+  // SESSION will not work before AccessController
     sleep(10);
     exit("You should specify the target forum");
-  }
-  else $apr->s("forum",$_SESSION["realm"]);
 }
 $targetPath=$forumsPath.$apr->g("forum")."/".$apr->g("forum");
 $apr->s("targetPath",$targetPath);
@@ -66,10 +63,10 @@ $ac=new AccessController;
 $acRet=$ac->go($aar);// so short
 echo("\r\nTrace: ".$ac->trace." ");
 if ( $alert = $aar->g("alert") ) echo($alert);// DEBUG
-if ( $acRet !== true ) exit($acRet); // exit($ret); 
+if ( $acRet !== true ) exit($acRet); 
 
 try {
-  $apr->s("cardfile",new CardfileSqlt($targetPath,false));
+  $apr->s("cardfile",new CardfileSqlt($targetPath,true));
 }
 catch (Exception $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());

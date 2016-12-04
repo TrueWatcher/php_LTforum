@@ -36,7 +36,11 @@ abstract class AuthElements {
     return ( "Login : ".$context->g("realm") );
   }
 
-  abstract static function hiddenFields ($context);
+  static function hiddenFields ($context) {
+    if (class_exists("AdminAct")) {
+      return( self::genericInput ( "hidden","forum",$context->g("realm") ) );
+    }
+  }
 
   static function alertP (AuthRegistry $context) {
     if ( empty($context->g("alert")) ) return ("");

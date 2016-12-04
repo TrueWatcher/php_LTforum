@@ -9,7 +9,7 @@
   }
 
   class AlertAuthElements extends AuthElements {
-    static function hiddenFields($context) {}// disabled
+    //static function hiddenFields($context) {}// disabled
     static function scriptHelper($context) {}
     static function scriptOnready() {}
     static function plainChkbx () {}
@@ -23,7 +23,8 @@
   
   class OpportunisticAuthElements extends AuthElements {
     static function hiddenFields($context) {
-      $h=parent::genericInput ("hidden","reg","authOpp");
+      $h=parent::hiddenFields($context);
+      $h.=parent::genericInput ("hidden","reg","authOpp");
       $h.=parent::genericInput ( "hidden","sn",$context->g("serverNonce") );
       $h.=parent::genericInput ( "hidden","realm",$context->g("realm") );
       return ($h);
@@ -45,7 +46,8 @@
 
   class StrictAuthElements extends AuthElements {
     static function hiddenFields($context) {
-      $h=parent::genericInput ("hidden","reg","authJs");
+      $h=parent::hiddenFields($context);
+      $h.=parent::genericInput ("hidden","reg","authJs");
       $h.=parent::genericInput ( "hidden","sn",$context->g("serverNonce") );
       $h.=parent::genericInput ( "hidden","realm",$context->g("realm") );
       return ($h);
