@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @version 1.2 added Access Controller and User Manager
  */
 /**
  * Common template for RollElements,SearchElements and ExportElements.
@@ -34,6 +34,8 @@ abstract class SectionElements {
   abstract static function lengthForm (ViewRegistry $context);
 
   abstract static function numberForm (ViewRegistry $context);
+  
+  static function logoutLink() {}
 
   abstract static function onreadyScript (SessionRegistry $sessionContext);
 

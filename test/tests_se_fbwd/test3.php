@@ -45,13 +45,22 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->webDriver->quit();
   }
 
-  static private $storedUsername="Test";
+  static private $storedUsername="test";
+  static private $storedPassword="q";
   static private $storedTotal=0;
   static private $storedMsg="";
   static private $storedForum="test";
   static private $storedQuery="";
+  
+  private function loginAs($user,$password) {
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys($user);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys($password);
+    $inputPs->submit();  
+  }
 
-  public function test_mainPage() {
+  public function _test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
     if ($this->JSenabled) print ("ON !");
     else print ("OFF !");
@@ -63,6 +72,13 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     else print ("title not found!\r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
     print("Info: first page OK");
+    sleep(7);
+    $this->loginAs(self::$storedUsername,self::$storedPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$storedUsername."/".self::$storedPassword."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$storedUsername."/".self::$storedPassword."!");
+    //self::$storedTitle=$title;
   }
 
   public function parseViewTitle($t,&$begin,&$end,&$pageCurrent,&$pageEnd) {
@@ -105,12 +121,12 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $titleNew2 \r\n");
     $this->assertContains(self::$storedForum,$titleNew2,"Not came to WRITE NEW page after ALERT");
     $this->assertContains("new message",$titleNew2,"Missed WRITE NEW page");
-    $me=self::$storedUsername;
+    //$me=self::$storedUsername;
     $msg="Test message ".$j." ".$myMsg;
-    $inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
+    //$inputAuthor=$this->webDriver->findElement(WebDriverBy::name("user"));
     //$this->assertNotEmpty($addLink,"A USER field not found");
-    $inputAuthor->clear();
-    $inputAuthor->sendKeys($me);
+    //$inputAuthor->clear();
+    //$inputAuthor->sendKeys($me);
     $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
     $this->assertNotEmpty($inputText,"A MESSAGE field not found");
     $inputText->sendKeys($msg);
@@ -122,7 +138,17 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   public function test_searchSequence1() {
     $mySearchCyr="ЙцуКЕнг";
     $myTextCyr="Фыва ".$mySearchCyr."ячсмить";
+    
     $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$storedUsername,self::$storedPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains( "alert", $title, "Failed to log in as ". self::$storedUsername. "/" . self::$storedPassword. "!" );    
+    $this->assertNotContains( "Login", $title, "Failed to log in as ". self::$storedUsername. "/" . self::$storedPassword. "!" );
+    
     $this->addOneMsg(0,$myTextCyr);
 
     $title=$this->webDriver->getTitle();
@@ -179,6 +205,17 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   }
 
   public function test_searchCaseInsensitive() {
+    
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$storedUsername,self::$storedPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains ( "alert", $title, "Failed to log in as " . self::$storedUsername . "/" . self::$storedPassword. "!" );
+    $this->assertNotContains ( "Login", $title, "Failed to log in as " . self::$storedUsername . "/" . self::$storedPassword. "!" );
+    
     $mySearchCyrInv="йЦУкеНГ";
     $this->webDriver->get($this->searchUri.urlencode($mySearchCyrInv));
     $title=$this->webDriver->getTitle();

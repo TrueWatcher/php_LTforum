@@ -13,12 +13,15 @@ require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AdminAct.php");
+require_once ($mainPath."Hopper.php");
+require_once ($mainPath."AccessController.php");
+require_once ($mainPath."UserManager.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
 
     public function load() {
-      $inputKeys=array("act","forum","pin","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear");
+      $inputKeys=array("act","forum","pin","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear","uEntry","user","aUser");
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
@@ -43,17 +46,27 @@ $asr=SessionRegistry::getInstance( 1, array( "lang"=>"en","viewOverlay"=>1, "toP
 $apr=PageRegistry::getInstance( 0,array() );
 $apr->load();
 $apr->s("title",$adminTitle);
+if ( empty( $apr->g("forum") ) ) {
+  // SESSION will not work before AccessController
+    sleep(10);
+    exit("You should specify the target forum");
+}
 $targetPath=$forumsPath.$apr->g("forum")."/".$apr->g("forum");
 $apr->s("targetPath",$targetPath);
 
-if ( $error=AdminAct::checkThreadPin($apr,$asr) ) {
-  Act::showAlert($apr,$asr,$error);
-}
 $apr->s( "title",$adminTitle." : ".$apr->g("forum") );
 $apr->s( "viewLink",Act::addToQueryString($apr,"","forum","pin") );
 
+// here goes the Session Manager
+$aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$forumsPath.$apr->g("forum")."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>6, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$ac=new AccessController;
+$acRet=$ac->go($aar);// so short
+echo("\r\nTrace: ".$ac->trace." ");
+if ( $alert = $aar->g("alert") ) echo($alert);// DEBUG
+if ( $acRet !== true ) exit($acRet); 
+
 try {
-  $apr->s("cardfile",new CardfileSqlt($targetPath,false));
+  $apr->s("cardfile",new CardfileSqlt($targetPath,true));
 }
 catch (Exception $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());
@@ -92,10 +105,57 @@ try {
       AdminAct::updateAny ($apr,$asr);
       exit(0);
   }
+  
+  //print_r($_REQUEST);
+  UserManager::init($aar->g("targetPath"),$apr->g("forum"));
+  switch ( $apr->g("act") ) {  
+    case ("lu"):
+      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
+      break;
+    case ("la"):
+      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+      break;
+    case ("uAdd"):
+      $ret=UserManager::manageUser("add",$apr->g("uEntry"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
+      break;
+    case ("uDel"):
+      $ret=UserManager::manageUser("del",$apr->g("uEntry"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
+      break;
+    case ("aAdd"):
+      $ret=UserManager::manageAdmin("add",$apr->g("aUser"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+      break;
+    case ("aDel"):
+      $ret=UserManager::manageAdmin("del",$apr->g("aUser"));
+      if ($ret) {
+        Act::showAlert ($apr,$asr,$ret);
+        exit;
+      }
+      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+      break;
+    case (""):
+      break;
+    default ;
+      Act::showAlert ($apr,$asr,"Unknown admin command:".$apr->g("act"));
+  }
+  
 } catch (AccessException $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());
 }
-
 
 include ($asr->g("templatePath")."admin.php");
 exit(0);

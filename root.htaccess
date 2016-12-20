@@ -1,7 +1,0 @@
-<Files rulez.php>
-  AuthType Basic
-  AuthName "Register to admin panel"
-  AuthUserFile "/path_to_mysite/LTforum/.users"
-  AuthGroupFile "/path_to_mysite/LTforum/.groups"
-  Require group admin
-</Files>

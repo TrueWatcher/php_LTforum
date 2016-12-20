@@ -24,9 +24,11 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   // com.gargoylesoftware.htmlunit   Class BrowserVersion
   protected $JSenabled=true;//true;//false;;
   protected $webDriver;
-  protected $homeUri="http://LTforum/rulez.php?forum=test&pin=1";//"http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//
+  protected $homeUri="http://LTforum/rulez.php?forum=test"; //"http://fs..net/new_ltforum/rulez.php?forum=test&pin=1";//
   //protected $filesystemPath="/home/alexander/www/LTforum/test/";
   protected $testDirUri="http://LTforum/test/";//"http://fs..net/new_ltforum/test/";//
+  protected static $adminName="admin";
+  protected static $adminPassword="admin";
 
   public function setUp() {
     $host = 'http://localhost:4444/wd/hub'; // this is the default
@@ -45,6 +47,14 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   private $storedTitle;
+  
+  private function loginAs($user,$password) {
+    $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
+    $inputUser->sendKeys($user);
+    $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
+    $inputPs->sendKeys($password);
+    $inputPs->submit();  
+  }
 
   public function _test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
@@ -58,7 +68,12 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     else print ("title not found!\r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
     print("Info: first page OK");
-    self::$storedTitle=$title;
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
   }
 
   private function parseHtmlIds($pathName) {
@@ -83,7 +98,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $form->submit();
   }
 
-  private function checkExportResponce($begin,$end) {
+  private function checkExportResponse($begin,$end) {
     $expected1="Exported messages ".$begin."..".$end." to ";
     $expected2=".html , total ".($end-$begin+1);
     $title=$this->webDriver->getTitle();
@@ -93,13 +108,13 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $this->assertContains($expected2,$src,"Given total mismatches");
   }
 
-  private function getExportResponce(&$begin,&$end) {
+  private function getExportResponse(&$begin,&$end) {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $src=$this->webDriver->getPageSource();
     $ret=preg_match("~\s+(\d+)\.\.(\d+)\s+~",$src,$res);
     //print_r($res);
-    $this->assertTrue($ret>0,"Something is wrong with parsing export responce");
+    $this->assertTrue($ret>0,"Something is wrong with parsing export response");
     $begin=$res[1];
     $end=$res[2];
   }
@@ -118,16 +133,25 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   public function test_simpleExport() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
+  
     $file="e_1_11";
     $begin=1;
     $end=11;
     $newBegin="*";
     self::export($begin,$end,$file,$newBegin);
     print(" Export demanded to ".$file);
-    self::checkExportResponce($begin,$end);
-    print(" Responce OK ");
+    self::checkExportResponse($begin,$end);
+    print(" Response OK ");
     self::checkExport($begin,$end,$file,$begin);
-
 
     $path=$this->testDirUri;
     $buf=file_get_contents($path.$file.".html");
@@ -142,6 +166,14 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   public function test_ImportExport() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");  
+  
     $file1="e_1_11";
     $begin=12;
     $end=22;
@@ -162,8 +194,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $newBegin=1;
     self::export($begin,$end,$file2,$newBegin);
     print(" Export demanded to ".$file2);
-    self::checkExportResponce($begin,$end);
-    print(" Responce OK ");
+    self::checkExportResponse($begin,$end);
+    print(" Response OK ");
     self::checkExport(1,11,$file2,$newBegin);
     //$path=$this->filesystemPath;
     $path=$this->testDirUri;
@@ -178,18 +210,24 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $begin=2;
     $kb=3;
     self::export($begin,"",$file3,$newBegin,$kb);
-    self::getExportResponce($recBegin,$recEnd);
-    print(" Responce : ".$recBegin."..".$recEnd);
+    self::getExportResponse($recBegin,$recEnd);
+    print(" Response : ".$recBegin."..".$recEnd);
     $this->assertEquals($begin,$recBegin,"Begin numbers mismatch");
     $this->assertLessThan(22,$recEnd,"End number too big, maybe kb limit not applied");
     $s=self::checkExport($begin,$recEnd,$file3,$begin);
-    print(" Export limited by ".$kb."KB : exported ".$s."KB ");
+    print(" Export limited by ".$kb."KB : exported ".$s."B ");
   }
 
-  public function test_DeleteEditExport() {
+  public function test_DeleteEditExport() {  
+  
     $this->webDriver->get($this->homeUri);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");  
+  
     $form=$this->webDriver->findElement(webDriverBy::id("delRange"));
     $form->findElement(webDriverBy::name("begin"))->sendKeys(12);
     $form->findElement(webDriverBy::name("end"))->sendKeys(22);
@@ -214,15 +252,31 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("editAny"));
+    print(" Info: returned to adminPanel ");
+    
+    // log out and change user
+    $logoutLink=$this->webDriver->findElement(webDriverBy::partialLinkText("Log out"));
+    $logoutLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $me="Editor";
+    $myPs="eee";
+    $this->loginAs($me,$myPs);
+    $title=$this->webDriver->getTitle();
+    $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $form=$this->webDriver->findElement(webDriverBy::id("editAny"));
     $toEdit=5;
     $form->findElement(webDriverBy::name("current"))->sendKeys($toEdit);
     $form->submit();
-    print(" Edit ".$toEdit." demanded ");
+    print(" Edit arbitrary page ".$toEdit." demanded ");
     $title_edit=$this->webDriver->getTitle();
     if (strlen($title_edit)) print ("\r\ntitle found: $title_edit \r\n");
     $this->assertContains("edit message ".$toEdit,$title_edit,"Not came to editAny page");
     $t=time();
-    $me="Editor ".$t;
+
     $add=" added _".$t;
     $myComm="My comment _".$t;
     $author=$this->webDriver->findElement(webDriverBy::name("author"));
@@ -241,8 +295,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $newBegin="*";
     self::export(1,22,$file,$newBegin);
     print(" Export demanded to ".$file);
-    self::getExportResponce($recBegin,$recEnd);
-    print(" Responce : ".$recBegin."..".$recEnd);
+    self::getExportResponse($recBegin,$recEnd);
+    print(" Response : ".$recBegin."..".$recEnd);
     $this->assertEquals($begin,$recBegin,"Begin numbers mismatch, maybe deletion error");
     $this->assertEquals($end,$recEnd,"End number too big, maybe deletion error");
     print ("\r\nDeletions OK\r\n");
@@ -259,14 +313,22 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   public function test_exportPartial() {
+    $this->webDriver->get($this->homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    sleep(7);
+    $this->loginAs(self::$adminName,self::$adminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");   
+  
     $file="e_4_9";
     $begin=4;
     $end=9;
     $newBegin="*";
     self::export($begin,$end,$file,$newBegin);
     print(" Export demanded to ".$file);
-    self::checkExportResponce($begin,$end);
-    print(" Responce OK ");
+    self::checkExportResponse($begin,$end);
+    print(" Response OK ");
     self::checkExport($begin,$end,$file,$begin);
     print (" Checking file".$file."OK ");
 
@@ -288,8 +350,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     $newBegin="4";
     self::export($begin,$end,$file2,$newBegin);
     print(" Export demanded to ".$file2);
-    self::getExportResponce($recBegin,$recEnd);
-    print(" Responce : ".$recBegin."..".$recEnd);
+    self::getExportResponse($recBegin,$recEnd);
+    print(" Response : ".$recBegin."..".$recEnd);
     self::checkExport($begin,$recEnd,$file2,$newBegin);
     print (" Checking file ".$file2."OK ");
     //$path=$this->filesystemPath;

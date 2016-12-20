@@ -1,11 +1,11 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @version 1.2 added SessionManager and UserManager
  */
 
 /**
- * Simplistic page to show alerts and error messages.
+ * Admin panel for managing messages and users in one thread/group
  * @uses PageRegistry $pr
  * @uses SessionRegistry $sr
  */
@@ -76,10 +76,90 @@
   </fieldset>
 </form>
 
-<!--
+<hr />
 
-Renumber from
--->
+<div>
+  <fieldset>
+    All users: <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=lu"><button type="button">Get users list</button></a><br />
+    <input type="textarea" style="width:100%" id="userList" value="<?php print($apr->g("userList")); ?>" />
+
+    <br />
+    All admins: <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;act=la"><button type="button">Get admins list</button></a><br />
+    <input type="textarea" style="width:100%" id="adminList" value="<?php print($apr->g("adminList")); ?>" />
+  </fieldset>
+</div>
+
+<script src="<?php print($asr->g("assetsPath")."authHelper.js"); ?>"></script>
+<form action="" method="post" id="manUser">
+  <fieldset>
+    User:<br />
+    Name : <input type="text" name="user" id="user" value="Turn on JS" />
+    Password : <input type="text" name="ps" id="ps" value="Turn on JS" />
+    <br />
+    <button type="button" id="genEntry">Generate Entry</button>
+    <br />
+    <input type="textarea" style="width:100%" name="uEntry" id="uEntry" />
+    <br />
+    <button type="button" id="uAdd">Add</button>
+    <button type="button" id="uDel">Remove</button>
+    <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
+    <input type="hidden" name="realm" id="realm" value="<?php print( $apr->g("forum") ) ?>" />
+  </fieldset>
+</form>
+<form action="" method="post" id="manAdmin">
+  <fieldset>
+    User:<br />
+    Name : <input type="text" name="aUser" id="aUser" value="Turn on JS" />
+    <br />
+    <button type="button" id="aAdd">Add to Admins</button>
+    <button type="button" id="aDel">Remove from Admins</button>
+    <input type="hidden" name="forum" value="<?php print( $apr->g("forum") ) ?>" />
+  </fieldset>
+</form>
+<script>
+  $("user").value=$("ps").value="";
+  function genEntry() {
+    if ( checkEmpty("user") || checkEmpty("ps") ) {
+      return false;
+    }    
+    var ha=makeHa();
+    $("uEntry").value=$("user").value+"="+ha;
+    return true;
+  }
+  $("genEntry").onclick=function(){ genEntry(); };
+  function clearPrivate() {
+    //$("user").value=$("ps").value=$("realm").value="";
+    remove("user");
+    remove("ps");
+    remove("realm");    
+  }
+  $("uAdd").onclick=function() { 
+    if ( !genEntry() ) return (false);
+    addHidden("act","uAdd","manUser");
+    clearPrivate("manUser");
+    $("manUser").submit();
+  };
+  $("uDel").onclick=function() { 
+    if ( !genEntry() ) return (false);
+    addHidden("act","uDel","manUser");
+    clearPrivate("manUser");
+    $("manUser").submit();
+  };
+  $("aUser").value="";
+  $("aAdd").onclick=function() { 
+    addHidden("act","aAdd","manAdmin");
+    $("manAdmin").submit();
+  };
+  $("aDel").onclick=function() { 
+    addHidden("act","aDel","manAdmin");
+    $("manAdmin").submit();
+  };
+</script>
+
+<fieldset>
+  <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;reg=reset"><button type="button">Log out</button></a>
+  <?php echo("HttpHost:".$_SERVER['HTTP_HOST']." ,ServerName:".$_SERVER['SERVER_NAME']); ?>
+</fieldset>
 
 <p id="footer"></p>
 <!--<table class="low"><tr>

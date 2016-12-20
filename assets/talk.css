@@ -87,13 +87,13 @@ table.low p {
 .h {
   background-color: #abc;  
 }
-input,select {
+input,select,button {
   padding: .2em .5em;
   margin: .3em;
   background-color: #abc;
   border: 2px solid #842;
 }
-input:hover,select:hover {
+input:hover,select:hover,button:hover {
   background-color: #eed;
 }
 fieldset {
