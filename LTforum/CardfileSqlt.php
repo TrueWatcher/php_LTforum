@@ -129,6 +129,18 @@ class CardfileSqlt extends ForumDb {
     return($msg);
   }
 
+  public function getLastMsgByAuthor($authorName) {
+    $qGetLastMsgByAuthor="SELECT id, date, time, author, message, comment
+      FROM '".self::$table."'
+      WHERE author=:authorName
+      ORDER BY id DESC";
+    $stmt=parent::$forumDbo->prepare($qGetLastMsgByAuthor);
+    $stmt->bindValue(':authorName',$authorName,SQLITE3_TEXT);
+    $result = $stmt->execute();
+    $msg=$result->fetchArray(SQLITE3_ASSOC);    
+    return($msg);
+  }  
+  
   public function yieldPackMsg($startId,$finId) {
     // from lower numbers to higher ones
     $qGetPackMsg="SELECT id, date, time, author, message, comment
