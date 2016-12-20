@@ -20,7 +20,8 @@ An exercise in OOP :)
 ##Installation
 
 You can do with only FTP access to your site. To feel more confident about passwords, SSH/SFTP is recommended.  
-Put all the files and folders into your target directory ( not nesessarily the site root, http://somesite.com/myAwfullForum/ will also do ).  
+
+Just put all the files and folders into your target directory ( not nesessarily the site root, http://somesite.com/myAwfullForum/ will also do ).  
   
 Check that all's working alright with the /test thread, which normally contains some residual data from automatic testings:  
 Try frontend: http:://your_site[/forum_directory]/test , login/password: admin/admin  
@@ -35,13 +36,13 @@ You may do the same with /demo or /chat folders/threads.
 
 ##Adding/removing forums
 
-Any forum folder can be simply removed at any time and can be put back same easily. All forum-specific settings are contained in its "index.php", all messages are stored in "forum_name.db", users' names and password hashes - in its ".group" ( ".db" and ".group" are created automatically on the first script call and are initialized with one user admin/admin ).  
+Any forum folder can be simply removed at any time and can be put back same easily. All forum-specific settings are contained in its "index.php" file, all messages are stored in "forum_name.db" file, users' names and password hashes - in its ".group" file ( ".db" and ".group" are created automatically on the first script call and are initialized with one user admin/admin ).  
   
 To create a new forum "your_new_forum":  
 Create a folder "your_new_forum" in the forum root folder.  
 Copy the "index.php" from "/demo" folder. Open it in text editor, change $forumName="demo" into $forumName="your_new_forum" and $forumTitle="Just another open miniforum" into  $forumTitle="your_title". Put the edited "index.php" into your new folder.  
 If you happened to copy any of ".group" or "*.db" or ".htaccess" files, remove them.   
-Try frontend: http:://your_site[/forum_directory]/your_new_forum , login/password admin/admin  
+Try frontend: http:://your_site[/forum_directory]/your_new_forum , login/password: admin/admin .  
 You should see a forum page with one welcome message.  
 Try AdminPanel: http:://your_site[/forum_directory]/rulez.php?forum=your_new_forum  
 Add a new user with some non-trivial name and long password.   
@@ -50,7 +51,7 @@ Add this new user to administrators.
 Add all your other users with their passwords.  
 Remove user admin/admin ( to remove a user through AdminPanel you need his/her password ).  
 Click "Log out" and try your new administrator on backend and new users on frontend.  
-You may also want to add your own welcome message and remove the automatic one ( Delete block from 1 to 1 ), or simply change it in-place through AdminPanel ( Edit any message id=1 ).  
+You may also want to add your own welcome message and remove the automatic one through the AdminPanel ( Delete message block from 1 to 1 ), or simply change it in-place ( Edit any message id=1 ).  
   
 If your have enough rights to set up HTTPS, your are advised to do it ;).  
 If HTTPS is unavailable, it's recommended to enforce JS-Digest authentication:  
@@ -63,30 +64,25 @@ Note that it can protect your passwords only from passive eavesdropping, not fro
 v.0.1.0    7 Aug 2016
 started
 
-v.0.3.3    28 Aug 2016
-cleaned and tested view-add-edit-delete, workable import-export-delRange-editAny
-need docs, more testing and .htaccess
-
 v.1.0.0    31 Aug 2016
 primary testing complete, ready for experimental deployment
  
 v.1.1.0    6 Sep 2016
 "Search" command
 
-v.1.1.2    9 Sep 2016
-refactoring Viewers, new tests, improvements
-
 v.1.1.5    20 Nov 2016
 improvements for narrow screen, probably last version in 1.1 line
+(now moved to the branch "Apache_Http_Authentication")
 
 v.1.2.11   4 Dec 2016
 new AccessController and UserManager, tests, refactoring
 
+v.1.2.13   20 Dec 2016
+improvements and bugfixes
+
 #TODOs
 
-A fast service to check new messages without registration  
+A fast service to check for new messages without registration  
+Conception of localization  
 Nice frontend  
 RSS generator/formatter  
-Conception of localization  
-
-
