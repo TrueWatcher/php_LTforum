@@ -58,6 +58,8 @@ class Act {
     if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with the message number. Looks like it's not the latest one now.");
     // store Id in SESSION
     $_SESSION["current"]=$lastMsg["id"];
+    // make sure Updated is cleared
+    if ( array_key_exists("updated",$_SESSION) ) unset($_SESSION["updated"]);
     // transfer message and comment
     $vr=ViewRegistry::getInstance( 2, [ "id"=>$lastMsg["id"], "author"=>$lastMsg["author"], "message"=>$lastMsg["message"], "comment"=>$lastMsg["comment"], "controlsClass"=>"EditElements" ] );
     require_once ($sr->g("templatePath")."FormElements.php");
@@ -69,41 +71,65 @@ class Act {
   
   /**
    * Processes the Edit form, presented by Act::editLast.
-   * Takes Id from SESSION, so works even if there came some more messages.
-   * Clears Id from SESSION after updating.
+   * Takes the Id from SESSION, so one update is guranteed even if there came some more messages.
+   * Clears the Id from SESSION on failure or removal, keeps it on successfull update.
+   * Sets the Updated flag in the SESSION on successfull first update.    
    */
   public static function updateLast(PageRegistry $pr,SessionRegistry $sr) {
     //$pr->dump();
     // $pr::"current" comes from SESSION
     $current=$pr->g("current");
+    if ( !$current ) self::showAlert ($pr,$sr,"Updating denied. Click the EDIT link again.");
     $targetMsg = $pr->g("cardfile")->getOneMsg( $current );
-    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length"/*,"user"*/,"current") );
+    if ( !$targetMsg ) self::showAlert ($pr,$sr,"Failed to find message number ".$current." in the database");
     if( $targetMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");
+    
+    $pr->s( "formLink",self::addToQueryString($pr,"act=el","length"/*,"user"*/,"current") );
 
-    if ( !empty($pr->g("del")) ) {
+    if ( !empty($pr->g("del")) ) { // delete this message
       // check if it is still last
       $lastMsg = $pr->g("cardfile")->getLastMsg();
-      if( $lastMsg["id"] != $current ) self::showAlert ($pr,$sr,"Sorry, something is wrong with message number. Looks like it's not the latest one now.");
+      if( $lastMsg["id"] != $current ) {
+        // fail
+        self::showAlert ($pr,$sr,"Sorry, deleting denied as there is some new message below.");
+      }
       // simply delete
       $pr->g("cardfile")->deletePackMsg($current,$current);
       if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$current." has been deleted");
+      // no more updates by this Id
       unset($_SESSION["current"]);
       self::redirectToView ($pr);
     }
-    // check input strings
+    // try to update this message
+    // check the input strings
     $txt=$pr->g("txt");
     if( empty($txt) ) self::showAlert ($pr,$sr,"Please, leave something in the Message field");
     $txt=self::prepareInputText($txt,$sr);
     $comm=$pr->g("comm");
     $comm=self::prepareInputText($comm,$sr);
-
     $targetMsg["message"]=$txt;
     $targetMsg["comment"]=$comm;
     $targetMsg["time"]=$targetMsg["date"]="";// current date and time will be set
+    
+    // look on the state
+    if ( !array_key_exists("updated",$_SESSION) ) {
+      // one update allowed without check
+      $_SESSION["updated"]=true;
+    }
+    else {
+      // more updates only through last message check
+      $lastMsg = $pr->g("cardfile")->getLastMsg();
+      if( $lastMsg["id"] != $current ) {
+        // fail
+        unset($_SESSION["current"]);
+        unset($_SESSION["updated"]);
+        self::showAlert ($pr,$sr,"Sorry, updating denied as there is some new message below. Create a new message.");
+      }
+    }
+    // update the message in database
     $pr->g("cardfile")->addMsg($targetMsg,true);// true for overwrite
 
     if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$current." has been updated");
-    unset($_SESSION["current"]);
     self::redirectToView ($pr);
   }
 

@@ -31,13 +31,11 @@
   }
 
   class AccessController extends Hopper {
-  
-    function __construct() {
-      $this->nextState="verifySession";
-    }
+        
+    // ----- Common resourses and utilities -----
     
     /**
-     * Name of a file in forum's folder, that contains users' names and password hashes
+     * Name of a file in forum's folder, that contains users' names and password hashes.
      * Used also by UserManager
      */
     static $groupFileName=".group";
@@ -90,7 +88,7 @@
       $s.="[".$forum."]".$nl;
       $s.="admin=".self::makeHa1("admin",$forum,"admin").$nl;
       $s.="[".$forum."Admins]".$nl;
-      $s.="admin=";
+      $s.="admin=".$nl;
       file_put_contents( $path.self::$groupFileName, $s);
     }
     
@@ -168,38 +166,6 @@
       $url .= $_SERVER['HTTP_HOST'];// Get the server
       $target=$url.$ru;
       return($target);
-      
-      $qs=$_SERVER["QUERY_STRING"];
-      $matches=[];
-      $r1=preg_match("~\&(reg=[^&]*)~",$qs,$matches);
-      if ( !$r1 ) $r2=preg_match("~^(reg=[^&]*)~",$qs,$matches);
-      //print ($qs."\r\n");
-      //print_r($matches);
-      if ( !empty($matches) ) {
-        $qs=str_replace($matches[1],"",$qs);
-        if ( (strpos($qs,"&"))===0 ) $qs=ltrim($qs,"&");
-        if ( ($p=strpos($qs,"&&"))!==false ) $qs=str_replace("&&","&",$qs);
-        if ( (strrpos($qs,"&"))===(strlen($qs)-1) ) $qs=rtrim($qs,"&");
-      }
-      echo(" qs=".$qs."! target=".$target."!");
-      exit;
-      if ( !empty($qs) ) {
-        /*$url = 'http://';
-        if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
-        $url .= $_SERVER['HTTP_HOST'];// Get the server
-        
-        $request=$url.$qs;*/
-        if (!class_exists("Act")) throw new UsageException ("AccessController: please, include all dependencies");
-        $parsedReqUri=parse_url($_SERVER["REQUEST_URI"]);
-        $path=$parsedReqUri["path"];
-        $file="";
-        $f="";
-        if (preg_match("~\/([^.\/]*\.php)~",$path,$f) ) $file=$f[1];
-        //print_r($f);
-        //echo (" path=".$path." file=".$file);
-        $qs=Act::myAbsoluteUri()."/".$file."?".$qs;
-      }
-      return ($qs);
     }
     
     /**
@@ -222,6 +188,15 @@
       ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));    
     }
     
+    // ----- Logical units to be called by Hopper class -----
+    
+    /**
+     * Sets the first step for the Hopper.
+     */
+    function __construct() {
+      $this->nextState="verifySession";
+    }
+    
     /**
      * Initial session checks. 
      * If no authentication required, finishes the job;
@@ -233,6 +208,7 @@
       self::iniSet($ar);
       session_start();
       
+      // check for a RESET command 
       if ( array_key_exists("reg",$_REQUEST) && $_REQUEST["reg"]=="reset" ) {
         //unset($_SESSION);
         //session_destroy();
@@ -242,31 +218,37 @@
         $this->next("requestLogin");
         return;      
       }
+      // check for an empty session
       if( empty($_SESSION) || !array_key_exists("state",$_SESSION) ) {
         $this->next("requestLogin");
         return;
       }
+      // check for an outtimed session
       $t=time();
       if ( empty($_SESSION["notBefore"]) || empty($_SESSION["notAfter"]) || $t > $_SESSION["notAfter"] ) {
         $_SESSION["state"]="junk";
         $this->next("requestLogin");
         return;      
       }
+      // check for a forum/thread mismatch
       if ( array_key_exists("realm",$_SESSION) && $_SESSION["realm"]!==$ar->g("realm") ) {
         $_SESSION["state"]="trip";
         $ar->s("alert","You need to register for a new thread");
         $this->next("requestLogin");
         return;      
       }
+      // check for too fast responce (probably an attack)
       if ( $t < $_SESSION["notBefore"] ) {
         $ar->s("alert","Please, wait a few seconds and click \"Refresh\"");
         $this->next("showAuthAlert");
         return; 
       }
+      // check for the pre-Auth state
       if ( $_SESSION["state"]=="preAuth" ) {
         $this->next("selectAuth");
         return;
       }
+      // check for other invalid sutuations
       if ( !array_key_exists("authName",$_SESSION) || $_SESSION["state"]!="auth" ) {
         $ar->s("alert","Something is wrong");
         $this->next("showAuthAlert");
@@ -274,11 +256,13 @@
       } 
       $user=$_SESSION["authName"];
       //echo ($user."====".(self::isAdmin($user)) );
+      // additional check for admin areas
       if ( $ar->g("isAdminArea") && !(self::isAdmin($user,$ar)) ) {
         $ar->s("alert","This area is for admins only");
         $this->next("requestLogin");
         return;      
       }
+      // happy end
       return (true);
     }
     

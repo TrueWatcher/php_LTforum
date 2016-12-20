@@ -46,7 +46,7 @@ You should see a forum page with one welcome message.
 Try AdminPanel: http:://your_site[/forum_directory]/rulez.php?forum=your_new_forum  
 Add a new user with some non-trivial name and long password.   
 Add this new user to administrators.  
-( If you have secure file access, but no HTTPS on site, you'd be more safe to click "Generate Entry" and manually insert the resulting string into the newly created "/your_new_forum/.group" file, section "[your_new_forum]", and entry "newUserName=" into section "[your_new_forumAdmins]" )  
+( If you have secure file access, but no HTTPS on site, you'd be more safe to click "Generate Entry" and manually insert the resulting string into the newly created "/your_new_forum/.group" file, section "[your_new_forum]", followed by entry "newUserName=" in the section "[your_new_forumAdmins]" )  
 Add all your other users with their passwords.  
 Remove user admin/admin ( to remove a user through AdminPanel you need his/her password ).  
 Click "Log out" and try your new administrator on backend and new users on frontend.  
@@ -55,7 +55,7 @@ You may also want to add your own welcome message and remove the automatic one (
 If your have enough rights to set up HTTPS, your are advised to do it ;).  
 If HTTPS is unavailable, it's recommended to enforce JS-Digest authentication:  
 open /LTforum/LTforum.php and in line 73 set "authMode"=>2  
-then do the same with /LTforum/LTmessageManager.php ,line 61  
+then do the same with /LTforum/LTmessageManager.php , line 61  
 Note that it can protect your passwords only from passive eavesdropping, not from a deliberate attack.
 
 
@@ -83,7 +83,8 @@ v.1.2.11   4 Dec 2016
 new AccessController and UserManager, tests, refactoring
 
 #TODOs
- 
+
+A fast service to check new messages without registration  
 Nice frontend  
 RSS generator/formatter  
 Conception of localization  
