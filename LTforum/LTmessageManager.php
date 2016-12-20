@@ -61,8 +61,8 @@ $apr->s( "viewLink",Act::addToQueryString($apr,"","forum","pin") );
 $aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$forumsPath.$apr->g("forum")."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>6, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
 $ac=new AccessController;
 $acRet=$ac->go($aar);// so short
-echo("\r\nTrace: ".$ac->trace." ");
-if ( $alert = $aar->g("alert") ) echo($alert);// DEBUG
+//echo("\r\nTrace: ".$ac->trace." ");
+//if ( $alert = $aar->g("alert") ) echo($alert);// DEBUG
 if ( $acRet !== true ) exit($acRet); 
 
 try {
