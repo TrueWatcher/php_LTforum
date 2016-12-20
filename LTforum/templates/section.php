@@ -45,6 +45,7 @@ if ( !empty($vr->g("msgGenerator")) ) {
   ?></td>
   <td><?php print ( $cc::pagePanel($vr) ); ?></td>
   <td><?php print ( $cc::lengthForm($vr) ); ?></td>
+  <?php print ( $cc::logoutLink() ); ?>
 </tr></table>
 <p id="footer"><?php
 $outcome="viewed~".$j;

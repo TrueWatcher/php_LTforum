@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @version 1.2 added Access Controller and User Manager
  */
 /**
  * Form View elements for New, EditLast and EditAny commands.
@@ -31,7 +31,9 @@ class EditanyElements extends FormElements {
   static function snapChkbx () {} // disabled
 
   //static function script1 () {}
+  
   //static function script2 () {}
+  
   //static function script3 () {}
 }
 
@@ -49,9 +51,10 @@ class NewElements extends FormElements {
 
   static function idP ($context) {}
 
-  static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {
+  static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {} // disabled
+  /*static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {
     return( parent::authorInput("Your name :","user",$pageContext->g("user"),null,null) );
-  }
+  }*/
 
   static function clearChkbx () {} // disabled
 
@@ -77,21 +80,25 @@ class EditElements extends FormElements {
   static function hiddenFields ($pageContext) {
     $h=self::genericInput ("hidden","act","upd");
     $h.=self::genericInput ("hidden","current",$pageContext->g("current"));
-    $h.=self::genericInput ("hidden","user",$pageContext->g("user"));
+    //$h.=self::genericInput ("hidden","user",$pageContext->g("user"));
     $h.=self::genericInput ("hidden","length",$pageContext->g("length"));
     return ($h);
   }
 
-  static function authorInput ($label,$inputName,$authorName,$context) {
+  static function authorInput ($label,$inputName,$authorName,$context) {} // disabled
+  /*static function authorInput ($label,$inputName,$authorName,$context) {
     return( parent::userP($context) );
-  }
+  }*/
 
   static function clearChkbx () {} // disabled
+  
   //static function deleteChkbx () {}
 
   static function commText ($settings,$context) {} // disabled
 
   //static function script1 () {}
+  
   //static function script2 () {}
+  
   static function script3 () {} // disabled
 }

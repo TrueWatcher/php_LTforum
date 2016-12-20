@@ -1,11 +1,11 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @version 1.2 added Access Controller and User Manager
  */
 
 /**
- * Controller upper part: Initialization and Command resolver.
+ * Controller upper part: Initializations, AccessController call and Command resolver.
  * Commands are in Act.php
  */
 
@@ -13,22 +13,40 @@ require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
-
-// Classes and function, which have not found their own files
-
+require_once ($mainPath."Hopper.php");
+require_once ($mainPath."AccessController.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
 
-    public function load() {
-      $inputKeys=array("act","current","begin","end","length","user","txt","comm","snap","del","query","searchLength","order");
+    public function readInput() {
+      $inputKeys=[ "act", "current", "begin", "end", "length", "user", "txt", "comm", "snap", "del", "query", "searchLength", "order" ];
       foreach ($inputKeys as $k) {
         if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
         else $this->s($k,"");
       }
-      if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);
-      //else $this->s("user","Creator");
+      if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);// will be overwritten by self::readSession
     }
+    
+    public function readSession() {
+      $keys=["authName"=>"user", "current"=>"current", "updated"=>"updated" ];
+      if ( !$_SESSION ) throw new UsageException("PageRegistry: no active session found !");//return(false);
+      $i=0;
+      foreach($keys as $sessKey=>$regKey) {
+        if ( array_key_exists($sessKey,$_SESSION) && $_SESSION[$sessKey] ) {
+          $this->s($regKey,$_SESSION[$sessKey]);
+          $i++;
+        }
+      }
+      return($i);
+    }
+    
+    /*public function exportToSession() {
+      $keys=[ "current"=>"current" ];//"authName"=>"user",
+      $regKey="current";
+      $sessKey=$keys[$regKey];
+      $_SESSION[$sessKey] = $this->g($regKey);
+    }*/
 }
 
 class SessionRegistry extends SingletAssocArrayWrapper {
@@ -43,18 +61,25 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
-// instantiate and initialize Page Registry and Session Registry
-$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>20, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "narrowScreen"=>640, "forum"=>$forumName)
+// instantiate and initialize the Session Registry
+$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>10, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "narrowScreen"=>640, "forum"=>$forumName)
 );
 
+// here goes the Access Controller
+$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$ac=new AccessController;
+$acRet=$ac->go($ar);
+//echo("\r\nTrace: ".$sm->trace." ");
+//if ( $alert=$ar->g("alert") ) echo($alert);
+if($acRet!==true) exit($acRet);
+
+//  instantiate and initialize the Page Registry
 $pr=PageRegistry::getInstance( 0,array() );
-$pr->load();
-//$pr->s("forum",$forumName); // $forumName comes from index.php
+$pr->readInput();
+$pr->readSession();
 if ($forumTitle) $pr->s("title",$forumTitle);
 else $pr->s("title","LTforum::".$forumName);
-$pr->s( "viewLink",Act::addToQueryString($pr,"end=-1","length","user")."#footer" );//
-//print ($pr->g( "viewLink"));
-//exit(0);
+$pr->s( "viewLink",Act::addToQueryString($pr,"end=-1","length")."#footer" );//
 
 try {
   $pr->s("cardfile",new CardfileSqlt($forumName,true));
@@ -63,31 +88,9 @@ catch (Exception $e) {
   Act::showAlert ($pr,$sr,$e->getMessage());
 }
 
-// some testing code
-//$messages=new CardfileSqlt( $pr->g("forum"), true);
-
-//$firstMsg=$pr->g("cardfile")->getOneMsg(1);
-//print_r ($firstMsg);
-/*for ($j=2;$j<=100;$j++) {
-  $m = Act::makeMsg("Creator","This is message number ".$j);
-  $pr->g("cardfile")->addMsg($m);
-}*/
-//$pr->g("cardfile")->deletePackMsg(1,15);
-/*$search=[" ак ","http","-IT"];//,"dvd"];"AR",
-$order="";//"desc";
-$limit=10;
-$results="";
-$toShow=$pr->g("cardfile")->yieldSearchResults($search,$order,$limit);
-foreach($toShow as $i=>$res) {
-  $results.="<hr />".implode(":",$res)."<hr />";
-  //$results.= ("!".strpos(implode("  ",$res),$search[1]) );
-  //if(strpos(implode("  ",$res),$search[1])===false) print ("<!");
-}
-print($results);
-exit();*/
-
 $action=$pr->g("act");
-if ( empty($action) && empty($pr->g("begin")) && empty($pr->g("end")) ) Act::redirectToView($pr);
+if ( empty($action) && empty($pr->g("begin")) && empty($pr->g("end")) )  Act::redirectToView($pr);
+
 switch ($action) {
   case "new":
     Act::newMessage($pr,$sr);

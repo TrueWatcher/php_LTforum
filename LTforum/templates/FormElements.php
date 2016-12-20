@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @version 1.2 added Access Controller and User Manager
  */
 /**
  * Common template for NewElements,EditElements and EditanyElements.
