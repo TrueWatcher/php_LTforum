@@ -13,8 +13,10 @@ require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
-require_once ($mainPath."Hopper.php");
-require_once ($mainPath."AccessController.php");
+//require_once ($mainPath."Hopper.php");
+//require_once ($mainPath."AccessController.php");
+require_once ($mainPath."AccessController2.php");
+require_once ($mainPath."Applicant.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error

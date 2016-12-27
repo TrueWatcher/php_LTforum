@@ -13,8 +13,10 @@ require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AdminAct.php");
-require_once ($mainPath."Hopper.php");
-require_once ($mainPath."AccessController.php");
+//require_once ($mainPath."Hopper.php");
+//require_once ($mainPath."AccessController.php");
+require_once ($mainPath."AccessController2.php");
+require_once ($mainPath."Applicant.php");
 require_once ($mainPath."UserManager.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
