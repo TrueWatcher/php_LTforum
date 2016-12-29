@@ -158,7 +158,7 @@
 
 <fieldset>
   <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;reg=reset"><button type="button">Log out</button></a>
-  <?php echo("HttpHost:".$_SERVER['HTTP_HOST']." ,ServerName:".$_SERVER['SERVER_NAME']); ?>
+  <?php //echo("HttpHost:".$_SERVER['HTTP_HOST']." ,ServerName:".$_SERVER['SERVER_NAME']); ?>
 </fieldset>
 
 <p id="footer"></p>

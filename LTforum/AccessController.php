@@ -30,7 +30,7 @@
     }
   }
 
-  class AccessController extends Hopper {
+  class AccessController {
         
     // ----- Common resourses and utilities -----
     
@@ -58,7 +58,7 @@
     
     /**
      * Creates the response for the Digest authentication.
-     * Has a parallel function on the client side.
+     * Has a parallel function on the client side. 
      * @see assets/authHelper.js makeResponse
      * @param string $sn server nonce
      * @param string $ha1 password hash
@@ -89,7 +89,7 @@
       $s.="admin=".self::makeHa1("admin",$forum,"admin").$nl;
       $s.="[".$forum."Admins]".$nl;
       $s.="admin=".$nl;
-      file_put_contents( $path.self::$groupFileName, $s);
+      file_put_contents( $path.self::$groupFileName, $s );
     }
     
     /**
@@ -106,6 +106,7 @@
       if ( !file_exists($groupFile) ) {
         //throw new AccessException ("No such file:".$groupFile."!");
         self::createEmptyGroupFile($targetPath,$context->g("realm"));
+        sleep(1);// important!
       }
       $parsed=parse_ini_file($groupFile,true);
       //print_r($parsed);
@@ -132,31 +133,21 @@
     }
     
     /**
-     * Checks if the given user has admin rights.
-     * @uses parseGroup
-     * @param string $user user name
-     * @param {object AuthRegistry} $context
-     * @returns int 0 or 1
-     */
-    function isAdmin($user,$context) {
-      $admins=self::parseGroup( $context->g("realm")."Admins", $context );
-      if ( array_key_exists($user,$admins) ) return (1);
-      return (0);
-    }
-    
-    /**
      * If requested page has some parameters, saves them to SESSION.
      * On successfull registration there'll be redirect (the PRG pattern).
      * Commands for authentication itself (e.g. reg=reset) are stripped off.
      * @returns string full absolute Uri or empty if no redirect requred
      */
-    function makeRedirectUri() {
+    static function makeRedirectUri() {
       $ru=$_SERVER["REQUEST_URI"];
       $matches=[];
+      // look for ?reg=command or &reg=command
       $r1=preg_match("~\&(reg=[^&]*)~",$ru,$matches);
       if ( !$r1 ) $r2=preg_match("~\?(reg=[^&]*)~",$ru,$matches);
       if ( !empty($matches) ) {
+        // remove reg=command
         $ru=str_replace($matches[1],"",$ru);
+        // make sure uri is still ok
         if ( (strpos($ru,"?&"))!==false ) $ru=str_replace("?&","?",$ru);
         if ( ($p=strpos($ru,"&&"))!==false ) $ru=str_replace("&&","&",$ru);
         $ru=rtrim($ru,"&? ");
@@ -171,130 +162,52 @@
     /**
      * Sets php.ini parametrs for session.
      * The only place for all those settings.
-     * @param {object AuthRegistry} $context
+     * @param {object AuthRegistry} $ar
      * @returns void
      */
-    function iniSet(AuthRegistry $ar) {
+    static function startSession (AuthRegistry $ar) {
       ini_set("session.serialize_handler","php_serialize");
       ini_set("session.use_only_cookies",1);
       ini_set("session.use_cookies",1);
       ini_set("session.use_strict_mode",1);
+      // my directory to store sessions
       $sessionsDir=realpath( __DIR__. '/../sessions');// absolute path required
       //echo($sessionsDir);
       if ( !file_exists($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." not found");
       if ( !is_writable($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." is not writable, check the permissions");
       ini_set('session.save_path',$sessionsDir);
-      ini_set('session.gc_probability',25);
-      ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));    
-    }
-    
-    // ----- Logical units to be called by Hopper class -----
-    
-    /**
-     * Sets the first step for the Hopper.
-     */
-    function __construct() {
-      $this->nextState="verifySession";
-    }
-    
-    /**
-     * Initial session checks. 
-     * If no authentication required, finishes the job;
-     * otherwise passes to auth initialisation (requestLogin)
-     * @param {object AuthRegistry} $context
-     * @returns void
-     */     
-    function verifySession (AuthRegistry $ar) {
-      self::iniSet($ar);
+      // probability of GarbageCollector check
+      ini_set('session.gc_probability',100);
+      // max interval between sessions
+      ini_set("session.gc_maxlifetime", $ar->g("maxTimeoutGc"));
+      // cookie lifetime, currently no prolongation
+      ini_set("session.cookie_lifetime", $ar->g("maxLifeCookie"));
       session_start();
-      
-      // check for a RESET command 
-      if ( array_key_exists("reg",$_REQUEST) && $_REQUEST["reg"]=="reset" ) {
-        //unset($_SESSION);
-        //session_destroy();
-        //session_start();
-        $_SESSION["state"]="aborted";
-        $ar->s("alert"," Session aborted by user ");
-        $this->next("requestLogin");
-        return;      
-      }
-      // check for an empty session
-      if( empty($_SESSION) || !array_key_exists("state",$_SESSION) ) {
-        $this->next("requestLogin");
-        return;
-      }
-      // check for an outtimed session
-      $t=time();
-      if ( empty($_SESSION["notBefore"]) || empty($_SESSION["notAfter"]) || $t > $_SESSION["notAfter"] ) {
-        $_SESSION["state"]="junk";
-        $this->next("requestLogin");
-        return;      
-      }
-      // check for a forum/thread mismatch
-      if ( array_key_exists("realm",$_SESSION) && $_SESSION["realm"]!==$ar->g("realm") ) {
-        $_SESSION["state"]="trip";
-        $ar->s("alert","You need to register for a new thread");
-        $this->next("requestLogin");
-        return;      
-      }
-      // check for too fast responce (probably an attack)
-      if ( $t < $_SESSION["notBefore"] ) {
-        $ar->s("alert","Please, wait a few seconds and click \"Refresh\"");
-        $this->next("showAuthAlert");
-        return; 
-      }
-      // check for the pre-Auth state
-      if ( $_SESSION["state"]=="preAuth" ) {
-        $this->next("selectAuth");
-        return;
-      }
-      // check for other invalid sutuations
-      if ( !array_key_exists("authName",$_SESSION) || $_SESSION["state"]!="auth" ) {
-        $ar->s("alert","Something is wrong");
-        $this->next("showAuthAlert");
-        return;
-      } 
-      $user=$_SESSION["authName"];
-      //echo ($user."====".(self::isAdmin($user)) );
-      // additional check for admin areas
-      if ( $ar->g("isAdminArea") && !(self::isAdmin($user,$ar)) ) {
-        $ar->s("alert","This area is for admins only");
-        $this->next("requestLogin");
-        return;      
-      }
-      // happy end
-      return (true);
     }
-    
-    /**
-     * Initializes authentication params, stores them to SESSION, and presents auth form according to the requred mode.
-     * Plaintext; opportunistic Digest; strict Digest
-     * @param {object AuthRegistry} $context
-     * @returns void
-     */
-    function requestLogin(AuthRegistry $ar) {
-      if ($_SESSION) {
-        unset($_SESSION);
-        session_destroy();
-        session_start();        
-      }
-      // initialize authentication
-      $sn=self::makeServerNonce();
-      $ar->s("serverNonce",$sn);// needed by form
-  
-      //$_SESSION["registry"]=$ar->export();
-      $_SESSION["serverNonce"]=$sn;
-      $_SESSION["notBefore"]=time()+$ar->g("minDelay");
-      $_SESSION["notAfter"]=time()+$ar->g("maxDelayAuth");
-      $_SESSION["state"]="preAuth";
-      if ( !empty($_SERVER["QUERY_STRING"]) ) $_SESSION["origUri"]=self::makeRedirectUri();
-      //if ( $r=self::makeRedirectUri() ) $_SESSION["origUri"]=$r;
-      //echo(">".$r);
-      //exit();
 
-      //session_write_close ();
-      //$ar->s("alert",session_id());
-      // show form
+    /**
+     * Displays the registration form.
+     * Also stores original request uri to SESSION and generates serverNonce.
+     * @uses templates/AuthElements
+     * @uses templates/SubAuthElements
+     * @uses templates/AuthForm.php
+     * @param {object AuthRegistry} $ar
+     * @param string $authMessage message to display in the form
+     * @return false
+     */
+    static function showAuthForm (AuthRegistry $ar, $authMessage="") {
+    
+      if ( !empty($_SERVER["QUERY_STRING"]) ) {
+        //echo( " QS=".$_SERVER["QUERY_STRING"]);
+        $_SESSION["origUri"]=self::makeRedirectUri();
+      }
+      else if ( !empty($_SESSION) && array_key_exists("origUri",$_SESSION)) { unset($_SESSION["origUri"]); }
+    
+      $ar->s("alert",$authMessage);
+      $sn=self::makeServerNonce();
+      $_SESSION["serverNonce"]=$sn;
+      $ar->s("serverNonce",$sn);// needed by form
+      
       require($ar->g("templatePath")."AuthElements.php");
       require($ar->g("templatePath")."SubAuthElements.php");
       $formSelect= [ 0=>"PlainAuthElements",
@@ -302,193 +215,207 @@
                      2=>"StrictAuthElements" ];
       $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
       include($ar->g("templatePath")."authForm.php");
-      $this->setBreak();// overly safe
-      return(false);
+      return(false);      
     }
     
     /**
-     * Checks user form and selects the processing mode (PLaintext or Digest).
-     * @param {object AuthRegistry} $context
-     * @returns void
-     */     
-    function selectAuth (AuthRegistry $ar) {
-      $ar->readInput($_REQUEST);
-      $ar->readSession();
-      if ( !($ar->g("reg")=="authPlain" || $ar->g("reg")=="authOpp" || $ar->g("reg")=="authJs") ) {
-        // only authentication should happen in preAuth state, so reset session
-        $ar->s("alert"," Out-of-order request was discarded ");
-        $this->next("requestLogin");
-        return;      
-      }
-      $tryPlainText=( $ar->g("reg")=="authPlain" || ( $ar->g("reg")=="authOpp" && $ar->g("plain") ) );
-      $tryDigest=( $ar->g("reg")=="authJs" || ($ar->g("reg")=="authOpp" && !$ar->g("plain") ) );
-      if ( !$tryPlainText && !$tryDigest ) {
-        // something strange
-        $ar->s("alert"," Out-of-order request was discarded ");
-        $this->next("requestLogin");
-        return;      
-      }
-      // pre-authentication checks
-      if ($tryPlainText) {
-        if ( $ar->g("authMode") == 2 ) {
-          $ar->s("alert"," Plaintext auth is turned off on the server ");
-          $this->next("requestLogin");
-          return;
-        }
-        if ( empty($ar->g("user")) || empty($ar->g("ps")) ) {
-          $ar->s("alert"," Empty username or password ");
-          $this->next("requestLogin");
-          return;
-        }
-        $this->next("authPlain");
-        return;       
-      }
-      else { // tryDigest
-        if ( $ar->g("authMode") == 0 ) {
-          $ar->s("alert"," Digest auth is turned off on the server ");
-          $this->next("requestLogin");
-          return;        
-        }
-        if ( $ar->g("user") || $ar->g("ps") ) {
-          $ar->s("alert"," This mode takes no credentials ");
-          $this->next("requestLogin");          
-          return;        
-        }
-        if ( empty($ar->g("response")) || empty($ar->g("cn")) ) {
-          $ar->s("alert"," Missing login data ");
-          $this->next("requestLogin");          
-          return;        
-        }
-        $this->next("authDigest");
-        return;       
-      }
-    }
-    
-    /**
-     * Checks user form and performs PLaintext auth.
-     * Passes to authSuccess on success or back to requestLogin on failure
-     * @uses user name
-     * @uses user password
-     * @uses self::parseGroup
-     * @uses self::makeHa1
-     * @param {object AuthRegistry} $context
-     * @returns void
-     */     
-    function authPlain(AuthRegistry $ar) {
-    
-      //echo("Trying auth plaintext ");
-      $realm=$ar->g("realm");
-      $applicantName=$ar->g("user");
-      $applicantPsw=$ar->g("ps");
-      $applicantHa=self::makeHa1($applicantName,$realm,$applicantPsw);
-      //echo(">".makeHa1($_REQUEST["user"],$ar->g("realm"),$_REQUEST["ps"])."<");// DEBUG  
-      $foundName="";
-      $users=self::parseGroup($ar->g("realm"),$ar);
-      // simply use array as dictionary
-      if ( array_key_exists($applicantName,$users) && $users[$applicantName]===$applicantHa ) $foundName=$applicantName;
-      if ( !$foundName ) {// fail
-        $this->next("requestLogin");
-        sleep(rand(5,10));
-        $ar->s("alert","Wrong login or/and password");
-        return;
-      }
-      // success
-      $_SESSION["authName"]=$foundName;
-      $ar->s("authName",$foundName);
-      $ar->s("alert","Plaintext authentication OK as ".$foundName);
-      $this->next("authSuccess");
-    }
-
-    /**
-     * Checks user form and performs Digest auth.
-     * Passes to authSuccess on success or back to requestLogin on failure
-     * @uses client nonce
-     * @uses client response
-     * @uses self::parseGroup
-     * @uses self::makeResponse
-     * @param {object AuthRegistry} $context
-     * @returns void
-     */
-    function authDigest(AuthRegistry $ar) {
-    
-      //echo(" Trying JS digest authentication ");
-      $foundName="";
-      $users=self::parseGroup($ar->g("realm"),$ar);
-      //print_r($users);
-      //echo("sn>".$sn);
-      
-      // Cycle: hash -> proposed response -> check -> user name
-      // so no need to send name in open
-      foreach ($users as $name=>$ha) {
-        $tryResponse=self::makeResponse( $ar->g("serverNonce"), $ha, $ar->g("cn") );
-        if ( $tryResponse == $ar->g("response") ) {
-          $foundName=$name;
-          break;
-        }
-      }
-      if ( !$foundName ) {
-        $this->next("requestLogin");
-        sleep(5);
-        $ar->s("alert","Wrong login or/and password "/*." response=".$ar->g("response")*/);
-        return;
-      }
-      // registered OK
-      $ar->s("authName",$foundName);
-      $ar->s( "secret",self::iterateSecret( $ha, $ar->g("cn") ) );
-      $ar->s("clientCount",1);
-      $ar->s("serverCount",1);  
-      $ar->s("alert","Digest authentication OK as ".$foundName);
-      $_SESSION["registry"]=$ar->exportToSession();// JS secrets
-      
-      $this->next("authSuccess");
-    }
-    
-    /**
-     * Proceeds after-authentication affairs.
-     * If adminArea flag is set, checks additionally for admin rights.
-     * Fills SESSION data for verifySession
-     * If redirect is preset, makes it.
-     * @param {object AuthRegistry} $context
-     * @returns mixed void on adminAuth fail, some message on redirect, true on no-redirect finish (fall-through to main Controller)
-     */     
-    function authSuccess(AuthRegistry $ar) {
-      if ( $ar->g("isAdminArea") && !self::isAdmin($ar->g("authName"),$ar ) ) {
-        $this->next("requestLogin");
-        $ar->s("alert","This is a restricted area");
-        return;
-      }
-      $_SESSION["authName"]=$ar->g("authName");
-      $_SESSION["realm"]=$ar->g("realm");
-      $_SESSION["notAfter"]=time()+$ar->g("maxDelayPage");
-      $_SESSION["state"]="auth";
-      unset($_SESSION["serverNonce"]);
-      session_regenerate_id();
-      //session_write_close ();
-      if ( /*false &&*/ array_key_exists("origUri",$_SESSION) ) {
-        $r=$_SESSION["origUri"];
-        unset($_SESSION["origUri"]);
-        header( "Location: ".$r );
-        //echo ( "redirected to ".$r );
-        $this->setBreak();
-        return ( "redirected to ".$r );
-      }
-      return (true);
-    }
-    
-    /**
-     * Displays page with one message and passes to finished state.
-     * @param {object AuthRegistry} $context
-     * @returns false
-     */     
-    function showAuthAlert(AuthRegistry $ar) {
-      // show form
+     * Displays simple alert message, formatted as the registration form.
+     * @uses templates/AuthElements
+     * @uses templates/SubAuthElements
+     * @uses templates/AuthForm.php
+     * @param {object AuthRegistry} $ar
+     * @param string $authMessage message to display in the form
+     * @return false
+     */    
+    static function showAuthAlert (AuthRegistry $ar, $authMessage="") {
+      $ar->s("alert",$authMessage);
       require($ar->g("templatePath")."AuthElements.php");
       require($ar->g("templatePath")."SubAuthElements.php");
       $ar->s( "controlsClass", "AlertAuthElements" );
       include($ar->g("templatePath")."authForm.php");
-      $this->setBreak();// overly safe
       return (false);
     }
     
-  }// end SessionManager
-?>
+    
+    /**
+     * Controller top level. Initializations and command/state logic.
+     * @uses Applicant
+     * @see LTforum/AccessController_table.rtf for command/state table
+     * @param {object AuthRegistry} $ar
+     * @return true on success, false or message on success/redirect, false or error message on failure
+     */
+    public function go (AuthRegistry $ar) {
+      $note="";
+      $fallthrough=false;
+      $pauseFail=rand(10,20);
+      $pauseAllow=3;//rand(2,5);
+      
+      self::startSession($ar);
+      if ( array_key_exists("reg",$_REQUEST) ) { $ar->s("reg",$_REQUEST["reg"]); }
+      $a=new Applicant($ar);
+      $a->initMin($ar);
+      
+      switch ($ar->g("reg")) {
+      
+      case "reset":
+        $a->setStatus("zero");
+        $note="Session reset by user";
+        if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {     
+          session_regenerate_id(true);
+        }
+        self::showAuthForm($ar,$note);
+        $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+        $a->setStatus("preAuth");
+        return(false);
+        
+      case "deact":
+        if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {
+          $note="Session reset by user";
+          session_regenerate_id(true);// important!: "true" to destroy old session
+          // postAuth state is bound to realm
+          $ret=$a->checkRealm($ar);
+          if ($ret!==true) {
+            // Error: reg=deact with wrong realm 
+            $note=$ret;
+            $a->setStatus("zero");
+          }
+          self::showAuthForm($ar,$note);
+          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+          if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) { 
+            $a->setStatus("postAuth");
+          }
+          else { $a->setStatus("preAuth"); }
+          return(false);
+        }
+        if ( empty($_SESSION) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
+          // same as reg=reset
+          self::showAuthForm($ar,"");
+          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+          $a->setStatus("preAuth");
+          return(false);          
+        }
+        throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
+
+      case "authPlain":
+      case "authOpp":
+      case "authDigest":
+        if ( $a->statusEquals("active") ) {
+          // error, possibly an attack
+          session_regenerate_id(true);
+          $a->setStatus("zero");
+          // fall-through
+        }
+        if ( empty($_SESSION) || $a->statusEquals("zero") ) {
+          // this also should not happen normally
+          self::showAuthForm($ar,"A wrong-timed request");
+          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+          $a->setStatus("preAuth");
+          return(false);          
+        }
+        if ( $a->statusEquals("preAuth") || $a->statusEquals("postAuth") ) {
+          $ret=$a->checkSessionKeys(["notBefore","activeUntil"]);
+          if ( $ret===true ) $ret=$a->checkActiveUntil();
+          if ( $ret!==true ) {
+            self::showAuthForm($ar,$ret);
+            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+            $a->setStatus("preAuth");
+            return(false);
+          } 
+          $ret=$a->checkNotBefore();
+          if ( $ret!==true ) {
+            self::showAuthAlert($ar,"Please, wait a few seconds and refresh the page");
+            //$a->setStatus("noChange");
+            return(false);
+          }
+
+          // additional initializations
+          $ar->readInput($_REQUEST);
+          $ar->readSession();
+          $a->initFull($ar);
+          // pre-registration checks and registration processaing
+          $ret=$a->beforeAuth($ar);
+          if ( $ret===true ) $ret=$a->processAuth($ar);
+          if ( $ret!==true ) {
+            sleep($pauseFail);
+            self::showAuthForm($ar,$ret);
+            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+            $a->setStatus("preAuth");
+            return(false);
+          }
+          // successful authentication
+          session_regenerate_id(true);
+          sleep($pauseAllow);
+          $a->setTimeLimits( 0,$ar->g("maxDelayPage") );
+          $a->setStatus("active");
+          // redirect ?
+          if ( $a->optionalRedirect() ) { return false; }// header has been sent
+          // continue to main controller
+          return (true);
+        }
+        throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
+
+      case "":
+        if ( empty($_SESSION) || $a->statusEquals("preAuth") ) {
+          self::showAuthForm($ar,"");
+          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+          $a->setStatus("preAuth");
+          return(false);
+        }
+        if ( $a->statusEquals("active") ) {
+          $ret = $a->checkActiveParams();
+          if ( $ret===true ) $ret = $a->checkRealm($ar);
+          if ( $ret===true ) $ret = $a->checkAdmin($ar);
+          if ( $ret!==true ) {
+            self::showAuthForm($ar,$ret);
+            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+            $a->setStatus("preAuth");
+            return(false);
+          }         
+          $ret = $a->checkNotBefore();
+          if ( $ret!==true ) {
+            self::showAuthAlert($ar,"Please, wait a few seconds and refresh the page");
+            //$a->setStatus("active");
+            return(false);
+          }
+          $ret = $a->checkActiveUntil();
+          if ( $ret!==true ) {
+            $note=$a->getUnanswered();
+            self::showAuthForm($ar,$note);
+            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+            $a->setStatus("postAuth");
+            return(false);
+          }
+          // happy end
+          // continue to main controller
+          $a->setTimeLimits( 0,$ar->g("maxDelayPage") );
+          //$a->setStatus("active");
+          return (true);
+        }
+        if ( $a->statusEquals("postAuth") ) {
+          $ret = $a->checkRealm($ar);
+          if ($ret===true) { 
+            $note=$a->getUnanswered();
+            self::showAuthForm($ar,$note);
+            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+            //$a->setStatus("postAuth");
+            return(false);
+          }
+          else {
+            // interpreted as a request to a fresh new registration to the new realm
+            $a->setStatus("zero");
+            session_regenerate_id();
+            self::showAuthForm($ar,$ret);
+            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
+            $a->setStatus("preAuth");
+            return(false);
+          }                   
+        }
+        throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
+
+      default:
+        self::showAuthAlert($ar,"Wrong command reg=".$ar->g("reg")."!");
+        return (false);
+      }// end switch
+    
+    }// end go
+  }// end AccessController  

@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.2 added SessionManager
+ * @version 1.2 added Access Controller and User Manager
  */
 /**
  * Common template for AuthElements.
@@ -44,7 +44,10 @@ abstract class AuthElements {
 
   static function alertP (AuthRegistry $context) {
     if ( empty($context->g("alert")) ) return ("");
-    return ( self::wrapRow ( self::wrapFldTh("Alert :").self::wrapFldTd($context->g("alert"),"alert") ) );
+    $s="<tr><td id=\"alert\" colspan=\"2\">".$context->g("alert")."</td></tr>";
+    return($s);
+    //<tr><th>Alert :</th><td id="alert">No messages by this user</td></tr>
+    //return ( self::wrapRow ( self::wrapFldTh("Alert :").self::wrapFldTd($context->g("alert"),"alert") ) );
   }
   
   static function realmP (AuthRegistry $context) {

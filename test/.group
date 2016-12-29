@@ -1,7 +1,10 @@
 ; must not contain empty lines and must end with NL !
 [test]
-Me=ab7f02e60542538b49e316a14a0495ba
+Editor=0c13e570e79bfaa9c7aa877f4182916c
+Test Pagination=e808bf1b3669e632057747954447096a
+Test Robot=98d441ec0442a9c12f87ef6b98c146d5
+test=e79db0355206b4066c65cf393d0e1177
 admin=ab9b071d5882ec7ed7a23543dfe3cc9f
 [testAdmins]
-Me=
+Editor=
 admin=

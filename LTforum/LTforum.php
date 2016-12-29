@@ -13,9 +13,7 @@ require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
-//require_once ($mainPath."Hopper.php");
-//require_once ($mainPath."AccessController.php");
-require_once ($mainPath."AccessController2.php");
+require_once ($mainPath."AccessController.php");
 require_once ($mainPath."Applicant.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
@@ -68,10 +66,9 @@ $sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>1
 );
 
 // here goes the Access Controller
-$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>30*60, "maxTimeoutGc"=>3*24*3600, "maxLifeCookie"=>14*24*3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
 $ac=new AccessController;
 $acRet=$ac->go($ar);
-//echo("\r\nTrace: ".$sm->trace." ");
 //if ( $alert=$ar->g("alert") ) echo($alert);
 if($acRet!==true) exit($acRet);
 
