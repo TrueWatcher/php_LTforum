@@ -428,7 +428,7 @@ class Applicant {
     // check if the latest message is authored by this user
     $last=$dbm->getLastMsg();
     $unanswered = $last["id"] - $found["id"];
-    $note="Unanswered:".$unanswered;
+    $note="Unanswered: ".$unanswered;
     if ( $unanswered ) $note.=", latest: ".$last["date"]." ".$last["time"];
     return ($note);
   }

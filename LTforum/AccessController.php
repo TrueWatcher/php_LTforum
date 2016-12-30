@@ -250,6 +250,7 @@
           $note="Session reset by user";
           session_regenerate_id(true);
         }
+        // any state > preAuth
         $a->demandReg($note,"preAuth");
         return(false);
         
@@ -267,7 +268,8 @@
           if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) { 
             $nextStatus="postAuth";
           }
-          else { $nextStatus="preAuth"; }          
+          else { $nextStatus="preAuth"; }
+          // active, postAuth > postAuth   
           $a->demandReg($note,$nextStatus);
           return(false);
         }
@@ -283,12 +285,14 @@
       case "authDigest":
         if ( $a->statusEquals("active") ) {
           // error, possibly an attack
+          // active > zero > preAuth
           session_regenerate_id(true);
           $a->setStatus("zero");
           // fall-through
         }
         if ( empty($_SESSION) || $a->statusEquals("zero") ) {
           // this also should not happen normally
+          // zero > preAuth
           $a->demandReg("A wrong-timed request","preAuth");
           return(false);          
         }
@@ -296,6 +300,7 @@
           $ret=$a->checkSessionKeys(["notBefore","activeUntil"],false);
           if ( $ret===true ) $ret=$a->checkActiveUntil();
           if ( $ret!==true ) {
+            // preAuth or postAuth > preAuth
             $a->demandReg($ret,"preAuth");
             return(false);
           } 
@@ -314,13 +319,18 @@
           $ret=$a->beforeAuth($ar);
           if ( $ret===true ) $ret=$a->processAuth($ar);
           if ( $ret!==true ) {
+            // preAuth or postAuth > preAuth
             sleep($pauseFail);
             $a->demandReg($ret,"preAuth");
             return(false);
           }
           // successful registration
-          session_regenerate_id(true);
-          $a->markCookieTime();
+          // preAuth or postAuth > active
+          if ( $a->statusEquals("preAuth") ) { 
+            session_regenerate_id(true);
+            $a->markCookieTime();
+          }
+          // on postAuth > active regeneration is skipped as there's keepCookie in postAuth checks
           sleep($pauseAllow);
           $a->setTimeLimits( 0,$ar->g("maxDelayPage") );
           $a->setStatus("active");
@@ -368,14 +378,16 @@
         }
         if ( $a->statusEquals("postAuth") ) {
           $ret = $a->checkRealm($ar);
-          if ($ret===true) { 
+          if ($ret===true) {
+            // postAuth > postAuth
             $note=$a->getUnanswered();
-            $a->keepCookie();
+            $a->keepCookie();// regenerate cookie and id if session is aged (more than 1 day typically)
             $a->demandReg($note,"postAuth");
             return(false);
           }
           else {
             // different realm : interpreted as request to a fresh new registration
+            // postAuth > preAuth
             $a->setStatus("zero");
             session_regenerate_id();
             $a->demandReg($ret,"preAuth");
