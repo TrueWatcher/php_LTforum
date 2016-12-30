@@ -179,9 +179,9 @@
       // probability of GarbageCollector check
       ini_set('session.gc_probability',100);
       // max interval between sessions
-      ini_set("session.gc_maxlifetime", $ar->g("maxTimeoutGc"));
-      // cookie lifetime, currently no prolongation
-      ini_set("session.cookie_lifetime", $ar->g("maxLifeCookie"));
+      ini_set("session.gc_maxlifetime", $ar->g("maxTimeoutGcCookie"));
+      // cookie lifetime, if not prolonged by session_regenerate_id
+      ini_set("session.cookie_lifetime", $ar->g("maxTimeoutGcCookie"));
       session_start();
     }
 
@@ -193,29 +193,18 @@
      * @uses templates/AuthForm.php
      * @param {object AuthRegistry} $ar
      * @param string $authMessage message to display in the form
-     * @return false
+     * @return nothing
      */
     static function showAuthForm (AuthRegistry $ar, $authMessage="") {
-    
-      if ( !empty($_SERVER["QUERY_STRING"]) ) {
-        //echo( " QS=".$_SERVER["QUERY_STRING"]);
-        $_SESSION["origUri"]=self::makeRedirectUri();
-      }
-      else if ( !empty($_SESSION) && array_key_exists("origUri",$_SESSION)) { unset($_SESSION["origUri"]); }
-    
       $ar->s("alert",$authMessage);
-      $sn=self::makeServerNonce();
-      $_SESSION["serverNonce"]=$sn;
-      $ar->s("serverNonce",$sn);// needed by form
-      
+      //$ar->s("serverNonce",$sn);// needed by form
       require($ar->g("templatePath")."AuthElements.php");
       require($ar->g("templatePath")."SubAuthElements.php");
       $formSelect= [ 0=>"PlainAuthElements",
                      1=>"OpportunisticAuthElements",
                      2=>"StrictAuthElements" ];
       $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
-      include($ar->g("templatePath")."authForm.php");
-      return(false);      
+      include($ar->g("templatePath")."authForm.php");     
     }
     
     /**
@@ -225,7 +214,7 @@
      * @uses templates/AuthForm.php
      * @param {object AuthRegistry} $ar
      * @param string $authMessage message to display in the form
-     * @return false
+     * @return nothing
      */    
     static function showAuthAlert (AuthRegistry $ar, $authMessage="") {
       $ar->s("alert",$authMessage);
@@ -233,7 +222,6 @@
       require($ar->g("templatePath")."SubAuthElements.php");
       $ar->s( "controlsClass", "AlertAuthElements" );
       include($ar->g("templatePath")."authForm.php");
-      return (false);
     }
     
     
@@ -246,7 +234,6 @@
      */
     public function go (AuthRegistry $ar) {
       $note="";
-      $fallthrough=false;
       $pauseFail=rand(10,20);
       $pauseAllow=3;//rand(2,5);
       
@@ -258,14 +245,12 @@
       switch ($ar->g("reg")) {
       
       case "reset":
-        $a->setStatus("zero");
-        $note="Session reset by user";
-        if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {     
+        if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {
+          $a->setStatus("zero");
+          $note="Session reset by user";
           session_regenerate_id(true);
         }
-        self::showAuthForm($ar,$note);
-        $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-        $a->setStatus("preAuth");
+        $a->demandReg($note,"preAuth");
         return(false);
         
       case "deact":
@@ -279,19 +264,16 @@
             $note=$ret;
             $a->setStatus("zero");
           }
-          self::showAuthForm($ar,$note);
-          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
           if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) { 
-            $a->setStatus("postAuth");
+            $nextStatus="postAuth";
           }
-          else { $a->setStatus("preAuth"); }
+          else { $nextStatus="preAuth"; }          
+          $a->demandReg($note,$nextStatus);
           return(false);
         }
         if ( empty($_SESSION) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
           // same as reg=reset
-          self::showAuthForm($ar,"");
-          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-          $a->setStatus("preAuth");
+          $a->demandReg("","preAuth");
           return(false);          
         }
         throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
@@ -307,18 +289,14 @@
         }
         if ( empty($_SESSION) || $a->statusEquals("zero") ) {
           // this also should not happen normally
-          self::showAuthForm($ar,"A wrong-timed request");
-          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-          $a->setStatus("preAuth");
+          $a->demandReg("A wrong-timed request","preAuth");
           return(false);          
         }
         if ( $a->statusEquals("preAuth") || $a->statusEquals("postAuth") ) {
-          $ret=$a->checkSessionKeys(["notBefore","activeUntil"]);
+          $ret=$a->checkSessionKeys(["notBefore","activeUntil"],false);
           if ( $ret===true ) $ret=$a->checkActiveUntil();
           if ( $ret!==true ) {
-            self::showAuthForm($ar,$ret);
-            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-            $a->setStatus("preAuth");
+            $a->demandReg($ret,"preAuth");
             return(false);
           } 
           $ret=$a->checkNotBefore();
@@ -337,18 +315,17 @@
           if ( $ret===true ) $ret=$a->processAuth($ar);
           if ( $ret!==true ) {
             sleep($pauseFail);
-            self::showAuthForm($ar,$ret);
-            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-            $a->setStatus("preAuth");
+            $a->demandReg($ret,"preAuth");
             return(false);
           }
-          // successful authentication
+          // successful registration
           session_regenerate_id(true);
+          $a->markCookieTime();
           sleep($pauseAllow);
           $a->setTimeLimits( 0,$ar->g("maxDelayPage") );
           $a->setStatus("active");
           // redirect ?
-          if ( $a->optionalRedirect() ) { return false; }// header has been sent
+          if ( $a->optionalRedirect() ) { return (false); }// header has been sent
           // continue to main controller
           return (true);
         }
@@ -356,9 +333,7 @@
 
       case "":
         if ( empty($_SESSION) || $a->statusEquals("preAuth") ) {
-          self::showAuthForm($ar,"");
-          $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-          $a->setStatus("preAuth");
+          $a->demandReg("","preAuth");
           return(false);
         }
         if ( $a->statusEquals("active") ) {
@@ -366,9 +341,8 @@
           if ( $ret===true ) $ret = $a->checkRealm($ar);
           if ( $ret===true ) $ret = $a->checkAdmin($ar);
           if ( $ret!==true ) {
-            self::showAuthForm($ar,$ret);
-            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-            $a->setStatus("preAuth");
+            // active > preAuth
+            $a->demandReg($ret,"preAuth");
             return(false);
           }         
           $ret = $a->checkNotBefore();
@@ -379,10 +353,11 @@
           }
           $ret = $a->checkActiveUntil();
           if ( $ret!==true ) {
+            // active > postAuth
             $note=$a->getUnanswered();
-            self::showAuthForm($ar,$note);
-            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-            $a->setStatus("postAuth");
+            session_regenerate_id();
+            $a->markCookieTime();
+            $a->demandReg($note,"postAuth");
             return(false);
           }
           // happy end
@@ -395,18 +370,15 @@
           $ret = $a->checkRealm($ar);
           if ($ret===true) { 
             $note=$a->getUnanswered();
-            self::showAuthForm($ar,$note);
-            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-            //$a->setStatus("postAuth");
+            $a->keepCookie();
+            $a->demandReg($note,"postAuth");
             return(false);
           }
           else {
-            // interpreted as a request to a fresh new registration to the new realm
+            // different realm : interpreted as request to a fresh new registration
             $a->setStatus("zero");
             session_regenerate_id();
-            self::showAuthForm($ar,$ret);
-            $a->setTimeLimits( $ar->g("minDelay"),$ar->g("maxDelayAuth") );
-            $a->setStatus("preAuth");
+            $a->demandReg($ret,"preAuth");
             return(false);
           }                   
         }
