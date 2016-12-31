@@ -256,22 +256,27 @@
         
       case "deact":
         if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {
-          $note="Session reset by user";
-          session_regenerate_id(true);// important!: "true" to destroy old session
-          // postAuth state is bound to realm
           $ret=$a->checkRealm($ar);
           if ($ret!==true) {
             // Error: reg=deact with wrong realm 
-            $note=$ret;
             $a->setStatus("zero");
+            session_regenerate_id(true);
+            $a->demandReg($ret,"preAuth");
+            return(false); 
           }
-          if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) { 
-            $nextStatus="postAuth";
+          if ( $a->statusEquals("active")) {
+            // active > postAuth
+            session_regenerate_id(true);
+            $a->demandReg("Session reset by user","postAuth");
+            return(false);
           }
-          else { $nextStatus="preAuth"; }
-          // active, postAuth > postAuth   
-          $a->demandReg($note,$nextStatus);
-          return(false);
+          else {
+            // postAuth > postAuth
+            // redirect to cleaned uri without reg=deact
+            $targetUri=AccessController::makeRedirectUri();
+            header( "Location: ".$targetUri );
+            return ( "redirected to ".$targetUri );
+          }
         }
         if ( empty($_SESSION) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
           // same as reg=reset
@@ -365,7 +370,7 @@
           if ( $ret!==true ) {
             // active > postAuth
             $note=$a->getUnanswered();
-            session_regenerate_id();
+            session_regenerate_id(true);
             $a->markCookieTime();
             $a->demandReg($note,"postAuth");
             return(false);
@@ -389,7 +394,7 @@
             // different realm : interpreted as request to a fresh new registration
             // postAuth > preAuth
             $a->setStatus("zero");
-            session_regenerate_id();
+            session_regenerate_id(true);
             $a->demandReg($ret,"preAuth");
             return(false);
           }                   
@@ -398,6 +403,7 @@
 
       default:
         self::showAuthAlert($ar,"Wrong command reg=".$ar->g("reg")."!");
+        // state noChange
         return (false);
       }// end switch
     

@@ -110,7 +110,7 @@ class Applicant {
     $delta=time() - $from;
     if ( $delta > $this->c->g("minRegenerateCookie") ) {
       $_SESSION["cookieTime"]=time();
-      session_regenerate_id();
+      session_regenerate_id(true);
     }
   }
   
