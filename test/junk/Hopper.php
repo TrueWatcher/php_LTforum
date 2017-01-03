@@ -16,7 +16,7 @@ class Hopper {
   protected $stopNow=0;
   protected $maxHops=10;
   public $trace=[];
-  
+
   /**
    * Called by a State method to set the next State method to invoke immediately, like GoTo.
    * @param string $nextHop neme of next State method
@@ -31,19 +31,19 @@ class Hopper {
    * Called by a State method to set the next State method to invoke on next go() call, like a State Machine. Stops main cycle.
    * @param string $nextHop neme of next State method
    * @returns void
-   */  
+   */
   protected function setNextAndBreak($nextHop) {
     $this->setBreak();
     $this->next($nextHop);
   }
-  
+
   /**
    *  Called by a State method to stop the main cycle like Return.
    */
   protected function setBreak() {
-    $this->stopNow=1;  
+    $this->stopNow=1;
   }
-  
+
   /**
    * Translates a State name into the method call.
    * @param string $hop current State name
@@ -61,7 +61,7 @@ class Hopper {
    * @param mixed $context common context of all States
    * @param string $from name of the first State, if not set in __construct
    * @returns mixed the return value of last called State method
-   */  
+   */
   public function go($context,$from=null) {
     $this->stopNow=0;
     $this->trace="";
@@ -70,7 +70,7 @@ class Hopper {
     else $step=$this->nextState;
     do {
       $this->nextState="";
-      $this->currentState=$step;   
+      $this->currentState=$step;
       $ret=$this->call($step,$context);
       $this->trace.=" > ".$step;
       if ($this->stopNow || !$this->nextState) break;
@@ -92,25 +92,25 @@ class TestHopper1 extends Hopper {
     //$this->nextState="runLikeHell";
     $this->nextState="run3";
   }
-  
+
   protected function runOnce($context) {
     echo(" Hi, I'm runOnce");
     return (" Bye, I'm runOnce");
   }
-  
+
   protected function runLikeHell($context) {
     echo(" Hi, I'm runLikeHell");
     //$this->next("runLikeHell");
     $this->setNextAndBreak("runLikeHell");
     return (" Bye, I'm runLikeHell");
   }
-  
+
   protected function run3($context) {
     static $i=0;
     echo(" Hi, I'm run3 ".$i);
     $i++;
     if ($i==3) {
-      $this->next("runOnce"); 
+      $this->next("runOnce");
       return (" Bye ");
     }
     $this->next("run3");

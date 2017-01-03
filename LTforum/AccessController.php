@@ -3,10 +3,10 @@
  * @pakage LTforum
  * @version 1.2 added SessionManager
  */
- 
+
   class AuthRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;
-    
+
     function exportToSession() {
       $what=["pers","secret","clientCount","serverCount"];
       $exp=[];
@@ -15,7 +15,7 @@
       }
       return($exp);
     }
-    
+
     function readInput($superGlobal) {
       $what=["reg","user","ps","cn","response","plain","pers"];
       $exp=[];
@@ -23,7 +23,7 @@
         if ( array_key_exists($k,$superGlobal) ) $this->s($k,$superGlobal[$k]);
       }
     }
-    
+
     function readSession() {
       $what=["serverNonce"];
       $this->s("serverNonce",$_SESSION["serverNonce"]);
@@ -31,15 +31,15 @@
   }
 
   class AccessController {
-        
+
     // ----- Common resourses and utilities -----
-    
+
     /**
      * Name of a file in forum's folder, that contains users' names and password hashes.
      * Used also by UserManager
      */
     static $groupFileName=".group";
-    
+
     /**
      * Creates a password hash.
      * Has a parallel function on the client side.
@@ -53,12 +53,12 @@
     static function makeHa1($userName,$realm,$password) {
       $realm=strtolower($_SERVER["SERVER_NAME"]).$realm;
       //echo(">>".$userName.$realm.$password);
-      return ( md5($userName.$realm.$password) ); 
+      return ( md5($userName.$realm.$password) );
     }
-    
+
     /**
      * Creates the response for the Digest authentication.
-     * Has a parallel function on the client side. 
+     * Has a parallel function on the client side.
      * @see assets/authHelper.js makeResponse
      * @param string $sn server nonce
      * @param string $ha1 password hash
@@ -66,13 +66,13 @@
      * @returns string
      */
     static function makeResponse($sn,$ha1,$cn) {
-      return ( md5($sn.$ha1.$cn) ); 
+      return ( md5($sn.$ha1.$cn) );
     }
-    
+
     static function iterateSecret($secret,$cNonce) {
       return ( md5($secret.$cNonce) );
     }
-    
+
     /**
      * Initializes the new thread with admin/admin.
      * Writes users data file in .ini format.
@@ -91,7 +91,7 @@
       $s.="admin=".$nl;
       file_put_contents( $path.self::$groupFileName, $s );
     }
-    
+
     /**
      * Reads users data file and creates an array of pairs "userName"=>"passwordHash"
      * @uses $groupFileName
@@ -113,7 +113,7 @@
       if (!array_key_exists($realm,$parsed)) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
       return($parsed[$realm]);
     }
-    
+
     /**
      * Generates random server nonce for the Digest authentication.
      * @returns string
@@ -131,7 +131,7 @@
       $sn=base64_encode($sn);
       return($sn);
     }
-    
+
     /**
      * If requested page has some parameters, saves them to SESSION.
      * On successfull registration there'll be redirect (the PRG pattern).
@@ -151,14 +151,14 @@
         if ( (strpos($ru,"?&"))!==false ) $ru=str_replace("?&","?",$ru);
         if ( ($p=strpos($ru,"&&"))!==false ) $ru=str_replace("&&","&",$ru);
         $ru=rtrim($ru,"&? ");
-      }      
+      }
       $url = 'http://';
       if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
       $url .= $_SERVER['HTTP_HOST'];// Get the server
       $target=$url.$ru;
       return($target);
     }
-    
+
     /**
      * Sets php.ini parametrs for session.
      * The only place for all those settings.
@@ -204,9 +204,9 @@
                      1=>"OpportunisticAuthElements",
                      2=>"StrictAuthElements" ];
       $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
-      include($ar->g("templatePath")."authForm.php");     
+      include($ar->g("templatePath")."authForm.php");
     }
-    
+
     /**
      * Displays simple alert message, formatted as the registration form.
      * @uses templates/AuthElements
@@ -215,7 +215,7 @@
      * @param {object AuthRegistry} $ar
      * @param string $authMessage message to display in the form
      * @return nothing
-     */    
+     */
     static function showAuthAlert (AuthRegistry $ar, $authMessage="") {
       $ar->s("alert",$authMessage);
       require($ar->g("templatePath")."AuthElements.php");
@@ -223,8 +223,8 @@
       $ar->s( "controlsClass", "AlertAuthElements" );
       include($ar->g("templatePath")."authForm.php");
     }
-    
-    
+
+
     /**
      * Controller top level. Initializations and command/state logic.
      * @uses Applicant
@@ -236,14 +236,14 @@
       $note="";
       $pauseFail=rand(10,20);
       $pauseAllow=3;//rand(2,5);
-      
+
       self::startSession($ar);
       if ( array_key_exists("reg",$_REQUEST) ) { $ar->s("reg",$_REQUEST["reg"]); }
       $a=new Applicant($ar);
       $a->initMin($ar);
-      
+
       switch ($ar->g("reg")) {
-      
+
       case "reset":
         if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {
           $a->setStatus("zero");
@@ -253,16 +253,16 @@
         // any state > preAuth
         $a->demandReg($note,"preAuth");
         return(false);
-        
+
       case "deact":
         if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {
           $ret=$a->checkRealm($ar);
           if ($ret!==true) {
-            // Error: reg=deact with wrong realm 
+            // Error: reg=deact with wrong realm
             $a->setStatus("zero");
             session_regenerate_id(true);
             $a->demandReg($ret,"preAuth");
-            return(false); 
+            return(false);
           }
           if ( $a->statusEquals("active")) {
             // active > postAuth
@@ -281,7 +281,7 @@
         if ( empty($_SESSION) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
           // same as reg=reset
           $a->demandReg("","preAuth");
-          return(false);          
+          return(false);
         }
         throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
 
@@ -299,7 +299,7 @@
           // this also should not happen normally
           // zero > preAuth
           $a->demandReg("A wrong-timed request","preAuth");
-          return(false);          
+          return(false);
         }
         if ( $a->statusEquals("preAuth") || $a->statusEquals("postAuth") ) {
           $ret=$a->checkSessionKeys(["notBefore","activeUntil"],false);
@@ -308,7 +308,7 @@
             // preAuth or postAuth > preAuth
             $a->demandReg($ret,"preAuth");
             return(false);
-          } 
+          }
           $ret=$a->checkNotBefore();
           if ( $ret!==true ) {
             self::showAuthAlert($ar,"Please, wait a few seconds and refresh the page");
@@ -331,7 +331,7 @@
           }
           // successful registration
           // preAuth or postAuth > active
-          if ( $a->statusEquals("preAuth") ) { 
+          if ( $a->statusEquals("preAuth") ) {
             session_regenerate_id(true);
             $a->markCookieTime();
           }
@@ -359,7 +359,7 @@
             // active > preAuth
             $a->demandReg($ret,"preAuth");
             return(false);
-          }         
+          }
           $ret = $a->checkNotBefore();
           if ( $ret!==true ) {
             self::showAuthAlert($ar,"Please, wait a few seconds and refresh the page");
@@ -397,7 +397,7 @@
             session_regenerate_id(true);
             $a->demandReg($ret,"preAuth");
             return(false);
-          }                   
+          }
         }
         throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
 
@@ -406,6 +406,6 @@
         // state noChange
         return (false);
       }// end switch
-    
+
     }// end go
-  }// end AccessController  
+  }// end AccessController

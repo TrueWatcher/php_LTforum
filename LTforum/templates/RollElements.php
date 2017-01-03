@@ -194,7 +194,7 @@ class RollElements extends SectionElements {
     $form.="</p></form>";
     return ($form);
   }
-  
+
   static function logoutLink() {
     //return ( "<td>" . self::genericLink("reg=reset","Log out") . "</td>" );
     return ( "<td>" . self::genericLink("reg=deact","Log out") . "</td>" );

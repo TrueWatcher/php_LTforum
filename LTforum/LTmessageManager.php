@@ -62,7 +62,7 @@ $aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$fo
 $ac=new AccessController;
 $acRet=$ac->go($aar);// so short
 //if ( $alert = $aar->g("alert") ) echo($alert);// DEBUG
-if ( $acRet !== true ) exit($acRet); 
+if ( $acRet !== true ) exit($acRet);
 
 try {
   $apr->s("cardfile",new CardfileSqlt($targetPath,true));
@@ -104,10 +104,10 @@ try {
       AdminAct::updateAny ($apr,$asr);
       exit(0);
   }
-  
+
   //print_r($_REQUEST);
   UserManager::init($aar->g("targetPath"),$apr->g("forum"));
-  switch ( $apr->g("act") ) {  
+  switch ( $apr->g("act") ) {
     case ("lu"):
       $apr->s("userList",implode(", ",UserManager::listUsers() ) );
       break;
@@ -151,7 +151,7 @@ try {
     default ;
       Act::showAlert ($apr,$asr,"Unknown admin command:".$apr->g("act"));
   }
-  
+
 } catch (AccessException $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());
 }

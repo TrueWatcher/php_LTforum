@@ -16,7 +16,7 @@ class InfoLock {
 
   private static $lockFileName="infoLock.dat";
   private static $lockPeriod=60; // seconds
-  
+
   /**
    * @return string Error message or empty string on success
    */
@@ -27,12 +27,12 @@ class InfoLock {
         exit ("Failed to create data file. Check the permissions");
       }
     }
-    $parsed=parse_ini_file(self::$lockFileName);    
+    $parsed=parse_ini_file(self::$lockFileName);
     if ( !array_key_exists("notBefore",$parsed) || empty($parsed["notBefore"]) ) return ("Invalid time limit");
     if ( time() < $parsed["notBefore"] ) return ("Service is locked");
     return("");
   }
-  
+
   /**
    * Creates lock and writes the data file.
    * @param string $message optional error message
@@ -49,7 +49,7 @@ class InfoLock {
     if ($message) $s.="message=\"".$message."\"".$nl;
     file_put_contents(self::$lockFileName,$s);
   }
-  
+
   /**
    * Creates a dummy lock file.
    */
@@ -90,7 +90,7 @@ try {
 }
 catch (Exception $e) { // invalid forum name
   $il->lock( $e->getMessage() );
-  exit();  
+  exit();
 }
 
 $user=$_REQUEST["user"];

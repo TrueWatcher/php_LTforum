@@ -3,25 +3,25 @@
  * @pakage LTforum
  * @version 1.2 added Access Controller and User Manager
  */
- 
+
 /**
  * A Controller subunit to perfom administrative operations, related to users, like dreation/deletion and setting/unsetting administrative rights.
  * @uses AccessController::$groupFileName
  * @uses MyExceptions
  */
 class UserManager {
-  
+
   protected static $forumName;
   protected static $users;
   protected static $admins;
   protected static $groupFile;
   //protected static $groupFileName=".group";
-  
+
   function __construct() {
     if (self::$forumName || self::$groupFile) throw new UsageException("You are not expected to create instances of UserManager class, use it statically!");
   }
-    
-  static function init($path="",$forum="") {     
+
+  static function init($path="",$forum="") {
     if ($path && $forum) {
       self::$forumName=$forum;
       if ( !class_exists("AccessController") ) throw new UsageException ("UserManager: please, include all dependencies");
@@ -44,7 +44,7 @@ class UserManager {
   static protected function readGroup($forumName,&$users,&$admins) {
     $parsed=parse_ini_file(self::$groupFile,true);
     //print_r($parsed);
-    if ( !array_key_exists($forumName,$parsed) || !array_key_exists($forumName."Admins",$parsed) ) throw new AccessException ("UserManager: invalid group file"); 
+    if ( !array_key_exists($forumName,$parsed) || !array_key_exists($forumName."Admins",$parsed) ) throw new AccessException ("UserManager: invalid group file");
     $users=$parsed[$forumName];
     $admins=$parsed[$forumName."Admins"];
     if (empty($users) || empty($admins)) {
@@ -55,7 +55,7 @@ class UserManager {
       self::manageAdmin("add","admin");*/
     }
   }
-  
+
   /**
    * Adds one entry to config file.
    * @param string $entry must end with NL!
@@ -68,7 +68,7 @@ class UserManager {
     $buf=str_replace("\r","",$buf);
     $beginSection=strpos($buf,"[".$header."]");
     if ($beginSection===false) throw new AccessException ("Section ".$header." not found in the file ".$groupFile);
-    
+
     if (strpos($buf,$entry,$beginSection)!==false) return("This entry already exists");
     $head=substr($buf,0,$beginSection+strlen($header)+3);
     $tail=substr($buf,$beginSection+strlen($header)+3);
@@ -76,20 +76,20 @@ class UserManager {
     file_put_contents(self::$groupFile,$buf);
     return("");
   }
-  
+
   /**
    * Removes one entry from config file.
    * @param string $entry must end with NL!
    * @param string $header name of target section
    * @return string empty on success, error message on failure
    */
-  static protected function delFromIniFile($entry,$header) { 
+  static protected function delFromIniFile($entry,$header) {
     $nl="\n";
     $buf=file_get_contents(self::$groupFile);
     $buf=str_replace("\r","",$buf);
     $beginSection=strpos($buf,"[".$header."]");
     if ($beginSection===false) throw new AccessException ("Section ".$header." not found in the file ".$groupFile);
-    
+
     $where=strpos($buf,$entry,$beginSection);
     if ($where===false) return ("Missing or invalid entry. Try manual editing");
     $after=@substr($buf,$where+strlen($entry),1);
@@ -101,8 +101,8 @@ class UserManager {
     $buf=$head.$tail;
     file_put_contents(self::$groupFile,$buf);
     return("");
-  }  
-  
+  }
+
   /**
    * Adds or removes one user to/from the user list of config file.
    * @param string $addOrDel command:"add", "del"
@@ -111,13 +111,13 @@ class UserManager {
    * @param string $realm optional!
    * @param string $password optional!
    * @return string empty on success, error message on failure
-   */ 
+   */
   static function manageUser($addOrDel,$userEntry="",$userName="",$realm="",$password="") {
     $nl="\n";
-    if ($userEntry) { 
+    if ($userEntry) {
       $entry=$userEntry.$nl;
       $userName=explode("=",$userEntry)[0];
-    }  
+    }
     else {
       if ( !$userName || !$realm || !$password ) throw new UsageException("UserManager::manageUser: no arguments");
       $ha=AccessController::makeHa1($userName,$realm,$password);
@@ -144,7 +144,7 @@ class UserManager {
     self::init();// success, re-read group file
     return ("");
   }
-  
+
   /**
    * Adds or removes one user to/from the admin list of config file.
    * @param string $addOrDel command:"add", "del"
@@ -155,7 +155,7 @@ class UserManager {
     $nl="\n";
     if (!array_key_exists($userName,self::$users)) return("No such user");
     $entry=$userName."=".$nl;
-    
+
     switch ($addOrDel) {
     case "add":
       if (array_key_exists($userName,self::$admins)) return("This user is an admin already");
@@ -171,22 +171,22 @@ class UserManager {
     if ($ret) return ($ret);// something was wrong
     self::init();// success, re-read group file
     return ("");
-  }    
-  
+  }
+
   /**
    * @return array list of user names
    */
   static function listUsers() {
-    return (array_keys(self::$users));  
+    return (array_keys(self::$users));
   }
 
   /**
    * @return array list of admin names
    */
   static function listAdmins() {
-    return (array_keys(self::$admins));  
+    return (array_keys(self::$admins));
   }
-  
+
 
 }// end UserManager
 ?>

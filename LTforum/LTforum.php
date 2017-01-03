@@ -27,7 +27,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
       }
       if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);// will be overwritten by self::readSession
     }
-    
+
     public function readSession() {
       $keys=["authName"=>"user", "current"=>"current", "updated"=>"updated" ];
       if ( !$_SESSION ) throw new UsageException("PageRegistry: no active session found !");//return(false);
@@ -40,7 +40,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
       }
       return($i);
     }
-    
+
     /*public function exportToSession() {
       $keys=[ "current"=>"current" ];//"authName"=>"user",
       $regKey="current";

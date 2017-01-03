@@ -51,15 +51,15 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
   static private $storedMsg="";
   static private $storedForum="";
   static private $resetUri="http://LTforum/test?reg=reset";
-  
+
   private function loginAs($user,$password) {
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $inputUser->sendKeys($user);
     $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
     $inputPs->sendKeys($password);
-    $inputPs->submit();  
+    $inputPs->submit();
   }
-  
+
 
   public function test_mainPage() {
     print ("\r\n! Browser: {$this->browser} as {$this->emulate}, JavaScript is ");
@@ -110,7 +110,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
     $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
-    
+
     $forum=self::parseViewTitle($title,$b,$lastMsg,$pc,$pe);
     self::$storedForum=$forum;
     //print("\r\nForum:$forum Total:$lastMsg\r\n");
@@ -173,8 +173,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
-    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");    
-    
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
+
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $total=self::$storedTotal;
     $this->assertEquals(self::$storedForum,$forum,"Wrong page: ".$title);
@@ -250,8 +250,8 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
-    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");    
-    
+    $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
+
     // same as previous
     /*$me=self::$storedUsername;
     $qs="?user=".$me;
@@ -350,13 +350,13 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
     print("Info: VIEW after ALERT OK");
-    
+
     // log out and change user
     $logoutLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Log out"));
     $logoutLink->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
-    $this->assertContains("Login",$title,"Failed to logout"); 
+    $this->assertContains("Login",$title,"Failed to logout");
     $me="Test Robot";
     $myPs="qq";
     self::$storedUsername=$me;
@@ -367,7 +367,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
     $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
-    
+
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("Write"));
     $addLink->click();
     // send a message with cleared snap
@@ -422,7 +422,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
     $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
-    
+
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     self::$storedForum=$forum;
     self::$storedTotal=$e;
@@ -553,7 +553,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotEmpty($title,"Failed to connect to the site");
     self::$storedUsername="Test Pagination";
-    self::$storedPassword="tp";    
+    self::$storedPassword="tp";
     $me=self::$storedUsername;
     $myPs=self::$storedPassword;
     sleep(7);
@@ -562,7 +562,7 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".$me."/".$myPs."!");
     $this->assertNotContains("Login",$title,"Failed to log in as ".$me."/".$myPs."!");
-    
+
     $forum=self::parseViewTitle($title,$b,$e,$pc,$pe);
     $this->assertLessThan(8,(int)$e-$b,"Too many messages in test database. Delete it manually");
     self::$storedForum=$forum;

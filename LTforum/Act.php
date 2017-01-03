@@ -19,7 +19,7 @@ class Act {
     include ($sr->g("templatePath")."form.php");
     exit(0);
   }
-  
+
   /**
    * Processes form, presented by Act::newMessage
    */
@@ -43,8 +43,8 @@ class Act {
 
     if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message from ".$user." has been added successfully");
     self::redirectToView ($pr);
-  }  
-  
+  }
+
   /**
    * Displays form to edit the last message, if its author is the current user.
    * Stores that message's Id in SESSION to keep track
@@ -54,7 +54,7 @@ class Act {
     //$pr->g("cardfile")=new CardfileSqlt( $pr->g("forum"), false);
     $lastMsg=$pr->g("cardfile")->getLastMsg();
     if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Editing is denied: user names are different !");
-    // $pr::"current" comes from an Edit link 
+    // $pr::"current" comes from an Edit link
     if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with the message number. Looks like it's not the latest one now.");
     // store Id in SESSION
     $_SESSION["current"]=$lastMsg["id"];
@@ -68,12 +68,12 @@ class Act {
     include ($sr->g("templatePath")."form.php");
     exit(0);
   }
-  
+
   /**
    * Processes the Edit form, presented by Act::editLast.
    * Takes the Id from SESSION, so one update is guranteed even if there came some more messages.
    * Clears the Id from SESSION on failure or removal, keeps it on successfull update.
-   * Sets the Updated flag in the SESSION on successfull first update.    
+   * Sets the Updated flag in the SESSION on successfull first update.
    */
   public static function updateLast(PageRegistry $pr,SessionRegistry $sr) {
     //$pr->dump();
@@ -83,7 +83,7 @@ class Act {
     $targetMsg = $pr->g("cardfile")->getOneMsg( $current );
     if ( !$targetMsg ) self::showAlert ($pr,$sr,"Failed to find message number ".$current." in the database");
     if( $targetMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");
-    
+
     $pr->s( "formLink",self::addToQueryString($pr,"act=el","length"/*,"user"*/,"current") );
 
     if ( !empty($pr->g("del")) ) { // delete this message
@@ -110,7 +110,7 @@ class Act {
     $targetMsg["message"]=$txt;
     $targetMsg["comment"]=$comm;
     $targetMsg["time"]=$targetMsg["date"]="";// current date and time will be set
-    
+
     // look on the state
     if ( !array_key_exists("updated",$_SESSION) ) {
       // one update allowed without check

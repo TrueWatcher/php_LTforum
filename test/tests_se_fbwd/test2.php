@@ -47,13 +47,13 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
   }
 
   private $storedTitle;
-  
+
   private function loginAs($user,$password) {
     $inputUser=$this->webDriver->findElement(WebDriverBy::name("user"));
     $inputUser->sendKeys($user);
     $inputPs=$this->webDriver->findElement(WebDriverBy::name("ps"));
     $inputPs->sendKeys($password);
-    $inputPs->submit();  
+    $inputPs->submit();
   }
 
   public function _test_mainPage() {
@@ -142,7 +142,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $this->assertNotContains("alert",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
     $this->assertNotContains("Login",$title,"Failed to log in as ".self::$adminName."/".self::$adminPassword."!");
-  
+
     $file="e_1_11";
     $begin=1;
     $end=11;
@@ -172,8 +172,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     sleep(7);
     $this->loginAs(self::$adminName,self::$adminPassword);
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");  
-  
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+
     $file1="e_1_11";
     $begin=12;
     $end=22;
@@ -218,16 +218,16 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     print(" Export limited by ".$kb."KB : exported ".$s."B ");
   }
 
-  public function test_DeleteEditExport() {  
-  
+  public function test_DeleteEditExport() {
+
     $this->webDriver->get($this->homeUri);
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     sleep(7);
     $this->loginAs(self::$adminName,self::$adminPassword);
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");  
-  
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+
     $form=$this->webDriver->findElement(webDriverBy::id("delRange"));
     $form->findElement(webDriverBy::name("begin"))->sendKeys(12);
     $form->findElement(webDriverBy::name("end"))->sendKeys(22);
@@ -253,7 +253,7 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
     $form=$this->webDriver->findElement(webDriverBy::id("editAny"));
     print(" Info: returned to adminPanel ");
-    
+
     // log out and change user
     $logoutLink=$this->webDriver->findElement(webDriverBy::partialLinkText("Log out"));
     $logoutLink->click();
@@ -319,8 +319,8 @@ class Test_LTforumMsgManager extends PHPUnit_Framework_TestCase {
     sleep(7);
     $this->loginAs(self::$adminName,self::$adminPassword);
     $title=$this->webDriver->getTitle();
-    if (strlen($title)) print ("\r\ntitle found: $title \r\n");   
-  
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+
     $file="e_4_9";
     $begin=4;
     $end=9;

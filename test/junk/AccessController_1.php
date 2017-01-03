@@ -3,10 +3,10 @@
  * @pakage LTforum
  * @version 1.2 added SessionManager
  */
- 
+
   class AuthRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;
-    
+
     function exportToSession() {
       $what=["pers","secret","clientCount","serverCount"];
       $exp=[];
@@ -15,7 +15,7 @@
       }
       return($exp);
     }
-    
+
     function readInput($superGlobal) {
       $what=["reg","user","ps","cn","response","plain","pers"];
       $exp=[];
@@ -23,7 +23,7 @@
         if ( array_key_exists($k,$superGlobal) ) $this->s($k,$superGlobal[$k]);
       }
     }
-    
+
     function readSession() {
       $what=["serverNonce"];
       $this->s("serverNonce",$_SESSION["serverNonce"]);
@@ -31,15 +31,15 @@
   }
 
   class AccessController extends Hopper {
-        
+
     // ----- Common resourses and utilities -----
-    
+
     /**
      * Name of a file in forum's folder, that contains users' names and password hashes.
      * Used also by UserManager
      */
     static $groupFileName=".group";
-    
+
     /**
      * Creates a password hash.
      * Has a parallel function on the client side.
@@ -53,9 +53,9 @@
     static function makeHa1($userName,$realm,$password) {
       $realm=strtolower($_SERVER["SERVER_NAME"]).$realm;
       //echo(">>".$userName.$realm.$password);
-      return ( md5($userName.$realm.$password) ); 
+      return ( md5($userName.$realm.$password) );
     }
-    
+
     /**
      * Creates the response for the Digest authentication.
      * Has a parallel function on the client side.
@@ -66,13 +66,13 @@
      * @returns string
      */
     static function makeResponse($sn,$ha1,$cn) {
-      return ( md5($sn.$ha1.$cn) ); 
+      return ( md5($sn.$ha1.$cn) );
     }
-    
+
     static function iterateSecret($secret,$cNonce) {
       return ( md5($secret.$cNonce) );
     }
-    
+
     /**
      * Initializes the new thread with admin/admin.
      * Writes users data file in .ini format.
@@ -91,7 +91,7 @@
       $s.="admin=".$nl;
       file_put_contents( $path.self::$groupFileName, $s);
     }
-    
+
     /**
      * Reads users data file and creates an array of pairs "userName"=>"passwordHash"
      * @uses $groupFileName
@@ -112,7 +112,7 @@
       if (!array_key_exists($realm,$parsed)) throw new AccessException ("Section ".$realm." not found in the file ".$groupFile);
       return($parsed[$realm]);
     }
-    
+
     /**
      * Generates random server nonce for the Digest authentication.
      * @returns string
@@ -130,7 +130,7 @@
       $sn=base64_encode($sn);
       return($sn);
     }
-    
+
     /**
      * Checks if the given user has admin rights.
      * @uses parseGroup
@@ -143,7 +143,7 @@
       if ( array_key_exists($user,$admins) ) return (1);
       return (0);
     }
-    
+
     /**
      * If requested page has some parameters, saves them to SESSION.
      * On successfull registration there'll be redirect (the PRG pattern).
@@ -160,14 +160,14 @@
         if ( (strpos($ru,"?&"))!==false ) $ru=str_replace("?&","?",$ru);
         if ( ($p=strpos($ru,"&&"))!==false ) $ru=str_replace("&&","&",$ru);
         $ru=rtrim($ru,"&? ");
-      }      
+      }
       $url = 'http://';
       if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
       $url .= $_SERVER['HTTP_HOST'];// Get the server
       $target=$url.$ru;
       return($target);
     }
-    
+
     /**
      * Sets php.ini parametrs for session.
      * The only place for all those settings.
@@ -185,30 +185,30 @@
       if ( !is_writable($sessionsDir) ) throw new AccessException ("Sessions directory ".$sessionsDir." is not writable, check the permissions");
       ini_set('session.save_path',$sessionsDir);
       ini_set('session.gc_probability',25);
-      ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));    
+      ini_set("session.gc_maxlifetime", $ar->g("maxDelayPage"));
     }
-    
+
     // ----- Logical units to be called by Hopper class -----
-    
+
     /**
      * Sets the first step for the Hopper.
      */
     function __construct() {
       $this->nextState="verifySession";
     }
-    
+
     /**
-     * Initial session checks. 
+     * Initial session checks.
      * If no authentication required, finishes the job;
      * otherwise passes to auth initialisation (requestLogin)
      * @param {object AuthRegistry} $context
      * @returns void
-     */     
+     */
     function verifySession (AuthRegistry $ar) {
       self::iniSet($ar);
       session_start();
-      
-      // check for a RESET command 
+
+      // check for a RESET command
       if ( array_key_exists("reg",$_REQUEST) && $_REQUEST["reg"]=="reset" ) {
         //unset($_SESSION);
         //session_destroy();
@@ -216,7 +216,7 @@
         $_SESSION["state"]="aborted";
         $ar->s("alert"," Session aborted by user ");
         $this->next("requestLogin");
-        return;      
+        return;
       }
       // check for an empty session
       if( empty($_SESSION) || !array_key_exists("state",$_SESSION) ) {
@@ -228,20 +228,20 @@
       if ( empty($_SESSION["notBefore"]) || empty($_SESSION["notAfter"]) || $t > $_SESSION["notAfter"] ) {
         $_SESSION["state"]="junk";
         $this->next("requestLogin");
-        return;      
+        return;
       }
       // check for a forum/thread mismatch
       if ( array_key_exists("realm",$_SESSION) && $_SESSION["realm"]!==$ar->g("realm") ) {
         $_SESSION["state"]="trip";
         $ar->s("alert","You need to register for a new thread");
         $this->next("requestLogin");
-        return;      
+        return;
       }
       // check for too fast responce (probably an attack)
       if ( $t < $_SESSION["notBefore"] ) {
         $ar->s("alert","Please, wait a few seconds and click \"Refresh\"");
         $this->next("showAuthAlert");
-        return; 
+        return;
       }
       // check for the pre-Auth state
       if ( $_SESSION["state"]=="preAuth" ) {
@@ -253,19 +253,19 @@
         $ar->s("alert","Something is wrong");
         $this->next("showAuthAlert");
         return;
-      } 
+      }
       $user=$_SESSION["authName"];
       //echo ($user."====".(self::isAdmin($user)) );
       // additional check for admin areas
       if ( $ar->g("isAdminArea") && !(self::isAdmin($user,$ar)) ) {
         $ar->s("alert","This area is for admins only");
         $this->next("requestLogin");
-        return;      
+        return;
       }
       // happy end
       return (true);
     }
-    
+
     /**
      * Initializes authentication params, stores them to SESSION, and presents auth form according to the requred mode.
      * Plaintext; opportunistic Digest; strict Digest
@@ -276,12 +276,12 @@
       if ($_SESSION) {
         unset($_SESSION);
         session_destroy();
-        session_start();        
+        session_start();
       }
       // initialize authentication
       $sn=self::makeServerNonce();
       $ar->s("serverNonce",$sn);// needed by form
-  
+
       //$_SESSION["registry"]=$ar->export();
       $_SESSION["serverNonce"]=$sn;
       $_SESSION["notBefore"]=time()+$ar->g("minDelay");
@@ -305,12 +305,12 @@
       $this->setBreak();// overly safe
       return(false);
     }
-    
+
     /**
      * Checks user form and selects the processing mode (PLaintext or Digest).
      * @param {object AuthRegistry} $context
      * @returns void
-     */     
+     */
     function selectAuth (AuthRegistry $ar) {
       $ar->readInput($_REQUEST);
       $ar->readSession();
@@ -318,7 +318,7 @@
         // only authentication should happen in preAuth state, so reset session
         $ar->s("alert"," Out-of-order request was discarded ");
         $this->next("requestLogin");
-        return;      
+        return;
       }
       $tryPlainText=( $ar->g("reg")=="authPlain" || ( $ar->g("reg")=="authOpp" && $ar->g("plain") ) );
       $tryDigest=( $ar->g("reg")=="authJs" || ($ar->g("reg")=="authOpp" && !$ar->g("plain") ) );
@@ -326,7 +326,7 @@
         // something strange
         $ar->s("alert"," Out-of-order request was discarded ");
         $this->next("requestLogin");
-        return;      
+        return;
       }
       // pre-authentication checks
       if ($tryPlainText) {
@@ -341,29 +341,29 @@
           return;
         }
         $this->next("authPlain");
-        return;       
+        return;
       }
       else { // tryDigest
         if ( $ar->g("authMode") == 0 ) {
           $ar->s("alert"," Digest auth is turned off on the server ");
           $this->next("requestLogin");
-          return;        
+          return;
         }
         if ( $ar->g("user") || $ar->g("ps") ) {
           $ar->s("alert"," This mode takes no credentials ");
-          $this->next("requestLogin");          
-          return;        
+          $this->next("requestLogin");
+          return;
         }
         if ( empty($ar->g("response")) || empty($ar->g("cn")) ) {
           $ar->s("alert"," Missing login data ");
-          $this->next("requestLogin");          
-          return;        
+          $this->next("requestLogin");
+          return;
         }
         $this->next("authDigest");
-        return;       
+        return;
       }
     }
-    
+
     /**
      * Checks user form and performs PLaintext auth.
      * Passes to authSuccess on success or back to requestLogin on failure
@@ -373,15 +373,15 @@
      * @uses self::makeHa1
      * @param {object AuthRegistry} $context
      * @returns void
-     */     
+     */
     function authPlain(AuthRegistry $ar) {
-    
+
       //echo("Trying auth plaintext ");
       $realm=$ar->g("realm");
       $applicantName=$ar->g("user");
       $applicantPsw=$ar->g("ps");
       $applicantHa=self::makeHa1($applicantName,$realm,$applicantPsw);
-      //echo(">".makeHa1($_REQUEST["user"],$ar->g("realm"),$_REQUEST["ps"])."<");// DEBUG  
+      //echo(">".makeHa1($_REQUEST["user"],$ar->g("realm"),$_REQUEST["ps"])."<");// DEBUG
       $foundName="";
       $users=self::parseGroup($ar->g("realm"),$ar);
       // simply use array as dictionary
@@ -410,13 +410,13 @@
      * @returns void
      */
     function authDigest(AuthRegistry $ar) {
-    
+
       //echo(" Trying JS digest authentication ");
       $foundName="";
       $users=self::parseGroup($ar->g("realm"),$ar);
       //print_r($users);
       //echo("sn>".$sn);
-      
+
       // Cycle: hash -> proposed response -> check -> user name
       // so no need to send name in open
       foreach ($users as $name=>$ha) {
@@ -436,13 +436,13 @@
       $ar->s("authName",$foundName);
       $ar->s( "secret",self::iterateSecret( $ha, $ar->g("cn") ) );
       $ar->s("clientCount",1);
-      $ar->s("serverCount",1);  
+      $ar->s("serverCount",1);
       $ar->s("alert","Digest authentication OK as ".$foundName);
       $_SESSION["registry"]=$ar->exportToSession();// JS secrets
-      
+
       $this->next("authSuccess");
     }
-    
+
     /**
      * Proceeds after-authentication affairs.
      * If adminArea flag is set, checks additionally for admin rights.
@@ -450,7 +450,7 @@
      * If redirect is preset, makes it.
      * @param {object AuthRegistry} $context
      * @returns mixed void on adminAuth fail, some message on redirect, true on no-redirect finish (fall-through to main Controller)
-     */     
+     */
     function authSuccess(AuthRegistry $ar) {
       if ( $ar->g("isAdminArea") && !self::isAdmin($ar->g("authName"),$ar ) ) {
         $this->next("requestLogin");
@@ -474,12 +474,12 @@
       }
       return (true);
     }
-    
+
     /**
      * Displays page with one message and passes to finished state.
      * @param {object AuthRegistry} $context
      * @returns false
-     */     
+     */
     function showAuthAlert(AuthRegistry $ar) {
       // show form
       require($ar->g("templatePath")."AuthElements.php");
@@ -489,6 +489,6 @@
       $this->setBreak();// overly safe
       return (false);
     }
-    
+
   }// end SessionManager
 ?>

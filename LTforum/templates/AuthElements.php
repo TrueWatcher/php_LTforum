@@ -49,7 +49,7 @@ abstract class AuthElements {
     //<tr><th>Alert :</th><td id="alert">No messages by this user</td></tr>
     //return ( self::wrapRow ( self::wrapFldTh("Alert :").self::wrapFldTd($context->g("alert"),"alert") ) );
   }
-  
+
   static function realmP (AuthRegistry $context) {
     $label="Thread : ";
     return ( self::wrapRow ( self::wrapFldTh($label).self::wrapFldTd($context->g("realm")) ) );
@@ -60,7 +60,7 @@ abstract class AuthElements {
     $row.=self::wrapFldTd( self::genericInput("text",$inputName,$authorName) );
     return ( self::wrapRow ($row) );
   }
-  
+
   static function pswInput ($label,$inputName,$pswValue,$context,$pageContext) {
     $row=self::wrapFldTh( self::genericLabel($inputName,$label) );
     $row.=self::wrapFldTd( self::genericInput("text",$inputName,$pswValue) );
@@ -89,7 +89,7 @@ abstract class AuthElements {
     if (empty($s)) return ("");
     return( self::wrapJs($s) );
   }
-  
+
   static function submitButton () {
     $s='<input class="submit" type="submit" value="Submit" />';
     $s='<td id="enter" colspan="2">'.$s."</td>\r\n";
