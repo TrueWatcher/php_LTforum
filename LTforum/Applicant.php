@@ -13,9 +13,28 @@ class Applicant {
   protected $authMethod=null;
   protected $authName;
   protected $realm;
-  //protected $isAdmin=false;
-  protected $c;
 
+  protected $c;// context
+  protected $r;// input, normally $_REQUEST
+  public $session;// session.normally $_SESSION
+
+  function __construct(AuthRegistry $context,$request=null,&$session=null) {
+      if ( !class_exists("AccessController") ) throw new UsageException ("Please, include the  AccessController class");
+      
+      $this->c = $context;
+      
+      if ( !isset($request) ) $this->r = $_REQUEST;
+      else $this->r = $request;
+      
+      if ( !isset($session) ) {
+        if ( !isset($_SESSION) ) throw new UsageException("Empty session!");
+        $this->session = &$_SESSION;// important & !
+      }
+      else $this->session = &$session;// important & !
+      
+      print("\n------------ on entrance:");
+      print_r($_SESSION);
+  }
   /**
    * Initializes Applicant for routine-level checks.
    * Sets $c, $status, possibly $authName
@@ -24,35 +43,34 @@ class Applicant {
    * @uses $_SESSION
    * @return nothing
    */
-  public function initMin (AuthRegistry $ar) {
-    if ( !class_exists("AccessController") ) throw new UsageException ("Please, include the  AccessController class");
+  public function initMin () {
 
-    //print_r($_SESSION);
-    $this->c = $ar;
+    //$this->c = $ar;
 
     //$this->realm = $this->c->g("realm");
     //echo($this->realm);
 
-    if ( empty($_SESSION) ) $this->status="zero";
+    if ( empty($this->session) ) $this->status="zero";
     else {
-      if ( !array_key_exists("status",$_SESSION) ) {
+      if ( !array_key_exists("status",$this->session) ) {
         throw new UsageException("No status found in existing SESSION");
       }
-      $this->status = $_SESSION["status"];
-      if ( array_key_exists("authName",$_SESSION) ) {
-        $this->authName = $_SESSION["authName"];
+      $this->status = $this->session["status"];
+      if ( array_key_exists("authName",$this->session) ) {
+        $this->authName = $this->session["authName"];
       }
     }
+    $this->c->trace($this->status);
   }
 
   /**
    * Currently does nothing as advanced procedures work directly with AuthRegistry and SESSION.
    */
-  public function initFull(AuthRegistry $ar) {
+  public function initFull() {
     return(true);
 
-    $this->authMode = $ar->g("authMode");
-    if ( empty($_SESSION) ) return (false);
+    $this->authMode = $this->c->g("authMode");
+    if ( empty($this->session) ) return (false);
     $this->readSession();
   }
 
@@ -61,11 +79,11 @@ class Applicant {
    */
   protected function readSession() {
     $keys=[/*"status"=>"status", "authName"=>"authName",*/ "isAdmin"=>"isAdmin", "realm"=>"realm", /*"notBefore"=>"notBefore", "activeUntil"=>"activeUntil",*/ "serverNonce"=>"serverNonce"  ];
-    if ( !$_SESSION ) throw new UsageException("Applicant::readSession: no active session found !");//return(false);
+    if ( !$this->session ) throw new UsageException("Applicant::readSession: no active session found !");//return(false);
     $i=0;
     foreach($keys as $sessKey=>$regKey) {
-      if ( array_key_exists($sessKey,$_SESSION) && $_SESSION[$sessKey] ) {
-        $this->$regKey = $_SESSION[$sessKey];
+      if ( array_key_exists($sessKey,$this->session) && $this->session[$sessKey] ) {
+        $this->$regKey = $this->session[$sessKey];
         $i++;
       }
     }
@@ -78,11 +96,11 @@ class Applicant {
    * @return int counter
    */
   protected function removeSessionKeys ($keys) {
-    if ( empty($_SESSION) ) return;
+    if ( empty($this->session) ) return;
     $i=0;
     foreach($keys as $sessKey) {
-      if ( array_key_exists($sessKey,$_SESSION) ) {
-        unset( $_SESSION[$sessKey] );
+      if ( array_key_exists($sessKey,$this->session) ) {
+        unset( $this->session[$sessKey] );
         $i++;
       }
     }
@@ -96,20 +114,20 @@ class Applicant {
    * @return nothing
    */
   public function setTimeLimits ($lower,$upper) {
-    if ($lower) $_SESSION["notBefore"] = time()+$lower;
-    if ($upper) $_SESSION["activeUntil"] = time()+$upper;
+    if ($lower) $this->session["notBefore"] = time()+$lower;
+    if ($upper) $this->session["activeUntil"] = time()+$upper;
   }
 
   public function markCookieTime() {
-    $_SESSION["cookieTime"]=time();
+    $this->session["cookieTime"]=time();
   }
 
   public function keepCookie() {
     $from=0;
-    if ( array_key_exists("cookieTime",$_SESSION) ) $from=$_SESSION["cookieTime"];
+    if ( array_key_exists("cookieTime",$this->session) ) $from=$this->session["cookieTime"];
     $delta=time() - $from;
     if ( $delta > $this->c->g("minRegenerateCookie") ) {
-      $_SESSION["cookieTime"]=time();
+      $this->session["cookieTime"]=time();
       session_regenerate_id(true);
     }
   }
@@ -147,37 +165,42 @@ class Applicant {
     case "preAuth":
       $this->removeSessionKeys(["authName","realm","isAdmin","registry","cookieTime"]);
       $this->checkSessionKeys(["serverNonce"]);
-      $_SESSION["status"]="preAuth";
-      session_write_close();
+      $this->session["status"]="preAuth";
+      //session_write_close();
       break;
 
     case "postAuth":
       $this->checkSessionKeys(["authName","serverNonce","realm"]);
       $this->removeSessionKeys(["isAdmin","registry"]);
-      $_SESSION["status"]="postAuth";
-      session_write_close();
+      $this->session["status"]="postAuth";
+      //session_write_close();
       break;
 
     case "active":
       if ( empty($this->authName) ) throw new UsageException ("Applicant::setStatus: empty authName");
       if ( empty($this->realm) ) throw new UsageException ("Applicant::setStatus: empty realm");
-      $_SESSION["authName"] = $this->authName;
-      $_SESSION["realm"] = $this->realm;
+      $this->session["authName"] = $this->authName;
+      $this->session["realm"] = $this->realm;
       $this->removeSessionKeys(["serverNonce"]);
-      $_SESSION["status"]="active";
+      $this->session["status"]="active";
       // no write_close here because SESSION may be used by follow-up page code
       break;
 
     case "noChange":
-      return;
+      $newStatus = $this->status;
+      break;
 
     default:
       throw new UsageException (" Unknown state :".$newStatus."! ");
       return;
     }
+    
     $this->status = $newStatus;
-    //echo(" New status:".$newStatus." ");
-    //print_r($_SESSION);
+    $this->c->trace($this->status);
+
+    print("\n------------ on setStatus:");
+    print_r($this->session);
+
   }
 
   /**
@@ -192,13 +215,13 @@ class Applicant {
 
     if ( !empty($_SERVER["QUERY_STRING"]) ) {
       //echo( " QS=".$_SERVER["QUERY_STRING"]);
-      $_SESSION["targetUri"]=AccessController::makeRedirectUri();
+      $this->session["targetUri"]=AccessController::makeRedirectUri();
     }
-    else if ( !empty($_SESSION) && array_key_exists("origUri",$_SESSION)) { unset($_SESSION["targetUri"]); }
+    else if ( !empty($this->session) && array_key_exists("origUri",$this->session)) { unset($this->session["targetUri"]); }
 
     $sn=AccessController::makeServerNonce();
     $this->c->s("serverNonce",$sn);
-    $_SESSION["serverNonce"]=$sn;
+    $this->session["serverNonce"]=$sn;
     $this->setTimeLimits( $this->c->g("minDelay"), $this->c->g("maxDelayAuth") );
     AccessController::showAuthForm( $this->c, $note );
 
@@ -209,7 +232,8 @@ class Applicant {
    * Performs pre-registration checks and selects processing method.
    * @return true on success, error message on failure
    */
-  public function beforeAuth (AuthRegistry $ar) {
+  public function beforeAuth () {
+    $ar=$this->c;
     $tryPlainText=( $ar->g("reg")=="authPlain" || ( $ar->g("reg")=="authOpp" && $ar->g("plain") ) );
     $tryDigest=( $ar->g("reg")=="authJs" || ($ar->g("reg")=="authOpp" && !$ar->g("plain") ) );
     if ( !$tryPlainText && !$tryDigest ) {
@@ -244,8 +268,8 @@ class Applicant {
 
     //check admin rights at registration and save a flag to SESSION
     $ret=$this->authAdmin( $this->c );
-    if ( $ret===true ) $_SESSION["isAdmin"]=true;
-    else $_SESSION["isAdmin"]=false;
+    if ( $ret===true ) $this->session["isAdmin"]=true;
+    else $this->session["isAdmin"]=false;
 
     // check admin access
     $ret=$this->checkAdmin( $this->c );
@@ -258,11 +282,12 @@ class Applicant {
    * @return true or message on redirect, false on no redirect required
    */
   public function optionalRedirect() {
-    if ( array_key_exists("targetUri",$_SESSION) ) {
-      $r=$_SESSION["targetUri"];
-      unset($_SESSION["targetUri"]);
+    if ( array_key_exists("targetUri",$this->session) ) {
+      $r=$this->session["targetUri"];
+      unset($this->session["targetUri"]);
+      //return false;// turn this off for DEBUG
       header( "Location: ".$r );
-      session_write_close();
+      //session_write_close();
       //exit();
       return ( "redirected to ".$r );
      }
@@ -285,10 +310,10 @@ class Applicant {
    */
   public function checkSessionKeys($keys,$excOrRerurn=true) {
     try {
-      if ( empty($_SESSION) ) throw new UsageException ("Empty session");
+      if ( empty($this->session) ) throw new UsageException ("Empty session");
       foreach ($keys as $k) {
-        if ( !array_key_exists($k,$_SESSION) ) throw new UsageException ("Missing required SESSION key ".$k."!");
-        if ( empty($_SESSION[$k]) ) throw new UsageException ("Empty value at SESSION key ".$k."!");
+        if ( !array_key_exists($k,$this->session) ) throw new UsageException ("Missing required SESSION key ".$k."!");
+        if ( empty($this->session[$k]) ) throw new UsageException ("Empty value at SESSION key ".$k."!");
       }
       return true;
     } catch (Exception $e) {
@@ -298,27 +323,27 @@ class Applicant {
   }
 
   public function checkNotBefore() {
-    if ( !array_key_exists("notBefore",$_SESSION) ) throw new UsageException ("checkNotBefore: no such key found in SESSION");
-    if ( time() < $_SESSION["notBefore"] ) return false; // failed
+    if ( !array_key_exists("notBefore",$this->session) ) throw new UsageException ("checkNotBefore: no such key found in SESSION");
+    if ( time() < $this->session["notBefore"] ) return false; // failed
     return true;// passed
   }
 
   public function checkActiveUntil() {
-    if ( !array_key_exists("activeUntil",$_SESSION) ) throw new UsageException ("checkActiveUntil: no such key found in SESSION");
-    if ( time() > $_SESSION["activeUntil"] ) return false; // failed
+    if ( !array_key_exists("activeUntil",$this->session) ) throw new UsageException ("checkActiveUntil: no such key found in SESSION");
+    if ( time() > $this->session["activeUntil"] ) return false; // failed
     return true;// passed
   }
 
   public function checkAdmin () {
     if ( ! $this->c->g("isAdminArea") ) return true; // not needed
-    if ( array_key_exists("isAdmin",$_SESSION) && $_SESSION["isAdmin"] ) return true;// passed
+    if ( array_key_exists("isAdmin",$this->session) && $this->session["isAdmin"] ) return true;// passed
     // failed
     return ("This area is for admins only");
   }
 
   public function checkRealm () {
     $r=$this->c->g("realm");
-    if ( $r && $_SESSION["realm"]===$r ) return true;// passed
+    if ( $r && $this->session["realm"]===$r ) return true;// passed
     return ("Please, register to a new thread");
   }
 
@@ -391,7 +416,7 @@ class Applicant {
     $ar->s("clientCount",1);
     $ar->s("serverCount",1);
     $ar->s("alert","Digest authentication OK as ".$foundName);
-    $_SESSION["registry"] = $ar->exportToSession();// JS secrets
+    $this->session["registry"] = $ar->exportToSession();// JS secrets
     return(true);
   }
 

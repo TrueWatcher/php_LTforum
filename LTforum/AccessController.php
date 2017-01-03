@@ -15,25 +15,52 @@
       }
       return($exp);
     }
-
-    function readInput($superGlobal) {
-      $what=["reg","user","ps","cn","response","plain","pers"];
-      $exp=[];
+    
+    function readCommands($superGlobal=null) {
+      // function readCommands($superGlobal=$_REQUEST) does not work
+      if (!isset($superGlobal)) $superGlobal=$_REQUEST;
+      $what=["reg","act"];
       foreach ($what as $k) {
         if ( array_key_exists($k,$superGlobal) ) $this->s($k,$superGlobal[$k]);
       }
     }
 
-    function readSession() {
+    function readInput($superGlobal=null) {
+      if (!isset($superGlobal)) $superGlobal=$_REQUEST;
+      $what=["reg","user","ps","cn","response","plain","pers"];
+      foreach ($what as $k) {
+        if ( array_key_exists($k,$superGlobal) ) $this->s($k,$superGlobal[$k]);
+      }
+    }
+
+    function readSession ( $session=null ) {
+      // readSession ( $session=$_SESSION )
+      if ( !isset($session) ) {
+        if ( !isset($_SESSION) ) throw new UsageException("Reading empty SESSION");
+        $session=$_SESSION;
+      }
       $what=["serverNonce"];
-      $this->s("serverNonce",$_SESSION["serverNonce"]);
+      if (! isset($session["serverNonce"]) ) throw new UsageException("Missing serverNonce!"); 
+      $this->s("serverNonce",$session["serverNonce"]);
+    }
+    
+    function trace($str) {
+      if($str===false) $str="false";
+      if($str===true) $str="true";
+      $separator=">";
+      $t=$this->g("trace").$separator.$str;
+      $this->s("trace",$t);
     }
   }
 
   class AccessController {
 
     // ----- Common resourses and utilities -----
-
+    
+    static function hello() {
+      return ("Hi, I'm AccessController class");
+    }
+    
     /**
      * Name of a file in forum's folder, that contains users' names and password hashes.
      * Used also by UserManager
@@ -184,6 +211,21 @@
       ini_set("session.cookie_lifetime", $ar->g("maxTimeoutGcCookie"));
       session_start();
     }
+    
+    /**
+     * Currently unused.
+     */
+    function writeSession($arr) {
+      // $var=$_SESSION; $var[$key]="value" sets value only in $var, not in $_SESSION
+      // no session_write_close() anywhere before this !!!
+      echo(" Copying session ");
+      $sk=array_keys($_SESSION);
+      foreach ($sk as $k) { unset($_SESSION[$k]); } 
+      $as=$a->session;
+      foreach ( $as as $k=>$v ) {
+        $_SESSION[$k]=$v;
+      }
+    }
 
     /**
      * Displays the registration form.
@@ -223,67 +265,92 @@
       $ar->s( "controlsClass", "AlertAuthElements" );
       include($ar->g("templatePath")."authForm.php");
     }
-
-
+    
+    protected $c;// context
+    protected $r;// input, normally $_REQUEST
+    protected $session;// session.normally $_SESSION
+    
+    function __construct(AuthRegistry $context,$request=null,$session=null) {
+      if ( !isset($request) ) $request=$_REQUEST;
+      //if ( !isset($session) ) $session=$_SESSION;
+      if (!is_array($request)) throw new UsageException("Wrong argument request!");
+      //if (!is_array($session)) throw new UsageException("Wrong argument session!");
+      $this->c = $context;
+      $this->r = $request;
+      $this->session = $session;
+    }
+    
     /**
      * Controller top level. Initializations and command/state logic.
      * @uses Applicant
      * @see LTforum/AccessController_table.rtf for command/state table
-     * @param {object AuthRegistry} $ar
      * @return true on success, false or message on success/redirect, false or error message on failure
      */
-    public function go (AuthRegistry $ar) {
+    public function go () {
+      $ar=$this->c;
       $note="";
       $pauseFail=rand(10,20);
       $pauseAllow=3;//rand(2,5);
+      $return=false;
 
-      self::startSession($ar);
-      if ( array_key_exists("reg",$_REQUEST) ) { $ar->s("reg",$_REQUEST["reg"]); }
-      $a=new Applicant($ar);
-      $a->initMin($ar);
+      self::startSession($this->c);
+      echo(" After start ");
+      print_r($_SESSION);
+      if (isset($_SESSION) && !isset($this->session) ) $this->session = &$_SESSION;// important & !
+      $this->c->readCommands();
+      $a=new Applicant($this->c,$this->r,$this->session);
+      $a->initMin();
 
-      switch ($ar->g("reg")) {
+      switch ($this->c->g("reg")) {
 
       case "reset":
         if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {
           $a->setStatus("zero");
-          $note="Session reset by user";
-          session_regenerate_id(true);
+          session_regenerate_id(true);          
         }
         // any state > preAuth
-        $a->demandReg($note,"preAuth");
-        return(false);
+        // redirect to cleaned uri without reg=deact
+        $targetUri=AccessController::makeRedirectUri();
+        header( "Location: ".$targetUri );
+        //return ( "redirected to ".$targetUri );
+        $return="redirected to ".$targetUri;
+        break;        
 
       case "deact":
         if ( $a->statusEquals("active") || $a->statusEquals("postAuth") ) {
-          $ret=$a->checkRealm($ar);
+          $ret=$a->checkRealm($this->c);
           if ($ret!==true) {
             // Error: reg=deact with wrong realm
             $a->setStatus("zero");
             session_regenerate_id(true);
             $a->demandReg($ret,"preAuth");
-            return(false);
+            //return(false);
+            break;
           }
           if ( $a->statusEquals("active")) {
             // active > postAuth
             session_regenerate_id(true);
             $a->demandReg("Session reset by user","postAuth");
-            return(false);
+            //return(false);
+            break;
           }
           else {
             // postAuth > postAuth
             // redirect to cleaned uri without reg=deact
             $targetUri=AccessController::makeRedirectUri();
             header( "Location: ".$targetUri );
-            return ( "redirected to ".$targetUri );
+            //return ( "redirected to ".$targetUri );
+            $return="redirected to ".$targetUri;
+            break;
           }
         }
-        if ( empty($_SESSION) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
+        if ( empty($this->session) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
           // same as reg=reset
           $a->demandReg("","preAuth");
-          return(false);
+          //return(false);
+          break;
         }
-        throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
+        throw new UsageException ("Wrong Command/State reg=".$this->c->g("reg")."/".$a->getStatus()."!");
 
       case "authPlain":
       case "authOpp":
@@ -295,11 +362,12 @@
           $a->setStatus("zero");
           // fall-through
         }
-        if ( empty($_SESSION) || $a->statusEquals("zero") ) {
+        if ( empty($this->session) || $a->statusEquals("zero") ) {
           // this also should not happen normally
           // zero > preAuth
           $a->demandReg("A wrong-timed request","preAuth");
-          return(false);
+          //return(false);
+          break;
         }
         if ( $a->statusEquals("preAuth") || $a->statusEquals("postAuth") ) {
           $ret=$a->checkSessionKeys(["notBefore","activeUntil"],false);
@@ -307,27 +375,30 @@
           if ( $ret!==true ) {
             // preAuth or postAuth > preAuth
             $a->demandReg($ret,"preAuth");
-            return(false);
+            //return(false);
+            break;
           }
           $ret=$a->checkNotBefore();
           if ( $ret!==true ) {
-            self::showAuthAlert($ar,"Please, wait a few seconds and refresh the page");
+            self::showAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
             //$a->setStatus("noChange");
-            return(false);
+            //return(false);
+            break;
           }
 
           // additional initializations
-          $ar->readInput($_REQUEST);
-          $ar->readSession();
-          $a->initFull($ar);
+          $this->c->readInput($this->r);
+          $this->c->readSession($this->session);
+          $a->initFull();
           // pre-registration checks and registration processaing
-          $ret=$a->beforeAuth($ar);
-          if ( $ret===true ) $ret=$a->processAuth($ar);
+          $ret=$a->beforeAuth();
+          if ( $ret===true ) $ret=$a->processAuth();
           if ( $ret!==true ) {
             // preAuth or postAuth > preAuth
             sleep($pauseFail);
             $a->demandReg($ret,"preAuth");
-            return(false);
+            //return(false);
+            break;
           }
           // successful registration
           // preAuth or postAuth > active
@@ -337,58 +408,71 @@
           }
           // on postAuth > active regeneration is skipped as there's keepCookie in postAuth checks
           sleep($pauseAllow);
-          $a->setTimeLimits( 0,$ar->g("maxDelayPage") );
+          $a->setTimeLimits( 0,$this->c->g("maxDelayPage") );
           $a->setStatus("active");
           // redirect ?
-          if ( $a->optionalRedirect() ) { return (false); }// header has been sent
+          if ( $a->optionalRedirect() ) { 
+            // header has been sent
+            //return (false);
+            break;
+          }
           // continue to main controller
-          return (true);
+          //return (true);
+          $return=true;
+          break;
         }
-        throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
+        throw new UsageException ("Wrong Command/State reg=".$this->c->g("reg")."/".$a->getStatus()."!");
 
       case "":
-        if ( empty($_SESSION) || $a->statusEquals("preAuth") ) {
+        if ( empty($this->session) || $a->statusEquals("preAuth") ) {
           $a->demandReg("","preAuth");
-          return(false);
+          //return(false);
+          break;
         }
         if ( $a->statusEquals("active") ) {
           $ret = $a->checkActiveParams();
-          if ( $ret===true ) $ret = $a->checkRealm($ar);
-          if ( $ret===true ) $ret = $a->checkAdmin($ar);
+          if ( $ret===true ) $ret = $a->checkRealm();
+          if ( $ret===true ) $ret = $a->checkAdmin();
           if ( $ret!==true ) {
             // active > preAuth
             $a->demandReg($ret,"preAuth");
-            return(false);
+            //return(false);
+            break;
           }
           $ret = $a->checkNotBefore();
           if ( $ret!==true ) {
-            self::showAuthAlert($ar,"Please, wait a few seconds and refresh the page");
+            self::showAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
             //$a->setStatus("active");
-            return(false);
+            //return(false);
+            break;
           }
           $ret = $a->checkActiveUntil();
           if ( $ret!==true ) {
             // active > postAuth
             $note=$a->getUnanswered();
-            session_regenerate_id(true);
+            //session_regenerate_id(true);
             $a->markCookieTime();
             $a->demandReg($note,"postAuth");
-            return(false);
+            //return(false);
+            break;
           }
           // happy end
           // continue to main controller
-          $a->setTimeLimits( 0,$ar->g("maxDelayPage") );
+          $a->setTimeLimits( 0,$this->c->g("maxDelayPage") );
           //$a->setStatus("active");
-          return (true);
+          //return (true);
+          $return=true;
+          break;
         }
         if ( $a->statusEquals("postAuth") ) {
-          $ret = $a->checkRealm($ar);
+          $ret = $a->checkRealm();
           if ($ret===true) {
             // postAuth > postAuth
             $note=$a->getUnanswered();
-            $a->keepCookie();// regenerate cookie and id if session is aged (more than 1 day typically)
+            $a->keepCookie();// regenerate cookie and id if the session is aged (more than 1 day typically)
             $a->demandReg($note,"postAuth");
-            return(false);
+            //return(false);
+            break;
           }
           else {
             // different realm : interpreted as request to a fresh new registration
@@ -396,16 +480,24 @@
             $a->setStatus("zero");
             session_regenerate_id(true);
             $a->demandReg($ret,"preAuth");
-            return(false);
+            //return(false);
+            break;
           }
         }
-        throw new UsageException ("Wrong Command/State reg=".$ar->g("reg")."/".$a->getStatus()."!");
+        throw new UsageException ("Wrong Command/State reg=".$this->c->g("reg")."/".$a->getStatus()."!");
 
       default:
-        self::showAuthAlert($ar,"Wrong command reg=".$ar->g("reg")."!");
+        self::showAuthAlert($this->c,"Wrong command reg=".$this->c->g("reg")."!");
         // state noChange
-        return (false);
+        //return (false);
+        break;
       }// end switch
+      
+      echo(" Re-reading session ");
+      print_r($_SESSION);
+
+      $this->c->trace($return);
+      return ($return);
 
     }// end go
   }// end AccessController
