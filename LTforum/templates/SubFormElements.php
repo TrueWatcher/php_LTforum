@@ -31,9 +31,9 @@ class EditanyElements extends FormElements {
   static function snapChkbx () {} // disabled
 
   //static function script1 () {}
-  
+
   //static function script2 () {}
-  
+
   //static function script3 () {}
 }
 
@@ -91,14 +91,14 @@ class EditElements extends FormElements {
   }*/
 
   static function clearChkbx () {} // disabled
-  
+
   //static function deleteChkbx () {}
 
   static function commText ($settings,$context) {} // disabled
 
   //static function script1 () {}
-  
+
   //static function script2 () {}
-  
+
   static function script3 () {} // disabled
 }

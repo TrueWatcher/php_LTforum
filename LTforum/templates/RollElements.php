@@ -194,9 +194,10 @@ class RollElements extends SectionElements {
     $form.="</p></form>";
     return ($form);
   }
-  
+
   static function logoutLink() {
-    return ( "<td>" . self::genericLink("reg=reset","Log out") . "</td>" );
+    //return ( "<td>" . self::genericLink("reg=reset","Log out") . "</td>" );
+    return ( "<td>" . self::genericLink("reg=deact","Log out") . "</td>" );
   }
   /*
    * Checks screen width and loads minifier script (drawers.js) if it is narrow

@@ -1,1 +1,3 @@
 *-swp
+sessions/s*
+infoLock.dat

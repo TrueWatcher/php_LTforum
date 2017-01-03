@@ -13,8 +13,8 @@ require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AdminAct.php");
-require_once ($mainPath."Hopper.php");
 require_once ($mainPath."AccessController.php");
+require_once ($mainPath."Applicant.php");
 require_once ($mainPath."UserManager.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
@@ -58,12 +58,11 @@ $apr->s( "title",$adminTitle." : ".$apr->g("forum") );
 $apr->s( "viewLink",Act::addToQueryString($apr,"","forum","pin") );
 
 // here goes the Session Manager
-$aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$forumsPath.$apr->g("forum")."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>6, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$aar=AuthRegistry::getInstance(1, [ "realm"=>$apr->g("forum"), "targetPath"=>$forumsPath.$apr->g("forum")."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
 $ac=new AccessController;
 $acRet=$ac->go($aar);// so short
-//echo("\r\nTrace: ".$ac->trace." ");
 //if ( $alert = $aar->g("alert") ) echo($alert);// DEBUG
-if ( $acRet !== true ) exit($acRet); 
+if ( $acRet !== true ) exit($acRet);
 
 try {
   $apr->s("cardfile",new CardfileSqlt($targetPath,true));
@@ -105,10 +104,10 @@ try {
       AdminAct::updateAny ($apr,$asr);
       exit(0);
   }
-  
+
   //print_r($_REQUEST);
   UserManager::init($aar->g("targetPath"),$apr->g("forum"));
-  switch ( $apr->g("act") ) {  
+  switch ( $apr->g("act") ) {
     case ("lu"):
       $apr->s("userList",implode(", ",UserManager::listUsers() ) );
       break;
@@ -152,7 +151,7 @@ try {
     default ;
       Act::showAlert ($apr,$asr,"Unknown admin command:".$apr->g("act"));
   }
-  
+
 } catch (AccessException $e) {
   Act::showAlert ($apr,$asr,$e->getMessage());
 }

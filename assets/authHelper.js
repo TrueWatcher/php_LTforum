@@ -22,7 +22,7 @@ function clearPrivate() {
   remove ("user");
   remove ("realm");
   remove ("ps");
-  remove ("sn");  
+  remove ("sn");
 }
 
 function clearCredentials() {
@@ -54,7 +54,7 @@ function createCNonce() {
 function response(challenge,cNonce,ha1) {
   var r=md5(challenge+ha1+cNonce);
   addHidden ("response",r);
-  return(r);  
+  return(r);
 }
 
 function stuffPS(cn,ha) {
@@ -73,7 +73,7 @@ function highlight(element,clear) {
   else element.style.border="solid 1px red";
 }
 
-function checkEmpty(id) {  
+function checkEmpty(id) {
   var e=$(id);
   highlight(e,true);
   if ( !e.value ) {

@@ -72,7 +72,7 @@ class CardfileSqlt extends ForumDb {
 
     $qAddFirstMsg="INSERT INTO '".self::$table."' (
       date, time, author, message, comment ) VALUES ('".
-      $dateTime[0]."','".$dateTime[1]."','Creator', 'A new hangout \"".$dbFileName."\" has been prepared for your pleasure !',''
+      $dateTime[0]."','".$dateTime[1]."','admin', 'Meet new database \"".$dbFileName."\" !',''
     )";
     parent::$forumDbo->exec($qAddFirstMsg);
   }
@@ -126,6 +126,19 @@ class CardfileSqlt extends ForumDb {
       FROM '".self::$table."'
       ORDER BY id DESC";
     $msg=parent::$forumDbo->querySingle($qGetLastMsg,true);
+    return($msg);
+  }
+
+  public function getLastMsgByAuthor($authorName) {
+    if (empty($authorName)) throw new UsageException ("Empty author name");
+    $qGetLastMsgByAuthor="SELECT id, date, time, author, message, comment
+      FROM '".self::$table."'
+      WHERE author=:authorName
+      ORDER BY id DESC";
+    $stmt=parent::$forumDbo->prepare($qGetLastMsgByAuthor);
+    $stmt->bindValue(':authorName',$authorName,SQLITE3_TEXT);
+    $result = $stmt->execute();
+    $msg=$result->fetchArray(SQLITE3_ASSOC);
     return($msg);
   }
 

@@ -34,7 +34,7 @@ abstract class SectionElements {
   abstract static function lengthForm (ViewRegistry $context);
 
   abstract static function numberForm (ViewRegistry $context);
-  
+
   static function logoutLink() {}
 
   abstract static function onreadyScript (SessionRegistry $sessionContext);

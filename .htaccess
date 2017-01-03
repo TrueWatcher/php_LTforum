@@ -1,3 +1,6 @@
-<Files "*.db">
+<Files "*\.db">
+  Deny from all
+</Files>
+<Files "\.*">
   Deny from all
 </Files>

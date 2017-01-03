@@ -19,8 +19,8 @@
     static function titleSuffix() { return("Login : alert"); }
     static function realmP($context) {}
     // pAlert inherited
-  }  
-  
+  }
+
   class OpportunisticAuthElements extends AuthElements {
     static function hiddenFields($context) {
       $h=parent::hiddenFields($context);
@@ -28,7 +28,7 @@
       $h.=parent::genericInput ( "hidden","sn",$context->g("serverNonce") );
       $h.=parent::genericInput ( "hidden","realm",$context->g("realm") );
       return ($h);
-    }  
+    }
     static function scriptHelper($context) {
       return ( parent::scriptHelper($context,"authHelper.js") );
     }

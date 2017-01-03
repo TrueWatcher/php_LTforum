@@ -13,8 +13,8 @@ require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
-require_once ($mainPath."Hopper.php");
 require_once ($mainPath."AccessController.php");
+require_once ($mainPath."Applicant.php");
 
 class PageRegistry extends SingletAssocArrayWrapper {
     protected static $me=null;// private causes access error
@@ -27,7 +27,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
       }
       if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);// will be overwritten by self::readSession
     }
-    
+
     public function readSession() {
       $keys=["authName"=>"user", "current"=>"current", "updated"=>"updated" ];
       if ( !$_SESSION ) throw new UsageException("PageRegistry: no active session found !");//return(false);
@@ -40,7 +40,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
       }
       return($i);
     }
-    
+
     /*public function exportToSession() {
       $keys=[ "current"=>"current" ];//"authName"=>"user",
       $regKey="current";
@@ -66,10 +66,9 @@ $sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>1
 );
 
 // here goes the Access Controller
-$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>3, "maxDelayAuth"=>300, "maxDelayPage"=>3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
+$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" ] );
 $ac=new AccessController;
 $acRet=$ac->go($ar);
-//echo("\r\nTrace: ".$sm->trace." ");
 //if ( $alert=$ar->g("alert") ) echo($alert);
 if($acRet!==true) exit($acRet);
 

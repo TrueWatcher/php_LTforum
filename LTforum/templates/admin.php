@@ -121,7 +121,7 @@
   function genEntry() {
     if ( checkEmpty("user") || checkEmpty("ps") ) {
       return false;
-    }    
+    }
     var ha=makeHa();
     $("uEntry").value=$("user").value+"="+ha;
     return true;
@@ -131,26 +131,26 @@
     //$("user").value=$("ps").value=$("realm").value="";
     remove("user");
     remove("ps");
-    remove("realm");    
+    remove("realm");
   }
-  $("uAdd").onclick=function() { 
+  $("uAdd").onclick=function() {
     if ( !genEntry() ) return (false);
     addHidden("act","uAdd","manUser");
     clearPrivate("manUser");
     $("manUser").submit();
   };
-  $("uDel").onclick=function() { 
+  $("uDel").onclick=function() {
     if ( !genEntry() ) return (false);
     addHidden("act","uDel","manUser");
     clearPrivate("manUser");
     $("manUser").submit();
   };
   $("aUser").value="";
-  $("aAdd").onclick=function() { 
+  $("aAdd").onclick=function() {
     addHidden("act","aAdd","manAdmin");
     $("manAdmin").submit();
   };
-  $("aDel").onclick=function() { 
+  $("aDel").onclick=function() {
     addHidden("act","aDel","manAdmin");
     $("manAdmin").submit();
   };
@@ -158,7 +158,7 @@
 
 <fieldset>
   <a href="?forum=<?php print( $apr->g("forum") ); ?>&amp;reg=reset"><button type="button">Log out</button></a>
-  <?php echo("HttpHost:".$_SERVER['HTTP_HOST']." ,ServerName:".$_SERVER['SERVER_NAME']); ?>
+  <?php //echo("HttpHost:".$_SERVER['HTTP_HOST']." ,ServerName:".$_SERVER['SERVER_NAME']); ?>
 </fieldset>
 
 <p id="footer"></p>
