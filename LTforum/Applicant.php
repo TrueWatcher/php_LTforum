@@ -3,7 +3,7 @@
 /**
  * Deals with authentication and other procedures changing $_SESSION.
  * used by AccessController
- * @uses AccessController
+ * @uses AccessHelper
  */
 
 class Applicant {
@@ -17,23 +17,26 @@ class Applicant {
   protected $c;// context
   protected $r;// input, normally $_REQUEST
   public $session;// session.normally $_SESSION
+  protected $helper;// helper class (library), normally AccessHelper
 
-  function __construct(AuthRegistry $context,$request=null,&$session=null) {
-      if ( !class_exists("AccessController") ) throw new UsageException ("Please, include the  AccessController class");
-      
-      $this->c = $context;
-      
-      if ( !isset($request) ) $this->r = $_REQUEST;
-      else $this->r = $request;
-      
-      if ( !isset($session) ) {
-        if ( !isset($_SESSION) ) throw new UsageException("Empty session!");
-        $this->session = &$_SESSION;// important & !
-      }
-      else $this->session = &$session;// important & !
-      
-      print("\n------------ on entrance:");
-      print_r($_SESSION);
+  function __construct(AuthRegistry $context,$request=null,&$session=null,$helperClass="AccessHelper") {
+    if ( !class_exists($helperClass) ) throw new UsageException("Wrong helper class ".$helperClass."!");
+    
+    $this->c = $context;
+    
+    if ( !isset($request) ) $this->r = $_REQUEST;
+    else $this->r = $request;
+    
+    if ( !isset($session) ) {
+      if ( !isset($_SESSION) ) throw new UsageException("Empty session!");
+      $this->session = &$_SESSION;// important & !
+    }
+    else $this->session = &$session;// important & !
+    
+    //print("\n------------ on entrance:");
+    //print_r($_SESSION);
+    
+    $this->helper = $helperClass;
   }
   /**
    * Initializes Applicant for routine-level checks.
@@ -154,11 +157,14 @@ class Applicant {
    * @return nothing
    */
   public function setStatus($newStatus) {
+    $hc=$this->helper;
+    
     switch ($newStatus) {
     case "zero":
-      //unset($_SESSION); // does not help
-      session_destroy();// this does not change session_id! call session_regenerate_id separately
-      session_start();
+      unset($this->session); // does not help by itself
+      $hc::nullifySession();
+      //session_destroy();// this does not change session_id! call session_regenerate_id separately
+      //session_start();
       $this->authName = null;
       break;
 
@@ -197,33 +203,32 @@ class Applicant {
     
     $this->status = $newStatus;
     $this->c->trace($this->status);
-
-    print("\n------------ on setStatus:");
-    print_r($this->session);
-
+    //print("\n------------ on setStatus:");
+    //print_r($this->session);
   }
 
   /**
    * Requests login and password from the user.
-   * @uses AccessController::showForm
-   * @uses AccessController::makeServerNonce
+   * @uses AccessHelper::showForm
+   * @uses AccessHelper::makeServerNonce
    * @param string $note
    * @param string $exitStatus
    * @return nothing
    */
   public function demandReg( $note, $exitStatus) {
-
+    $hc=$this->helper;
+  
     if ( !empty($_SERVER["QUERY_STRING"]) ) {
       //echo( " QS=".$_SERVER["QUERY_STRING"]);
-      $this->session["targetUri"]=AccessController::makeRedirectUri();
+      $this->session["targetUri"] = $hc::makeRedirectUri();
     }
     else if ( !empty($this->session) && array_key_exists("origUri",$this->session)) { unset($this->session["targetUri"]); }
 
-    $sn=AccessController::makeServerNonce();
+    $sn = $hc::makeServerNonce();
     $this->c->s("serverNonce",$sn);
     $this->session["serverNonce"]=$sn;
     $this->setTimeLimits( $this->c->g("minDelay"), $this->c->g("maxDelayAuth") );
-    AccessController::showAuthForm( $this->c, $note );
+    $hc::showAuthForm( $this->c, $note );
 
     $this->setStatus($exitStatus);
   }
@@ -278,15 +283,18 @@ class Applicant {
 
   /**
    * Sends Redirect header.
-   * If original page request contained any params, they must have been saved to SESSION by AccessController::showForm. Now it's time to look for them and send the redirect header (so called PRG pattern).
+   * If original page request contained any params, they must have been saved to SESSION by AccessHelper::showForm. Now it's time to look for them and send the redirect header (so called PRG pattern).
    * @return true or message on redirect, false on no redirect required
    */
   public function optionalRedirect() {
+    $hc=$this->helper;
+  
     if ( array_key_exists("targetUri",$this->session) ) {
       $r=$this->session["targetUri"];
       unset($this->session["targetUri"]);
       //return false;// turn this off for DEBUG
-      header( "Location: ".$r );
+      $hc::sendRedirect($r);
+      //header( "Location: ".$r );
       //session_write_close();
       //exit();
       return ( "redirected to ".$r );
@@ -352,20 +360,21 @@ class Applicant {
      * Passes to authSuccess on success or back to requestLogin on failure
      * @uses user name
      * @uses user password
-     * @uses AccessController::parseGroup
-     * @uses AccessController::makeHa1
+     * @uses AccessHelper::parseGroup
+     * @uses AccessHelper::makeHa1
      * @param {object AuthRegistry} $context
      * @returns true on success, false or error message on failure
      */
   protected function authPlain (AuthRegistry $ar) {
     //echo("Trying auth plaintext ");
-    $realm=$ar->g("realm");
-    $applicantName=$ar->g("user");
-    $applicantPsw=$ar->g("ps");
-    $applicantHa=AccessController::makeHa1($applicantName,$realm,$applicantPsw);
+    $hc=$this->helper;
+    $realm = $ar->g("realm");
+    $applicantName = $ar->g("user");
+    $applicantPsw = $ar->g("ps");
+    $applicantHa = $hc::makeHa1($applicantName,$realm,$applicantPsw);
     //echo(">".makeHa1($_REQUEST["user"],$ar->g("realm"),$_REQUEST["ps"])."<");// DEBUG
     $foundName="";
-    $users=AccessController::parseGroup($ar->g("realm"),$ar);
+    $users = $hc::parseGroup($ar->g("realm"),$ar);
     // simply use array as dictionary
     if ( array_key_exists($applicantName,$users) && $users[$applicantName]===$applicantHa ) $foundName=$applicantName;
     if ( !$foundName ) {// fail
@@ -384,22 +393,23 @@ class Applicant {
      * Passes to authSuccess on success or back to requestLogin on failure
      * @uses client nonce
      * @uses client response
-     * @uses AccessController::parseGroup
-     * @uses AccessController::makeResponse
+     * @uses AccessHelper::parseGroup
+     * @uses AccessHelper::makeResponse
      * @param {object AuthRegistry} $context
      * @returns true on success, false or error message on failure
      */
   function authDigest (AuthRegistry $ar) {
     //echo(" Trying JS digest authentication ");
+    $hc=$this->helper;
     $foundName="";
-    $users=AccessController::parseGroup($ar->g("realm"),$ar);
+    $users = $hc::parseGroup($ar->g("realm"),$ar);
     //print_r($users);
     //echo("sn>".$sn);
 
     // Cycle: hash -> proposed response -> check -> user name
     // so no need to send the name in a request
     foreach ($users as $name=>$ha) {
-      $tryResponse=AccessController::makeResponse( $ar->g("serverNonce"), $ha, $ar->g("cn") );
+      $tryResponse = $hc::makeResponse( $ar->g("serverNonce"), $ha, $ar->g("cn") );
       if ( $tryResponse == $ar->g("response") ) {
         $foundName=$name;
         break;
@@ -412,7 +422,7 @@ class Applicant {
     // registered OK
     $ar->s("authName",$foundName);
     $this->authName = $foundName;
-    $ar->s( "secret",AccessController::iterateSecret( $ha, $ar->g("cn") ) );
+    $ar->s( "secret", $hc::iterateSecret( $ha, $ar->g("cn") ) );
     $ar->s("clientCount",1);
     $ar->s("serverCount",1);
     $ar->s("alert","Digest authentication OK as ".$foundName);
@@ -422,12 +432,13 @@ class Applicant {
 
     /**
      * Checks if the given user has admin rights against .group file.
-     * @uses AccessController::parseGroup
+     * @uses AccessHelper::parseGroup
      * @param {object AuthRegistry} $context
      * @returns true if has, false or error message if has not
      */
-  protected function authAdmin(AuthRegistry $ar) {
-    $admins=AccessController::parseGroup( $ar->g("realm")."Admins", $ar );
+  protected function authAdmin (AuthRegistry $ar) {
+    $hc=$this->helper;
+    $admins = $hc::parseGroup( $ar->g("realm")."Admins", $ar );
     if ( array_key_exists( $this->authName, $admins ) ) return (true);
     return ("Not an admin");
   }
@@ -438,14 +449,10 @@ class Applicant {
    * @return string notification
    */
   public function getUnanswered() {
-    if ( !class_exists("CardfileSqlt") || !class_exists("AccessController") ) throw new UsageException ("Some dependency is missing");
+    if ( !class_exists("CardfileSqlt") ) throw new UsageException ("Some dependency is missing");
     $dbFile = $this->c->g("targetPath").$this->c->g("realm");
-    //try {
-      $dbm=new CardfileSqlt($dbFile,false);
-    //}
-    //catch (Exception $e) {
-      //AccessController::showAuthAlert ($this->c,$e->getMessage());
-    //}
+    $dbm=new CardfileSqlt($dbFile,false);
+
     $found=$dbm->getLastMsgByAuthor($this->authName);
     if (!$found) { // no messages by this user in this forum
       return("No messages by this user");
