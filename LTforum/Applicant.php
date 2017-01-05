@@ -131,7 +131,8 @@ class Applicant {
     $delta=time() - $from;
     if ( $delta > $this->c->g("minRegenerateCookie") ) {
       $this->session["cookieTime"]=time();
-      session_regenerate_id(true);
+      $hc=$this->helper;
+      $hc::regenerateId();
     }
   }
 
@@ -161,8 +162,9 @@ class Applicant {
     
     switch ($newStatus) {
     case "zero":
-      unset($this->session); // does not help by itself
-      $hc::nullifySession();
+      //unset($this->session); // does not help by itself and conflicts with unit testing
+      $hc::nullifySession($this->session);
+      //print_r($this->session);
       //session_destroy();// this does not change session_id! call session_regenerate_id separately
       //session_start();
       $this->authName = null;
@@ -217,12 +219,14 @@ class Applicant {
    */
   public function demandReg( $note, $exitStatus) {
     $hc=$this->helper;
-  
-    if ( !empty($_SERVER["QUERY_STRING"]) ) {
+    
+    // if request contains a command, remember it in SESSION for final redirect
+    //if ( !empty($_SERVER["QUERY_STRING"]) ) {
+    if ( $this->c->g("reg") || $this->c->g("act") || ( isset($_SERVER["QUERY_STRING"]) && !empty($_SERVER["QUERY_STRING"]) ) ) {
       //echo( " QS=".$_SERVER["QUERY_STRING"]);
-      $this->session["targetUri"] = $hc::makeRedirectUri();
+      $this->session["targetUri"] = $hc::makeRedirectUri($this->c);
     }
-    else if ( !empty($this->session) && array_key_exists("origUri",$this->session)) { unset($this->session["targetUri"]); }
+    else if ( !empty($this->session) && array_key_exists("targetUri",$this->session)) { unset($this->session["targetUri"]); }
 
     $sn = $hc::makeServerNonce();
     $this->c->s("serverNonce",$sn);

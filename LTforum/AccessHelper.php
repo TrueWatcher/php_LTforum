@@ -5,7 +5,7 @@
  */
 
 /**
- * A library of utilities/code fragments for AccessController, Applicant and UserManager
+ * A library of utilities/code fragments for AccessController, Applicant and UserManager.
  */
 class AccessHelper {
 
@@ -28,7 +28,9 @@ class AccessHelper {
     * @returns string
     */
   static function makeHa1($userName,$realm,$password) {
-    $realm=strtolower($_SERVER["SERVER_NAME"]).$realm;
+    $serverName="localhost";
+    if ( isset($_SERVER["SERVER_NAME"]) ) $serverName=$_SERVER["SERVER_NAME"];
+    $realm=strtolower($serverName).$realm;
     //echo(">>".$userName.$realm.$password);
     return ( md5($userName.$realm.$password) );
   }
@@ -109,34 +111,8 @@ class AccessHelper {
     return($sn);
   }
 
-  /**
-    * If requested page has some parameters, saves them to SESSION.
-    * On successfull registration there'll be redirect (the PRG pattern).
-    * Commands for authentication itself (e.g. reg=reset) are stripped off.
-    * @returns string full absolute Uri or empty if no redirect requred
-    */
-  static function makeRedirectUri() {
-    $ru=$_SERVER["REQUEST_URI"];
-    $matches=[];
-    // look for ?reg=command or &reg=command
-    $r1=preg_match("~\&(reg=[^&]*)~",$ru,$matches);
-    if ( !$r1 ) $r2=preg_match("~\?(reg=[^&]*)~",$ru,$matches);
-    if ( !empty($matches) ) {
-      // remove reg=command
-      $ru=str_replace($matches[1],"",$ru);
-      // make sure uri is still ok
-      if ( (strpos($ru,"?&"))!==false ) $ru=str_replace("?&","?",$ru);
-      if ( ($p=strpos($ru,"&&"))!==false ) $ru=str_replace("&&","&",$ru);
-      $ru=rtrim($ru,"&? ");
-    }
-    $url = 'http://';
-    if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
-    $url .= $_SERVER['HTTP_HOST'];// Get the server
-    $target=$url.$ru;
-    return($target);
-  }
-
   // ----- Interface methods for AccessController  -----
+  
   // --- interface to session control functions ---
   
   /**
@@ -165,12 +141,19 @@ class AccessHelper {
     session_start();
   }
   
-  static function nullifySession() {
+  /**
+   * Sets $_SESSION to empty.
+   * @param array $session output! used by overriding methods
+   * @return nothing
+   */
+  static function nullifySession (&$session) {
     session_destroy();
     session_start();
   }
   
-  
+  /**
+   * Wraps native php function.
+   */
   static function regenerateId() {
     session_regenerate_id(true);
   }
@@ -191,7 +174,40 @@ class AccessHelper {
   }
   
   // --- interface to Header ---
+  /**
+    * If requested page has some parameters, saves them to SESSION.
+    * On successfull registration there'll be redirect (the PRG pattern).
+    * Commands for authentication itself (e.g. reg=reset) are stripped off.
+    * @returns string full absolute Uri or empty if no redirect requred
+    */
+  static function makeRedirectUri(AuthRegistry $context) {
+    $ru=$_SERVER["REQUEST_URI"];
+    $matches=[];
+    // look for ?reg=command or &reg=command
+    $r1=preg_match("~\&(reg=[^&]*)~",$ru,$matches);
+    if ( !$r1 ) $r2=preg_match("~\?(reg=[^&]*)~",$ru,$matches);
+    //print("Matches:"); print_r($matches);
+    if ( !empty($matches) ) {
+      
+      // remove reg=command
+      $ru=str_replace($matches[1],"",$ru);
+      // make sure uri is still ok
+      if ( (strpos($ru,"?&"))!==false ) $ru=str_replace("?&","?",$ru);
+      if ( ($p=strpos($ru,"&&"))!==false ) $ru=str_replace("&&","&",$ru);
+      $ru=rtrim($ru,"&? ");
+    }
+    $url = 'http://';
+    if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
+    $url .= $_SERVER['HTTP_HOST'];// Get the server
+    $target=$url.$ru;
+    return($target);
+  }
   
+  /**
+   * Sends Location header.
+   * @param string $targetUri
+   * @return nothing
+   */
   static function sendRedirect($targetUri) {
     header( "Location: ".$targetUri );
   }
@@ -236,4 +252,64 @@ class AccessHelper {
     include($ar->g("templatePath")."authForm.php");
   }
   
+}
+
+/**
+ * A class for unit testing the AccessController class.
+ * Overrides its interface methods.
+ */
+class DetachedAccessHelper extends AccessHelper {
+  // ----- Interface methods for AccessController  -----
+  // --- interface to session control functions ---
+
+  static function startSession (AuthRegistry $ar) {}
+  
+  static function nullifySession (&$session) {
+    echo(" Clearing my session array ");
+    $session=[];
+  }
+    
+  static function regenerateId() {
+    $ar=AuthRegistry::getInstance();
+    $ar->trace("reg_id");
+  }
+  
+  // --- interface to Header ---
+  
+  static function makeRedirectUri (AuthRegistry $context) {
+    $reg=$context->g("reg");
+    $act=$context->g("act");
+    $target="?";
+    if ( $act ) $target.="act=".$act;
+    return($target);
+  }
+  
+  static function sendRedirect($targetUri) {
+    $ar=AuthRegistry::getInstance();
+    $ar->trace("redirect");
+  }
+  
+  // --- interface to View ---
+  static function showAuthForm (AuthRegistry $ar, $authMessage="") {
+    $ar->s("alert",$authMessage);
+    //$ar->s("serverNonce",$sn);// needed by form
+    require_once($ar->g("templatePath")."AuthElements.php");
+    require_once($ar->g("templatePath")."SubAuthElements.php");
+    $formSelect= [ 0=>"PlainAuthElements",
+                    1=>"OpportunisticAuthElements",
+                    2=>"StrictAuthElements" ];
+    //$ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
+    $cc = $formSelect[$ar->g("authMode")];
+    echo ( "\n".$cc::titleSuffix($ar)."\n" );
+    //include($ar->g("templatePath")."authForm.php");
+  }
+
+  static function showAuthAlert (AuthRegistry $ar, $authMessage="") {
+    $ar->s("alert",$authMessage);
+    require_once($ar->g("templatePath")."AuthElements.php");
+    require_once($ar->g("templatePath")."SubAuthElements.php");
+    echo ( "\n".AlertAuthElements::titleSuffix($ar)."\n" );
+    //$ar->s( "controlsClass", "AlertAuthElements" );
+    //include($ar->g("templatePath")."authForm.php");
+  }
 }

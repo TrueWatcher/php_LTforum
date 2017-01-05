@@ -93,10 +93,11 @@ class AccessController {
     $return=false;
 
     $hc::startSession($this->c);
-    //echo(" After start ");
-    //print_r($_SESSION);
+    echo(" After start: ");
+    if (isset($_SESSION)) print_r($_SESSION);// DEBUG
     if (isset($_SESSION) && !isset($this->session) ) $this->session = &$_SESSION;// important & !
-    $this->c->readCommands();
+    $this->c->readCommands($this->r);
+    //$this->c->dump();
     $a = new Applicant ( $this->c, $this->r, $this->session, $this->helper );
     $a->initMin();
 
@@ -109,8 +110,9 @@ class AccessController {
       }
       // any state > preAuth
       // redirect to cleaned uri without reg=deact
-      $targetUri=$hc::makeRedirectUri();
-      header( "Location: ".$targetUri );
+      $targetUri=$hc::makeRedirectUri($this->c);
+      $hc::sendRedirect($targetUri);
+      //header( "Location: ".$targetUri );
       //return ( "redirected to ".$targetUri );
       $return="redirected to ".$targetUri;
       break;        
@@ -136,7 +138,7 @@ class AccessController {
         else {
           // postAuth > postAuth
           // redirect to cleaned uri without reg=deact
-          $targetUri=$hc::makeRedirectUri();
+          $targetUri=$hc::makeRedirectUri($this->c);
           $hc::sendRedirect($targetUri);
           //header( "Location: ".$targetUri );
           //return ( "redirected to ".$targetUri );
@@ -187,6 +189,7 @@ class AccessController {
         }
 
         // additional initializations
+        //echo(" Trying to register ");
         $this->c->readInput($this->r);
         $this->c->readSession($this->session);
         $a->initFull();
@@ -293,8 +296,8 @@ class AccessController {
       break;
     }// end switch
     
-    //echo(" Re-reading session ");
-    //print_r($_SESSION);
+    echo(" Re-reading session: ");
+    if (isset($_SESSION)) print_r($_SESSION);// DEBUG
 
     $this->c->trace($return);
     return ($return);
