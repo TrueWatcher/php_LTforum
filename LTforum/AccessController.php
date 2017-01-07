@@ -142,7 +142,8 @@ class AccessController {
           $hc::sendRedirect($targetUri);
           //header( "Location: ".$targetUri );
           //return ( "redirected to ".$targetUri );
-          $return="redirected to ".$targetUri;
+          //$return="redirected to ".$targetUri;
+          //return(false);
           break;
         }
       }

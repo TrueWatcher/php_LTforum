@@ -51,6 +51,10 @@ class CardfileSqlt extends ForumDb {
       parent::__construct($forumDbFile,false);
     }
   }
+  
+  static function destroy() {
+    parent::$forumDbo=null;
+  }
 
   public function createTable($tableName) {
     // AUTOINCREMENT with PRIMARY KEY prevent the reuse of ROWIDs from previously deleted rows.

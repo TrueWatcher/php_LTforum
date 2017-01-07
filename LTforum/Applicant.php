@@ -371,6 +371,7 @@ class Applicant {
      */
   protected function authPlain (AuthRegistry $ar) {
     //echo("Trying auth plaintext ");
+    //echo("Localhost:".$_SERVER["SERVER_NAME"]); exit();
     $hc=$this->helper;
     $realm = $ar->g("realm");
     $applicantName = $ar->g("user");
@@ -454,7 +455,8 @@ class Applicant {
    */
   public function getUnanswered() {
     if ( !class_exists("CardfileSqlt") ) throw new UsageException ("Some dependency is missing");
-    $dbFile = $this->c->g("targetPath").$this->c->g("realm");
+    $dbFile = $this->c->g("targetPath").$this->c->g("realm"); 
+    //$dbFile = $this->c->g("targetPath")."../".$this->c->g("realm")."/".$this->c->g("realm");
     $dbm=new CardfileSqlt($dbFile,false);
 
     $found=$dbm->getLastMsgByAuthor($this->authName);
@@ -466,6 +468,7 @@ class Applicant {
     $unanswered = $last["id"] - $found["id"];
     $note="Unanswered: ".$unanswered;
     if ( $unanswered ) $note.=", latest: ".$last["date"]." ".$last["time"];
+    //$dbm->destroy();
     return ($note);
   }
 }

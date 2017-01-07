@@ -3,7 +3,7 @@
 // All PHPUnit tests stop after first failure!
 // Uses PHPUnit + Selenium + FacebookWebDriver + HtmlUnit
 // And optionally XAMPP
-// (c) TrueWatcher August 2016
+// by TrueWatcher August 2016
 
 //require_once("/home/alexander/vendor/autoload.php" );// needed, but present in ./bootstrap.php
 
@@ -16,7 +16,7 @@ use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverSelect;
 //use PHPUnit\Framework\TestCase;
 
-class Test_LTforumMain extends PHPUnit_Framework_TestCase {
+class Test_LTforumAuthentication extends PHPUnit_Framework_TestCase {
 
   protected $browser="htmlunit";
   protected $emulate="FIREFOX_45";// needed for JQuery and/or Bootstrap

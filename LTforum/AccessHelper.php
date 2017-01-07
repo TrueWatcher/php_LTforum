@@ -28,8 +28,8 @@ class AccessHelper {
     * @returns string
     */
   static function makeHa1($userName,$realm,$password) {
-    $serverName="localhost";
     if ( isset($_SERVER["SERVER_NAME"]) ) $serverName=$_SERVER["SERVER_NAME"];
+    else $serverName="ltforum";// as set in test environment, normally "localhost";
     $realm=strtolower($serverName).$realm;
     //echo(">>".$userName.$realm.$password);
     return ( md5($userName.$realm.$password) );
