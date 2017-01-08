@@ -93,8 +93,8 @@ class AccessController {
     $return=false;
 
     $hc::startSession($this->c);
-    echo(" After start: ");
-    if (isset($_SESSION)) print_r($_SESSION);// DEBUG
+    //echo(" After start: ");
+    //if (isset($_SESSION)) print_r($_SESSION);// DEBUG
     if (isset($_SESSION) && !isset($this->session) ) $this->session = &$_SESSION;// important & !
     $this->c->readCommands($this->r);
     //$this->c->dump();
@@ -160,10 +160,15 @@ class AccessController {
     case "authDigest":
       if ( $a->statusEquals("active") ) {
         // error, possibly an attack
+        // alert and no state change
+        $hc::showAuthAlert($this->c,"Unappropriate registration request");
+        //return(false);
+        break;
+        /*
         // active > zero > preAuth
         $hc::regenerateId();
         $a->setStatus("zero");
-        // fall-through
+        // fall-through*/
       }
       if ( empty($this->session) || $a->statusEquals("zero") ) {
         // this also should not happen normally
@@ -297,8 +302,8 @@ class AccessController {
       break;
     }// end switch
     
-    echo(" Re-reading session: ");
-    if (isset($_SESSION)) print_r($_SESSION);// DEBUG
+    //echo(" Re-reading session: ");
+    //if (isset($_SESSION)) print_r($_SESSION);// DEBUG
 
     $this->c->trace($return);
     return ($return);

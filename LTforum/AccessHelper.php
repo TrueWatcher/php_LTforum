@@ -265,7 +265,7 @@ class DetachedAccessHelper extends AccessHelper {
   static function startSession (AuthRegistry $ar) {}
   
   static function nullifySession (&$session) {
-    echo(" Clearing my session array ");
+    //echo(" Clearing my session array ");
     $session=[];
   }
     
@@ -300,7 +300,7 @@ class DetachedAccessHelper extends AccessHelper {
                     2=>"StrictAuthElements" ];
     //$ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
     $cc = $formSelect[$ar->g("authMode")];
-    echo ( "\n".$cc::titleSuffix($ar)."\n" );
+    echo ( "Page:".$cc::titleSuffix($ar)."\n" );
     //include($ar->g("templatePath")."authForm.php");
   }
 
@@ -308,7 +308,7 @@ class DetachedAccessHelper extends AccessHelper {
     $ar->s("alert",$authMessage);
     require_once($ar->g("templatePath")."AuthElements.php");
     require_once($ar->g("templatePath")."SubAuthElements.php");
-    echo ( "\n".AlertAuthElements::titleSuffix($ar)."\n" );
+    echo ( "Page:".AlertAuthElements::titleSuffix($ar)."\n" );
     //$ar->s( "controlsClass", "AlertAuthElements" );
     //include($ar->g("templatePath")."authForm.php");
   }

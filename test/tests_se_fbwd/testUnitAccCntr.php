@@ -15,12 +15,14 @@ require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AccessHelper.php");
 require_once ($mainPath."AccessController.php");
 require_once ($mainPath."Applicant.php");
+require_once ($mainPath."UserManager.php");
 
-function page($registryTemplate,$input,&$session,&$registry) {
-  echo("-----\n");
-  echo("Input:");
-  if (!empty($input)) print_r($input);
-  else print ("empty\n");
+function page($registryTemplate,$input,&$session,&$registry,$verbose=0) {
+  if ($verbose) {
+    echo("Input:");
+    if (!empty($input)) print_r($input);
+    else print ("empty\n");
+  }
   $ar=AuthRegistry::getInstance( 1, $registryTemplate );
   $ac=new AccessController( $ar, $input, $session, "DetachedAccessHelper" );
   $acRet=$ac->go();
@@ -28,7 +30,10 @@ function page($registryTemplate,$input,&$session,&$registry) {
   //print_r($ac->session);
   echo ("Trace:".$ar->g("trace")."\n");
   echo ("Alert:".$ar->g("alert")."\n");
-  echo ("Session:"); print_r($session);
+  if ($verbose) { 
+    echo ("Session:");
+    print_r($session);
+  }
   //$ar->destroy();
   return ($acRet);
 }
@@ -44,6 +49,7 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
   }
   
   public function test_page_emptyEmpty() {
+    $verbose=0;
     $art = $this->authRegistryTemplate;
   
     $input=[];
@@ -71,48 +77,49 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     $ar->destroy();
     
-    echo("Test empty-empty OK\n");
+    echo("\nTest empty-empty OK\n");
   }
   
   public function test_plaintextAuth() {
+    $verbose=0;
     $art = $this->authRegistryTemplate;
   
     $input=[];
     $session=[];
     $ar=null;
     
-    // try to register from zero state, expecting failure
+    echo("\n trying to register from zero state, expecting failure\n");
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">zero>preAuth>false", $t, "Wrong trace" );
     
     $ar->destroy();
     $session=[];
     
-    // get form
+    echo("\ngetting the form\n");
     $input=[];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
     $this->assertNotEmpty ($session["serverNonce"], "Empty serverNonce" );
     
     $ar->destroy();
     
-    // send registration request after 1 second, expecting "Wait for a few seconds" alert
+    echo("\nsending registration request after 1 second, expecting alert\n");
     sleep( 1 );
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">preAuth>false", $t, "Wrong trace" );
     $this->assertContains ("wait",$ar->g("alert"),"Alert does not contain WAIT");
     
     $ar->destroy();
     
-    // send registration request after delay, expecting success
+    echo("\nsending registration request after delay, expecting success\n");
     sleep( $art["minDelay"]+1 );
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">preAuth>reg_id>active>true", $t, "Wrong trace" );
     $this->assertEquals ( "test", $session["realm"], "Missing realm in SESSION" );
@@ -121,18 +128,18 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     $ar->destroy();
     
-    // send request for a page, expecting successful authentication
+    echo("\nsending request for a page, expecting successful pass\n");
     //$input=[];
     $input=["act"=>"search"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">active>true", $t, "Wrong trace" );
     
     $ar->destroy();
     
-    // send Log out
+    echo("\nsending Log out\n");
     $input=["reg"=>"deact"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">active>reg_id>postAuth>false", $t, "Wrong trace" );
     $this->assertEquals ( "admin", $session["authName"], "Missing or wrong authName in SESSION" );
@@ -141,10 +148,10 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     $ar->destroy();
     
-    // test registration from postAuth state
+    echo("\ntrying registration from postAuth state, expecting success\n");
     sleep( $art["minDelay"]+1 );
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">postAuth>active>redirect>false", $t, "Wrong trace" );
     $this->assertEquals ( "test", $session["realm"], "Missing realm in SESSION" );
@@ -153,21 +160,23 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     $ar->destroy();
     
-    // send request for registration in active state, expecting failure
+    echo("\nsending request for registration in active state, expecting alert\n");
     //$art["realm"]="demo";
     sleep( $art["minDelay"]+1 );
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");      
-    $this->assertEquals  ( ">active>reg_id>zero>preAuth>false", $t, "Wrong trace" );
-    $this->assertFalse ( array_key_exists("authName",$session), "Not cleared authName from SESSION" );
+    //$this->assertEquals  ( ">active>reg_id>zero>preAuth>false", $t, "Wrong trace" );
+    $this->assertEquals  ( ">active>false", $t, "Wrong trace" );
+    //$this->assertFalse ( array_key_exists("authName",$session), "Not cleared authName from SESSION" );
     
     $ar->destroy();
     
-    echo("Test plaintextAuth OK\n");
+    echo("\nTest plaintext auth OK\n");
   }
   
   public function test_digestAuth() {
+    $verbose=0;
     $ha1_admin=AccessHelper::makeHa1("admin","test","admin");
     $art = $this->authRegistryTemplate;
   
@@ -175,45 +184,45 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $session=[];
     $ar=null;
     
-    // try to register from zero state, expecting failure
+    echo("\ntrying to register from zero state, expecting failure\n");
     $clientNonce=AccessHelper::makeServerNonce();
     $serverNonce=AccessHelper::makeServerNonce();
     $response=AccessHelper::makeResponse($serverNonce,$ha1_admin,$clientNonce);
     $input=["reg"=>"authOpp","plain"=>0,"cn"=>$clientNonce,"response"=>$response];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">zero>preAuth>false", $t, "Wrong trace" );
     
     $ar->destroy();
     $session=[];
     
-    // get form
+    echo("\ngetting the form\n");
     $input=[];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
     $this->assertNotEmpty ($session["serverNonce"], "Empty serverNonce" );
     
     $ar->destroy();
     
-    // send registration request after 1 second, expecting "Wait for a few seconds" alert
+    echo("\nsending registration request after 1 second, expecting an alert\n");
     sleep( 1 );
     $clientNonce=AccessHelper::makeServerNonce();
     $response=AccessHelper::makeResponse($session["serverNonce"],$ha1_admin,$clientNonce);
     $input=["reg"=>"authOpp","plain"=>0,"cn"=>$clientNonce,"response"=>$response];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">preAuth>false", $t, "Wrong trace" );
     $this->assertContains ("wait",$ar->g("alert"),"Alert does not contain WAIT");
     
     $ar->destroy();
     
-    // send registration request after delay, expecting success
+    echo("\nsending registration request after delay, expecting success\n");
     sleep( $art["minDelay"]+1 );
     $clientNonce=AccessHelper::makeServerNonce();
     $response=AccessHelper::makeResponse($session["serverNonce"],$ha1_admin,$clientNonce);
     $input=["reg"=>"authOpp","plain"=>0,"cn"=>$clientNonce,"response"=>$response];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">preAuth>reg_id>active>true", $t, "Wrong trace" );
     $this->assertEquals ( "test", $session["realm"], "Missing realm in SESSION" );
@@ -222,18 +231,18 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     $ar->destroy();
     
-    // send request for a page, expecting successful authentication
+    echo("\nsend request for a page, expecting successful pass\n");
     //$input=[];
     $input=["act"=>"search"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">active>true", $t, "Wrong trace" );
     
     $ar->destroy();
     
-    // send Log out
+    echo("\nsending Log out\n");
     $input=["reg"=>"deact"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">active>reg_id>postAuth>false", $t, "Wrong trace" );
     $this->assertEquals ( "admin", $session["authName"], "Missing or wrong authName in SESSION" );
@@ -242,12 +251,12 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     $ar->destroy();
     
-    // test registration from postAuth state
+    echo("\ntrying registration from postAuth state, expecting success\n");
     sleep( $art["minDelay"]+1 );
     $clientNonce=AccessHelper::makeServerNonce();
     $response=AccessHelper::makeResponse($session["serverNonce"],$ha1_admin,$clientNonce);
     $input=["reg"=>"authOpp","plain"=>0,"cn"=>$clientNonce,"response"=>$response];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">postAuth>active>redirect>false", $t, "Wrong trace" );
     $this->assertEquals ( "test", $session["realm"], "Missing realm in SESSION" );
@@ -256,61 +265,63 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     $ar->destroy();
     
-    // send request for registration in active state, expecting failure
+    echo("\nsending request for registration in active state, expecting alert\n");
     //$art["realm"]="demo";
     sleep( $art["minDelay"]+1 );
     $clientNonce=AccessHelper::makeServerNonce();
     $response=AccessHelper::makeResponse($serverNonce,$ha1_admin,$clientNonce);
     $input=["reg"=>"authOpp","plain"=>0,"cn"=>$clientNonce,"response"=>$response];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");      
-    $this->assertEquals  ( ">active>reg_id>zero>preAuth>false", $t, "Wrong trace" );
-    $this->assertFalse ( array_key_exists("authName",$session), "Not cleared authName from SESSION" );
+    //$this->assertEquals  ( ">active>reg_id>zero>preAuth>false", $t, "Wrong trace" );
+    $this->assertEquals  ( ">active>false", $t, "Wrong trace" );
+    //$this->assertFalse ( array_key_exists("authName",$session), "Not cleared authName from SESSION" );
 
     $ar->destroy();
-    echo("Test digestAuth OK\n");
+    echo("\nTest digest auth OK\n");
   }
   
   public function test_delays() {
+    $verbose=0;
     $art = $this->authRegistryTemplate;
   
     $input=[];
     $session=[];
     $ar=null;
           
-    // get form
+    echo("\ngetting the form\n");
     $input=[];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
     $this->assertNotEmpty ($session["serverNonce"], "Empty serverNonce" );
     
     $ar->destroy();
     
-    // send registration request after max delay, expecting failure
+    echo("\nsending registration request after max delay, expecting failure\n");
     sleep( $art["maxDelayAuth"] + 1 );
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">preAuth>preAuth>false", $t, "Wrong trace" );
     $this->assertFalse (array_key_exists("authName",$session),"authName in SESSION");
     
     $ar->destroy();
     
-    // register normally, expecting success
+    echo("\nregistering normally, expecting success\n");
     sleep( $art["minDelay"] + 1 );
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">preAuth>reg_id>active>redirect>false", $t, "Wrong trace" );
     
     $ar->destroy();
     
-    // test fallout to postAuth
+    echo("\nwaiting for fallout to postAuth\n");
     $nb=$session["notBefore"];
     sleep( $art["maxDelayPage"] + 1 );
     $input=["act"=>"new"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">active>postAuth>false", $t, "Wrong trace" );
     $this->assertFalse (array_key_exists("isAdmin",$session),"Remaining isAdmin in postAuth");
@@ -324,12 +335,12 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $ar->destroy();
     CardfileSqlt::destroy();
     
-    // test not regenerate cookie in postAuth state before minRegenerateCookie
+    echo("\ntesting not regenerate cookie in postAuth state before minRegenerateCookie\n");
     $ct=$session["cookieTime"];
     $nb=$session["notBefore"];
     sleep( 1 );
     $input=[];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");    
     $this->assertEquals  ( ">postAuth>postAuth>false", $t, "Wrong trace" );
     $delta=$session["cookieTime"]-$ct;
@@ -343,12 +354,12 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $ar->destroy();
     CardfileSqlt::destroy();
     
-    // test regenerate cookie in postAuth state
+    echo("\ntesting regenerate cookie in postAuth state\n");
     $ct=$session["cookieTime"];
     $nb=$session["notBefore"];
     sleep( $art["minRegenerateCookie"] + 1 );
     $input=[];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");    
     $this->assertEquals  ( ">postAuth>reg_id>postAuth>false", $t, "Wrong trace" );
     $delta=$session["cookieTime"]-$ct;
@@ -362,43 +373,43 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $ar->destroy();
     CardfileSqlt::destroy();
     
-    // test cross-realm registration in post-auth, expecting success
+    echo("\ntesting cross-realm registration in post-auth, expecting success\n");
     $art["realm"]="demo";
     $art["targetPath"]="../../demo/";
     sleep( $art["minDelay"] + 1 );
     $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals ( ">postAuth>active>true", $t, "Wrong trace" );
 
     $ar->destroy();
     CardfileSqlt::destroy();
     
-    // deactivate
+    echo("\nsending deactivate command\n");
     $input=["reg"=>"deact"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">active>reg_id>postAuth>false", $t, "Wrong trace" );    
 
     $ar->destroy();
     CardfileSqlt::destroy();
     
-    // test repeated deact request, expecting redirect
+    echo("\ntest repeated deact request, expecting redirect\n");
     $input=["reg"=>"deact"];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">postAuth>redirect>false", $t, "Wrong trace" );    
     
     $ar->destroy();
     CardfileSqlt::destroy();
     
-    // test cross-realm page request in postAuth, expecting fall to preAuth
+    echo("\ntesting cross-realm page request in postAuth, expecting transit to preAuth\n");
     $art["realm"]="test";
     $art["targetPath"]="../";
     $nb=$session["notBefore"];
     sleep(1);
     $input=[];
-    page($art,$input,$session,$ar);
+    page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals ( ">postAuth>zero>reg_id>preAuth>false", $t, "Wrong trace" );
     $this->assertContains ("new thread",$ar->g("alert"),"Wrong message" );
@@ -407,8 +418,146 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $ar->destroy();
     CardfileSqlt::destroy();
     
-    echo("Test delays OK\n");
+    echo("\nTest delays OK\n");
+  }
+  
+  public function test_nonadmin() {
+    $verbose=0;
+    $art = $this->authRegistryTemplate;
+    
+    echo("\ncreating non-admin user user/abc\n");
+    $userName="user";
+    $userPsw="abc";
+    UserManager::init($art["targetPath"],"test");
+    $ret=UserManager::manageUser("add","",$userName,"test",$userPsw);
+    $ok=( $ret==="" || $ret==="This user already exists" );
+    $this->assertTrue($ok,"Failed to create/find non-admin user");
+    
+    $input=[];
+    $session=[];
+    $ar=null;
+          
+    echo("\ngetting the form\n");
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
+    $this->assertNotEmpty ($session["serverNonce"], "Empty serverNonce" );
+    
+    $ar->destroy();
+    
+    echo("\nregistering as user/abc, expecting success\n");
+    sleep( $art["minDelay"] + 1 );
+    $input=["reg"=>"authOpp","plain"=>1,"user"=>$userName,"ps"=>$userPsw];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">preAuth>reg_id>active>true", $t, "Wrong trace" );
+    $this->assertEquals ( $userName, $session["authName"], "Wrong authName" );
+    $notAdmin=( !isset($session["isAdmin"]) || !$session["isAdmin"] );
+    $this->assertTrue ($notAdmin,"Unappropriate isAdmin flag");
+    
+    $ar->destroy();
+    
+    echo("\ngetting a page, expecting success\n");
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>true", $t, "Wrong trace" );
+    
+    $ar->destroy();
+      
+    echo("\ntrying to get an admin page, expecting failure\n");
+    $art["isAdminArea"]=1;
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>preAuth>false", $t, "Wrong trace" );
+    
+    $ar->destroy();
+    
+    echo("\nlogging in as admin/admin, expecting success\n");
+    sleep( $art["minDelay"] + 1 );
+    $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">preAuth>reg_id>active>true", $t, "Wrong trace" );
+    $isAdmin=( isset($session["isAdmin"]) && $session["isAdmin"] );
+    $this->assertTrue ($isAdmin,"Missing isAdmin flag");
+    
+    $ar->destroy();    
+    echo("\nTest non-admin login OK\n");
+  }
+  
+  public function test_blockPlaintext() {
+    $verbose=0;
+    $art = $this->authRegistryTemplate;
 
+    $input=[];
+    $session=[];
+    $ar=null;
+          
+    echo("\ngetting the form\n");
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
+    $this->assertNotEmpty ($session["serverNonce"], "Empty serverNonce" );
+    
+    $ar->destroy();
+    
+    echo("\ntrying plaintext auth in Opportunistic mode without the flag, expecting failure\n");
+    $art["authMode"]=1;
+    sleep( $art["minDelay"] + 1 );
+    $input=["reg"=>"authOpp","plain"=>0,"user"=>"admin","ps"=>"admin"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">preAuth>preAuth>false", $t, "Wrong trace" );
+    
+    $ar->destroy();
+    
+    echo("\ntry plaintext auth in digest-only mode, expecting failure\n");
+    $art["authMode"]=2;
+    sleep( $art["minDelay"] + 1 );
+    $input=["reg"=>"authOpp","plain"=>1,"user"=>"admin","ps"=>"admin"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">preAuth>preAuth>false", $t, "Wrong trace" );
+    
+    $ar->destroy();
+    
+    echo("\ntry plaintext auth in digest-only mode, expecting failure\n");
+    $art["authMode"]=2;
+    sleep( $art["minDelay"] + 1 );
+    $input=["reg"=>"authPlain","user"=>"admin","ps"=>"admin"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">preAuth>preAuth>false", $t, "Wrong trace" );    
+    
+    $ar->destroy();
+    
+    echo("\ntry plaintext auth in plaintext-only mode, expecting success\n");
+    $art["authMode"]=0;
+    sleep( $art["minDelay"] + 1 );
+    $input=["reg"=>"authPlain","user"=>"admin","ps"=>"admin"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">preAuth>reg_id>active>redirect>false", $t, "Wrong trace" );
+    $this->assertEquals ( "admin", $session["authName"], "Wrong authName" );
+    
+    $ar->destroy();
+    
+    echo("\ntry cross-realm page request in active state, expecting fallout to preAuth\n");
+    $art["realm"]="demo";
+    sleep( 1 );
+    $input=["act"=>"new"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>preAuth>false", $t, "Wrong trace" );
+    $this->assertFalse ( isset($session["authName"]), "Remaining authName in SESSION" );
+    
+    $ar->destroy();
+    echo ("\nTest blocking plaintext auth OK\n");
+      
   }
 }    
 ?>
