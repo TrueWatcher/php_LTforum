@@ -241,8 +241,8 @@ class Test_LTforumAuthentication extends PHPUnit_Framework_TestCase {
     $logOutLink->click();
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+        
     sleep(10);
-
     // try logging in as Me, the new-born admin
     $this->loginAs(self::$storedUserName,self::$storedUserPassword);
     $title=$this->webDriver->getTitle();
@@ -378,6 +378,52 @@ class Test_LTforumAuthentication extends PHPUnit_Framework_TestCase {
     print("\r\nInfo: logged in to the ".self::$storedForum." adminPanel");
 
     $this->webDriver->get(self::$resetUri);
+  }
+  
+  public function test_postAuth() {
+    // get login page
+    $this->webDriver->get(self::$homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    //$this->assertNotEmpty($title,"Failed to connect to the site");
+    $this->assertContains("Login",$title,"no <Login> in the title");
+    $this->assertContains(self::$storedForum,$title,"no forumName in the title");
+    print("\r\nInfo: login page found");
+    
+    // log in normally
+    sleep(10);
+    //$this->webDriver->findElement(WebDriverBy::name("plain"))->click();
+    $this->loginAs(self::$storedAdminName,self::$storedAdminPassword);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("Login",$title,"Failed admin login");
+    print("\r\nInfo: admin login Ok");
+    
+    // click Log out
+    $logOutLink=$this->webDriver->findElement( webDriverBy::partialLinkText("Log out") );
+    $logOutLink->click();
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertContains("Login",$title,"Failed logout");
+    print("\r\nInfo: logout to postAuth Ok");
+
+    // request a forum page again
+    $this->webDriver->get(self::$homeUri);
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $source=$this->webDriver->getPageSource();
+    $this->assertContains("Unanswered: 0",$source,"No info found");
+    print("\r\nInfo: verify postAuth info Ok");
+    
+    // log in as another user
+    sleep(10);
+    $this->webDriver->findElement(WebDriverBy::name("plain"))->click();
+    $this->loginAs("test","q");
+    $title=$this->webDriver->getTitle();
+    if (strlen($title)) print ("\r\ntitle found: $title \r\n");
+    $this->assertNotContains("Login",$title,"Failed user login");
+    print("\r\nInfo: another user login Ok");
+    
   }
 
 }

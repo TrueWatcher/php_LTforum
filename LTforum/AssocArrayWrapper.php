@@ -98,10 +98,9 @@
     /**
      * Resets the object, so that it can be re-initialized.
      */
-    public function destroy() {
+    public static function clearInstance() {
       $sc=get_called_class();
       $sc::$me=null;
-      $this->arr=[];
     }
   }// end SingletAssocArrayWrapper
 
