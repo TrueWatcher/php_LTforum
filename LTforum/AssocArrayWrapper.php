@@ -94,6 +94,14 @@
     public function export() {
       return ($this->arr);
     }
+    
+    /**
+     * Resets the object, so that it can be re-initialized.
+     */
+    public static function clearInstance() {
+      $sc=get_called_class();
+      $sc::$me=null;
+    }
   }// end SingletAssocArrayWrapper
 
 ?>

@@ -6,7 +6,7 @@
 
 /**
  * A Controller subunit to perfom administrative operations, related to users, like dreation/deletion and setting/unsetting administrative rights.
- * @uses AccessController::$groupFileName
+ * @uses AccessHelper::$groupFileName
  * @uses MyExceptions
  */
 class UserManager {
@@ -24,16 +24,17 @@ class UserManager {
   static function init($path="",$forum="") {
     if ($path && $forum) {
       self::$forumName=$forum;
-      if ( !class_exists("AccessController") ) throw new UsageException ("UserManager: please, include all dependencies");
-      self::$groupFile = $path . AccessController::$groupFileName;//$path.self::$groupFileName;
+      if ( !class_exists("AccessHelper") ) throw new UsageException ("UserManager: please, include all dependencies");
+      self::$groupFile = $path . AccessHelper::$groupFileName;//$path.self::$groupFileName;
       if ( ! file_exists(self::$groupFile) ) {
         throw new AccessException ("No such file:".self::$groupFile."!");
-        // this should not happen because of AccessController::createEmptyGroupFile($path,$forum);
+        // this should not happen because of AccessHelper::createEmptyGroupFile($path,$forum);
       }
     }
     self::readGroup(self::$forumName,self::$users,self::$admins);
+    //AccessHelper::readGroup(self::$forumName,self::$users,self::$admins);
   }
-
+  
   /**
    * Reads users and admins inrormation from the config file.
    * @param string $forumName
@@ -41,15 +42,16 @@ class UserManager {
    * @param array $admins output! pairs userName=>""
    * @return nothing
    */
-  static protected function readGroup($forumName,&$users,&$admins) {
+  static function readGroup($forumName,&$users,&$admins) {
+  
     $parsed=parse_ini_file(self::$groupFile,true);
     //print_r($parsed);
-    if ( !array_key_exists($forumName,$parsed) || !array_key_exists($forumName."Admins",$parsed) ) throw new AccessException ("UserManager: invalid group file");
+    if ( !array_key_exists($forumName,$parsed) || !array_key_exists($forumName."Admins",$parsed) ) throw new AccessException ("Invalid group file");
     $users=$parsed[$forumName];
     $admins=$parsed[$forumName."Admins"];
     if (empty($users) || empty($admins)) {
-      // this should not happen as AccessController::createEmptyGroupFile should had been called already
-      throw new AccessException ("UserManager: empty group file");
+      // this should not happen as AccessHelper::createEmptyGroupFile should had been called already
+      throw new AccessException ("Empty group file");
       // create admin/admin
       /*self::manageUser("add",null,"admin",$forumName,"admin");
       self::manageAdmin("add","admin");*/
@@ -120,7 +122,7 @@ class UserManager {
     }
     else {
       if ( !$userName || !$realm || !$password ) throw new UsageException("UserManager::manageUser: no arguments");
-      $ha=AccessController::makeHa1($userName,$realm,$password);
+      $ha=AccessHelper::makeHa1($userName,$realm,$password);
       $entry=$userName."=".$ha.$nl;
     }
     $found=array_key_exists($userName,self::$users);
