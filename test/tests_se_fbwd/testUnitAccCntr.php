@@ -494,6 +494,7 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     
     echo("\ntry cross-realm page request in active state, expecting fallout to preAuth\n");
     $art["realm"]="demo";
+    $art["targetPath"]="../../demo/";
     sleep( 1 );
     $input=["act"=>"new"];
     page($art,$input,$session,$ar,$verbose);
