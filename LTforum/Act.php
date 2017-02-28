@@ -5,12 +5,13 @@
  */
 
 /**
- * Helper class for Controller
+ * Helper class for The Controller (LTforum.php).
  */
 class Act {
 
   /**
    * Displays form to write a new message.
+   * @return void
    */
    public static function newMessage(PageRegistry $pr,SessionRegistry $sr) {
     $vr=ViewRegistry::getInstance( 2, [ "id"=>"", "message"=>"",  "controlsClass"=>"NewElements" ] );
@@ -21,7 +22,8 @@ class Act {
   }
 
   /**
-   * Processes form, presented by Act::newMessage
+   * Processes form, presented by Act::newMessage.
+   * @return void
    */
   public static function add(PageRegistry $pr,SessionRegistry $sr) {
     //$pr->dump();
@@ -48,14 +50,14 @@ class Act {
   /**
    * Displays form to edit the last message, if its author is the current user.
    * Stores that message's Id in SESSION to keep track
+   * @return void
    */
   public static function editLast(PageRegistry $pr,SessionRegistry $sr) {
     // checkings
-    //$pr->g("cardfile")=new CardfileSqlt( $pr->g("forum"), false);
     $lastMsg=$pr->g("cardfile")->getLastMsg();
-    if( $lastMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Editing is denied: user names are different !");
+    if( $lastMsg["author"] != $pr->g("user") ) self::showAlert ($pr,$sr,"Editing is denied: user names are different !");
     // $pr::"current" comes from an Edit link
-    if( $lastMsg["id"]!=$pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with the message number. Looks like it's not the latest one now.");
+    if( $lastMsg["id"] != $pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with the message number. Looks like it's not the latest one now. ".$lastMsg["id"]."/".$pr->g("current").".");
     // store Id in SESSION
     $_SESSION["current"]=$lastMsg["id"];
     // make sure Updated is cleared
@@ -74,11 +76,13 @@ class Act {
    * Takes the Id from SESSION, so one update is guranteed even if there came some more messages.
    * Clears the Id from SESSION on failure or removal, keeps it on successfull update.
    * Sets the Updated flag in the SESSION on successfull first update.
+   * @return void
    */
   public static function updateLast(PageRegistry $pr,SessionRegistry $sr) {
     //$pr->dump();
-    // $pr::"current" comes from SESSION
-    $current=$pr->g("current");
+    // $pr::"current" comes from SESSION 
+    //$current=$pr->g("current"); conflicts with $_REQUEST["current"]
+    $current=$_SESSION["current"];
     if ( !$current ) self::showAlert ($pr,$sr,"Updating denied. Click the EDIT link again.");
     $targetMsg = $pr->g("cardfile")->getOneMsg( $current );
     if ( !$targetMsg ) self::showAlert ($pr,$sr,"Failed to find message number ".$current." in the database");
@@ -111,7 +115,7 @@ class Act {
     $targetMsg["comment"]=$comm;
     $targetMsg["time"]=$targetMsg["date"]="";// current date and time will be set
 
-    // look on the state
+    // look at the state
     if ( !array_key_exists("updated",$_SESSION) ) {
       // one update allowed without check
       $_SESSION["updated"]=true;
@@ -135,6 +139,7 @@ class Act {
 
   /**
    * Displays a page of messages. Default View.
+   * @return void
    */
   public static function view (PageRegistry $pr,SessionRegistry $sr) {
     try {
@@ -267,6 +272,9 @@ class Act {
 
   /**
    * Displays Alert message, possibly with Back and Ok links.
+   * @param
+   * @param
+   * @param string $alertMessage
    * @return void
    */
   public static function showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
@@ -312,7 +320,7 @@ class Act {
    * Checks if a string contains any of given symbols.
    * @param string $object string to test
    * @param string $charsString "[symbol1][symbol2]..." like "<&'"
-   * @returns boolean true if found, false if not
+   * @return boolean true if found, false if not
    */
   public static function charsInString($object,$charsString) {
     if ( empty($object) ) return (false);
