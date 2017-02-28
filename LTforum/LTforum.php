@@ -30,7 +30,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
     }
 
     public function readSession() {
-      $keys=["authName"=>"user", "current"=>"current", "updated"=>"updated" ];
+      $keys=["authName"=>"user", /*"current"=>"current", conflicts with readInput*/ "updated"=>"updated" ];
       if ( !$_SESSION ) throw new UsageException("PageRegistry: no active session found !");//return(false);
       $i=0;
       foreach($keys as $sessKey=>$regKey) {
