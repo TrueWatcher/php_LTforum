@@ -503,16 +503,6 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $readLink->click();
     print("Info: again ALERT after cleared SNAP OK");
 
-    // submit unchanged form with default snap=on
-    /*$titleNew1=$this->webDriver->getTitle();
-    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
-    $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
-    $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
-    $this->assertContains("edit",$titleNew1,"Missed EDIT page");
-    $subm=$this->webDriver->findElement(WebDriverBy::xpath('//input[@type="submit"]'));
-    $subm->submit();
-    print("Info: return to EDIT and submit a default form OK");*/
-
     // check View page
     $title=$this->webDriver->getTitle();
     if (strlen($title)) print ("\r\ntitle found: $title \r\n");
@@ -521,6 +511,38 @@ class Test_LTforumMain extends PHPUnit_Framework_TestCase {
     $this->assertEquals(self::$storedTotal,$e,"Invalid or missing total number");
     $addLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));
     print("Info: View-Edit-Alert-View sequence OK");
+    
+    // submit long message with default snap=on
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $editLink=$this->webDriver->findElement(WebDriverBy::partialLinkText("§"));
+    $editLink->click();
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $forumAdd=self::parseViewTitle($titleNew1,$b,$e,$pc,$pe);
+    $this->assertEquals(self::$storedForum,$forumAdd,"Not came to EDIT page");
+    $this->assertContains("edit",$titleNew1,"Missed EDIT page");
+    
+    $longString="A Long String\n";
+    $limit=750;// defined in LTforum.php and LTmessageManager.php: SessionRegistry "maxMessageLetters"
+    mb_internal_encoding("UTF-8");
+    while ( mb_strlen($longString) < $limit-1 ) { $longString.="Э"; }
+    $longString.="Ю";// this one is 750th and should still pass
+    $longString.="Я";// this one is beyond limit
+    
+    $inputText=$this->webDriver->findElement(WebDriverBy::name("txt"));
+    $inputText->clear();
+    $inputText->sendKeys($longString);
+    $inputText->submit();
+    
+    $titleNew1=$this->webDriver->getTitle();
+    if (strlen($titleNew1)) print ("\r\ntitle found: $titleNew1 \r\n");
+    $page=$this->webDriver->getPageSource();
+    $this->assertContains("Э",$page,"Missing character");
+    $this->assertContains("Ю",$page,"Missing character");
+    $this->assertNotContains("Я",$page,"The extra character not removed");
+    
+    print("Info: return to EDIT and submit a long text OK");
   }
 
   public function addOneMsg($j=1) {

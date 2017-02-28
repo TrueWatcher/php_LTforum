@@ -63,7 +63,7 @@ class ViewRegistry extends SingletAssocArrayWrapper {
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // instantiate and initialize the Session Registry
-$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>10, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageBytes"=>"1200", "narrowScreen"=>640, "forum"=>$forumName)
+$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>10, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, /*"maxMessageBytes"=>1500,*/ "maxMessageLetters"=>750, "narrowScreen"=>640, "forum"=>$forumName)
 );
 
 // here goes the Access Controller
