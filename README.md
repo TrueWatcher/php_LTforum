@@ -77,12 +77,13 @@ improvements for narrow screen, probably last version in 1.1 line
 v.1.2.11   4 Dec 2016
 new AccessController and UserManager, tests, refactoring
 
-v.1.2.13   20 Dec 2016
-improvements and bugfixes
+v.1.2.22   9 Jan 2017
+rewritten AccessController, unit tests, feature "number of unanswered messages" on registration form
+
+
 
 #TODOs
 
-A fast service to check for new messages without registration  
 Conception of localization  
 Nice frontend  
 RSS generator/formatter  
