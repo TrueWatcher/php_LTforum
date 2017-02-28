@@ -46,8 +46,6 @@ abstract class AuthElements {
     if ( empty($context->g("alert")) ) return ("");
     $s="<tr><td id=\"alert\" colspan=\"2\">".$context->g("alert")."</td></tr>";
     return($s);
-    //<tr><th>Alert :</th><td id="alert">No messages by this user</td></tr>
-    //return ( self::wrapRow ( self::wrapFldTh("Alert :").self::wrapFldTd($context->g("alert"),"alert") ) );
   }
 
   static function realmP (AuthRegistry $context) {
@@ -63,7 +61,7 @@ abstract class AuthElements {
 
   static function pswInput ($label,$inputName,$pswValue,$context,$pageContext) {
     $row=self::wrapFldTh( self::genericLabel($inputName,$label) );
-    $row.=self::wrapFldTd( self::genericInput("text",$inputName,$pswValue) );
+    $row.=self::wrapFldTd( self::genericInput("password",$inputName,$pswValue) );
     return ( self::wrapRow ($row) );
   }
 

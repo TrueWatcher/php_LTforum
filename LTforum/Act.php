@@ -178,7 +178,11 @@ class Act {
         }
       }
       // find current and last page numbers
-      if ( $base=="begin" ) {
+      if ($forumEnd == 0) throw new UsageException ("Thread should not be empty");
+      if ($forumEnd <= $overlay) {
+        $pageCurrent=$pageEnd=1;
+      }
+      else if ( $base=="begin" ) {
         // calculate from end message numbers
         $pageCurrent=(int)ceil(($end-$forunBegin-$overlay+1)/($length-$overlay));
         $pageEnd=(int)ceil(($forumEnd-$forunBegin-$overlay+1)/($length-$overlay));
@@ -209,6 +213,7 @@ class Act {
 
   /**
    * Displays the Search form and a page of found messages.
+   * @return void
    */
   public static function search (PageRegistry $pr, SessionRegistry $sr) {
     mb_internal_encoding("UTF-8");// ! important
@@ -262,6 +267,7 @@ class Act {
 
   /**
    * Displays Alert message, possibly with Back and Ok links.
+   * @return void
    */
   public static function showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
     $pr->s( "alert",$alertMessage );
@@ -274,9 +280,20 @@ class Act {
   /**
    * Filters texts, which were recieved from user.
    * @uses MaskTags::mask_tags
+   * @param string $txt raw text
+   * @param object SessionRegistry $sr
+   * @return string truncated and tag-filtered text
    */
   public static function prepareInputText($txt, SessionRegistry $sr) {
-    if( strlen($txt) > $sr->g("maxMessageBytes") ) $txt=substr($txt,0,$sr->g("maxMessageBytes"));
+    mb_internal_encoding("UTF-8");
+    //if( strlen($txt) > $sr->g("maxMessageBytes") ) $txt=substr($txt,0,$sr->g("maxMessageBytes"));
+    // some browsers use \r\n, some \n as Newline
+    //http://stackoverflow.com/questions/7642257/javascript-string-length-differs-from-php-mb-strlen-on-textarea-row-line-break
+    $txt=str_replace("\r\n","\n",$txt);
+    //echo (">".$sr->g("maxMessageLetters").":".mb_strlen($txt));
+    if ( mb_strlen($txt) > $sr->g("maxMessageLetters") ) { 
+      $txt = mb_substr( $txt, 0, $sr->g("maxMessageLetters") );
+    }
     require_once ($sr->g("mainPath")."MaskTags.php");
     $keep_tags=array (
       'bbc' => array ("[s]","[/s]","[i]","[/i]","[b]","[/b]","[u]","[/u]"),
@@ -304,17 +321,19 @@ class Act {
 
   /**
    * Cleverly finds the basis for making absolute URIs from relative ones.
+   * @return string
    */
   public static function myAbsoluteUri () {
     $url = 'http://';
     if ( (array_key_exists("HTTPS",$_SERVER)) && $_SERVER['HTTPS'] ) $url = 'https://';
-    $url .= $_SERVER['HTTP_HOST'];            // Get the server
-    $url .= rtrim(dirname($_SERVER['PHP_SELF']), '/\\'); // Get the current directory
+    $url .= $_SERVER['HTTP_HOST'];// Get the server
+    $url .= rtrim(dirname($_SERVER['PHP_SELF']), '/\\');// Get the current directory
     return ($url);
   }
 
   /**
    * Takes from the Page Registry the actual link to the viewer ( as query string, relative ), turns it into valid absolute address and sends it as REDIRECT header.
+   * @return void
    */
   public static function redirectToView (PageRegistry $pr) {
     $uri=$pr->g("viewLink");

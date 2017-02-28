@@ -29,7 +29,7 @@ class CardfileSqlt extends ForumDb {
   function __construct($forumName,$allowCreate=false,$tableName=null) {
     $forumPath="";// relative to /thread/index.php
     $forumDbFile=$forumPath.$forumName.".db";
-    if( !empty($tableName) ) self::$table=$tableName;
+    if ( !empty($tableName) ) self::$table=$tableName;
 
     if (! file_exists($forumDbFile) ) {
       if (! $allowCreate) { // alas
@@ -50,9 +50,11 @@ class CardfileSqlt extends ForumDb {
     // db file was found ready
       parent::__construct($forumDbFile,false);
     }
+    parent::$forumDbo->busyTimeout(5000);    
   }
   
   static function destroy() {
+    if (parent::$forumDbo) parent::$forumDbo->close();
     parent::$forumDbo=null;
   }
 
