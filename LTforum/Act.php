@@ -5,9 +5,37 @@
  */
 
 /**
- * Helper class for The Controller (LTforum.php).
+ * Helper class for The Frontend Controller (LTforum.php).
  */
 class Act {
+
+  /**
+   * Resolves the command and calls the appropriate method.
+   * Single entry point into frontend command processing.
+   * @return void
+   */
+  public static function go(PageRegistry $pr,SessionRegistry $sr) {
+    $action=$pr->g("act");
+    switch ($action) {
+      case "new":
+        self::newMessage($pr,$sr);
+        break;
+      case "el":
+        self::editLast($pr,$sr);
+        break;
+      case "upd":
+        self::updateLast($pr,$sr);
+        break;
+      case "add":
+        self::add($pr,$sr);
+        break;
+      case "search":
+        self::search($pr,$sr);
+        break;
+      default:
+        self::view($pr,$sr);
+    }    
+  }
 
   /**
    * Displays form to write a new message.

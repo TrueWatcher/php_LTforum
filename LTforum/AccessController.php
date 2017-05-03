@@ -51,6 +51,29 @@ class AuthRegistry extends SingletAssocArrayWrapper {
     $t=$this->g("trace").$separator.$str;
     $this->s("trace",$t);
   }
+  
+  static function initVectorForFrontend($forumName,$templatePath,$assetsPath) {
+    $ivf=[
+    "realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" , "trace"=>""
+    ];
+    return $ivf;
+  }
+  
+  static function initVectorForBackend($forumName,$forumsPath,$templatePath,$assetsPath) {
+    $ivb=[
+    "realm"=>$forumName, "targetPath"=>$forumsPath.$forumName."/", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>"YES", "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>"" 
+    ];
+    return $ivb;
+  }
+  
+  static function initVector($forumName,$targetPath,$templatePath,$assetsPath,$isAdminArea) {
+  // frontend: ($forumName, "", $templatePath, $assetsPath, 0)
+  // backend ($apr->g("forum"), $forumsPath.$apr->g("forum")."/", $templatePath, $assetsPath, 1)
+    $iv=[
+      "realm"=>$forumName, "targetPath"=>$targetPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>$isAdminArea, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
+    ];
+    return $iv;
+  } 
 }
 
 class AccessController {

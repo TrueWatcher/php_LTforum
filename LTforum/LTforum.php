@@ -5,111 +5,42 @@
  */
 
 /**
- * Controller upper part: Initializations, AccessController call and Command resolver.
+ * Frontend Controller, the upper part of.
+ * Initializations, AccessController call and command processor call.
  * Commands are in Act.php
  */
 
-require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."AssocArrayWrapper.php");
+require_once ($mainPath."Registries.php");
+require_once ($mainPath."CardfileSqlt.php");
 require_once ($mainPath."Act.php");
 require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AccessHelper.php");
 require_once ($mainPath."AccessController.php");
 require_once ($mainPath."Applicant.php");
 
-class PageRegistry extends SingletAssocArrayWrapper {
-    protected static $me=null;// private causes access error
-
-    public function readInput() {
-      $inputKeys=[ "act", "current", "begin", "end", "length", "user", "txt", "comm", "snap", "del", "query", "searchLength", "order" ];
-      foreach ($inputKeys as $k) {
-        if ( array_key_exists($k,$_REQUEST) ) $this->s($k,$_REQUEST[$k]);
-        else $this->s($k,"");
-      }
-      if (array_key_exists('PHP_AUTH_USER',$_SERVER) ) $this->s("user",$_SERVER['PHP_AUTH_USER']);// will be overwritten by self::readSession
-    }
-
-    public function readSession() {
-      $keys=["authName"=>"user", /*"current"=>"current", conflicts with readInput*/ "updated"=>"updated" ];
-      if ( !$_SESSION ) throw new UsageException("PageRegistry: no active session found !");//return(false);
-      $i=0;
-      foreach($keys as $sessKey=>$regKey) {
-        if ( array_key_exists($sessKey,$_SESSION) && $_SESSION[$sessKey] ) {
-          $this->s($regKey,$_SESSION[$sessKey]);
-          $i++;
-        }
-      }
-      return($i);
-    }
-
-    /*public function exportToSession() {
-      $keys=[ "current"=>"current" ];//"authName"=>"user",
-      $regKey="current";
-      $sessKey=$keys[$regKey];
-      $_SESSION[$sessKey] = $this->g($regKey);
-    }*/
-}
-
-class SessionRegistry extends SingletAssocArrayWrapper {
-    protected static $me=null;
-}
-
-class ViewRegistry extends SingletAssocArrayWrapper {
-    protected static $me=null;
-}
-
-// MAIN
-
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
-// instantiate and initialize the Session Registry
-$sr=SessionRegistry::getInstance( 2, array( "lang"=>"en", "viewDefaultLength"=>10, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, /*"maxMessageBytes"=>1500,*/ "maxMessageLetters"=>750, "narrowScreen"=>640, "forum"=>$forumName)
-);
+// minimal initializations
+$ivf=SessionRegistry::initVectorForFrontend($mainPath,$templatePath,$assetsPath,$forumName);
+$sr=SessionRegistry::getInstance(2,$ivf);
 
 // here goes the Access Controller
-$ar=AuthRegistry::getInstance(1, ["realm"=>$forumName, "targetPath"=>"", "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"" , "trace"=>""] );
+//$ivf=AuthRegistry::initVectorForFrontend($forumName,$templatePath,$assetsPath);
+$ivf=AuthRegistry::initVector($forumName, "", $templatePath, $assetsPath, 0);
+$ar=AuthRegistry::getInstance(1,$ivf);
 $ac=new AccessController($ar);
 $acRet=$ac->go();
 //echo("Trace:".$ar->g("trace")."\n");
 //echo( "Alert:".$ar->g("alert")."\n" );
 if($acRet!==true) exit($acRet);
 
-//  instantiate and initialize the Page Registry
-$pr=PageRegistry::getInstance( 0,array() );
-$pr->readInput();
-$pr->readSession();
-if ($forumTitle) $pr->s("title",$forumTitle);
-else $pr->s("title","LTforum::".$forumName);
-$pr->s( "viewLink",Act::addToQueryString($pr,"end=-1","length")."#footer" );//
+// more initializations using database
+$pr=PageRegistry::getInstance( 0, [] );
+$pr->initAllAfterAuth(null, null, $sr, "Act", $forumTitle, $forumName);
 
-try {
-  $pr->s("cardfile",new CardfileSqlt($forumName,true));
-}
-catch (Exception $e) {
-  Act::showAlert ($pr,$sr,$e->getMessage());
-}
+if ( $pr->queryStringIsEmpty() )  Act::redirectToView($pr);
 
-$action=$pr->g("act");
-if ( empty($action) && empty($pr->g("begin")) && empty($pr->g("end")) )  Act::redirectToView($pr);
-
-switch ($action) {
-  case "new":
-    Act::newMessage($pr,$sr);
-    break;
-  case "el":
-    Act::editLast($pr,$sr);
-    break;
-  case "upd":
-    Act::updateLast($pr,$sr);
-    break;
-  case "add":
-    Act::add($pr,$sr);
-    break;
-  case "search":
-    Act::search($pr,$sr);
-    break;
-  default:
-    Act::view($pr,$sr);
-}
+Act::go($pr,$sr);
 
 ?>
