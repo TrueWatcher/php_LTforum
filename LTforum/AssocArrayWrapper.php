@@ -76,6 +76,13 @@
       }
       return( $this->arr[$key] );
     }
+    
+    public function checkNotEmpty($key) {
+      if ( !array_key_exists($key,$this->arr) ) {
+        return false;
+      }
+      return( ! empty($this->arr[$key]) );
+    }
 
     public function r($key) {
       if ( $this->strict==2 ) throw new UsageException ("Attempt to remove element by key ".$key." while this instance was constucted in READONLY mode" );

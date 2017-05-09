@@ -18,10 +18,14 @@
   <link rel="stylesheet" type="text/css" href="<?php print($sr->g("assetsPath")."talk.css"); ?>" media="all" />
 </head>
 <body>
-<!--<p style="text-align:center;"><?php print($pr->g("alert")); ?><br /></p>-->
+<?php 
+if (isset($vr) && $vr->g("alert")) $alert=$vr->g("alert");
+else $alert=$pr->g("alert");
+?>
+<!--<p style="text-align:center;"><?php print($alert); ?><br /></p>-->
 
 <table class="low">
-  <tr><td colspan="2"><?php print($pr->g("alert")); ?></td></tr>
+  <tr><td colspan="2"><?php print($alert); ?></td></tr>
   <tr>
   <td><?php
   if( !empty($pr->g("formLink")) )

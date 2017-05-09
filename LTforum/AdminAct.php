@@ -9,10 +9,38 @@
  */
 class AdminAct {
 
-  public function checkThreadPin (PageRegistry $apr, SessionRegistry $asr) {
-    if ( empty($apr->g("forum")) ) return ("You must specify a forum thread");
-    if ( empty($apr->g("user")) && strcmp($apr->g("pin"),$asr->g("pin"))!==0 ) return ("You must present PIN. Or, better, set up authentication");
-    if ( !file_exists($apr->g("targetPath").".db") ) return ("You must specify a valid forum thread ".$apr->g("targetDb"));
+  /**
+   * Main entry point.
+   * @return false if command is unknown, ViewRegistry instance on success or error
+   */
+  public static function go(PageRegistry $apr, SessionRegistry $asr) {
+    try {
+      switch ( $apr->g("act") ) {
+      case ("exp"):
+        //print("export");
+        //print_r($apr);
+        return(self::exportHtml ($apr,$asr));
+      case ("imp"):
+        //print("export");
+        return(self::importHtml ($apr,$asr));
+        //self::showAlert($apr,$asr,$error);
+        //else self::showAlert($apr,$asr,"Import is complete");
+        //Act::view($apr,$asr);
+        //exit(0);
+      case ("dr"):
+        //print("delete");
+        return(self::deleteRange ($apr,$asr));
+      case ("ea"):
+        //print("edit any");
+        return(self::editAny ($apr,$asr));
+      case ("ua"):
+        return(self::updateAny ($apr,$asr));
+      default:
+        return false;
+      }
+    } catch (AccessException $e) {
+      return (self::showAlert($e->getMessage()));
+    }
   }
 
   public function exportHtml (PageRegistry $apr, SessionRegistry $asr) {
@@ -21,7 +49,9 @@ class AdminAct {
     //require_once($asr->g("templatePath")."RollElements.php");//will be removed
 
     //Act::view($apr,$asr);
-    if ( empty($apr->g("begin")) || ( empty($apr->g("end")) && empty($apr->g("kb")) )  ) Act::showAlert($apr,$asr,"You should give begin and end|kb");
+    if ( empty($apr->g("begin")) || ( empty($apr->g("end")) && empty($apr->g("kb")) ) ) {
+      return(self::showAlert("You should give begin and end|kb"));
+    }
     $begin=$apr->g("begin");
     $end=$apr->g("end");
     if ( $begin < $apr->g("forumBegin") ) $begin = $apr->g("forumBegin");
@@ -73,8 +103,9 @@ class AdminAct {
       $newEnd=$realEnd;
     }
 
-    $vr=ViewRegistry::getInstance(2,array("begin"=>$newBegin,"end"=>$newEnd,"msgGenerator"=>$msgList,"controlsClass"=>"ExportElements"
-    ));
+    $vr=ViewRegistry::getInstance(2,[
+      "begin"=>$newBegin, "end"=>$newEnd, "msgGenerator"=>$msgList, "controlsClass"=>"ExportElements"
+    ] );
     $pr=PageRegistry::getInstance();
     $sr=clone $asr;// need to change assetsPath
     $sr->s( "assetsPath","../".$asr->g("assetsPath") );
@@ -96,9 +127,10 @@ class AdminAct {
     include ($asr->g("templatePath")."section.php");
 
     ob_end_clean();
-    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil($processedBytes/1000)."KB. ".$warning);
+    
+    $vr->clearInstance();// ViewRegistry is needed for normal page view
+    return(self::showAlert("Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil($processedBytes/1000)."KB. ".$warning));
 
-    return;
     /* just history
     // $apr,$asr,$newBegin,$newEnd,$processed,$warning,$begin,$realEnd,$messages
     //print("!!".$asr->g("templatePath")."export.html");
@@ -115,7 +147,7 @@ class AdminAct {
     touch ($fullFile);
     if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
     file_put_contents($fullFile,$template);
-    Act::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil(strlen($template)/1000)."KB. ".$warning);*/
+    self::showAlert($apr,$asr,"Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil(strlen($template)/1000)."KB. ".$warning);*/
   }
 
   /**
@@ -136,7 +168,9 @@ class AdminAct {
   public function importHtml (PageRegistry $apr, SessionRegistry $asr) {
     //print("import");
     $fullFile=$asr->g("forumsPath").$apr->g("forum")."/".$apr->g("obj").".html";
-    if ( !file_exists($fullFile) ) Act::showAlert($apr,$asr,"File not found: ".$fullFile." Have you really created it?");
+    if ( !file_exists($fullFile) ) {
+      return(self::showAlert("File not found: ".$fullFile." Have you really created it?"));
+    }
     $i=0;
     $pieces=self::getOneMessage ($fullFile,$apr->g("order"));
     foreach($pieces as $m) {
@@ -145,7 +179,7 @@ class AdminAct {
       $apr->g("cardfile")->addMsg($parsed);
       $i++;
     }
-    Act::showAlert($apr,$asr,"Added ".$i." messages in ".$apr->g("order")." order");
+    return(self::showAlert("Added ".$i." messages in ".$apr->g("order")." order"));
   }
 
   private static function getOneMessage ($file,$order) {
@@ -207,42 +241,60 @@ class AdminAct {
   public function deleteRange (PageRegistry $apr, SessionRegistry $asr) {
     $begin=$apr->g("begin");
     $end=$apr->g("end");
-    if ( empty($begin) || empty($end) ) Act::showAlert($apr,$asr,"You must specify both begin and end");
+    if ( empty($begin) || empty($end) ) {
+      return(self::showAlert("You must specify both begin and end"));
+    }
     if ( $begin < $apr->g("forumBegin") ) $begin = $apr->g("forumBegin");
     if ( $end > $apr->g("forumEnd") ) $end = $apr->g("forumEnd");
-    if ( $begin != $apr->g("forumBegin") && $end != $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Your block must border begin or end of forum thread");
-    if ( $begin <= $apr->g("forumBegin") && $end >= $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"You are not allowed to delete all messages, leave at least one");
+    if ( $begin != $apr->g("forumBegin") && $end != $apr->g("forumEnd") ) {
+      return(self::showAlert("Your block must border begin or end of forum thread"));
+    }
+    if ( $begin <= $apr->g("forumBegin") && $end >= $apr->g("forumEnd") ) {
+      return(self::showAlert("You are not allowed to delete all messages, leave at least one"));
+    }
     $apr->g("cardfile")->deletePackMsg($begin,$end);
-    Act::showAlert($apr,$asr,"Removed ".($end+1-$begin)." messages from ".$begin." to ".$end );
+    return(self::showAlert("Removed ".($end+1-$begin)." messages from ".$begin." to ".$end ));
   }
 
   public function editAny (PageRegistry $apr, SessionRegistry $asr) {
     $targetId=$apr->g("current");
-    if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
+    if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) {
+      return(self::showAlert("Invalid message number : ".$targetId));
+    }
     $m=$apr->g("cardfile")->getOneMsg($targetId);
 
     $pr=$apr;
     $sr=$asr;
-    $vr=ViewRegistry::getInstance( 2, ["id"=>$targetId, "author"=>$m["author"], "message"=>$m["message"], "comment"=>$m["comment"], "controlsClass"=>"EditanyElements"] );
-    require_once($asr->g("templatePath")."FormElements.php");
+    $vr=ViewRegistry::getInstance( 2, [
+      "id"=>$targetId, "author"=>$m["author"], "message"=>$m["message"], "comment"=>$m["comment"],
+      "requireFiles"=>"FormElements.php,SubFormElements.php", "includeTemplate"=>"form.php",
+      "controlsClass"=>"EditanyElements"] 
+    );
+    return ($vr);
+    /*require_once($asr->g("templatePath")."FormElements.php");
     require_once($asr->g("templatePath")."SubFormElements.php");
     // show form
     include ($asr->g("templatePath")."form.php");
-    exit(0);
+    exit(0);*/
   }
 
   public function updateAny (PageRegistry $apr, SessionRegistry $asr) {
     $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum","pin","current") );
     $targetId=$apr->g("current");
-    if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) Act::showAlert($apr,$asr,"Invalid message number : ".$targetId);
+    if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) {
+      return(self::showAlert("Invalid message number : ".$targetId));
+    }
     $m=$apr->g("cardfile")->getOneMsg($targetId);
     // check input strings
     $author=trim($apr->g("author"));
-    if ( empty($author) ) Act::showAlert ($apr,$asr,"Empty username is not allowed");
-    if ( Act::charsInString($author,"<>&\"':;()") )
-      Act::showAlert ($apr,$asr,"Username ".htmlspecialchars($author)." contains forbidden symbols");
+    if ( empty($author) ) {
+      return(self::showAlert("Empty username is not allowed"));
+    }
+    if ( Act::charsInString($author,"<>&\"':;()") ) {
+      return(self::showAlert ("Username ".htmlspecialchars($author)." contains forbidden symbols"));
+    }
     $txt=$apr->g("txt");
-    if( empty($txt) ) Act::showAlert ($apr,$asr,"Please, leave something in the Message field");
+    if( empty($txt) ) return(self::showAlert("Please, leave something in the Message field"));
     $txt=Act::prepareInputText($txt,$asr);
     $comm=$apr->g("comm");
     $comm=Act::prepareInputText($comm,$asr);
@@ -253,7 +305,22 @@ class AdminAct {
     if ( !empty($apr->g("clear")) ) $m["time"]=$m["date"]="";// current date and time will be set
     $apr->g("cardfile")->addMsg($m,true);// true for overwrite
 
-    Act::showAlert ($apr,$asr,"Message ".$apr->g("current")." has been updated");
-
+    return(self::showAlert("Message ".$apr->g("current")." has been updated"));
+  }
+  
+  /**
+   * Displays Alert message, possibly with Back and Ok links.
+   * @param
+   * @param
+   * @param string $alertMessage
+   * @return void
+   */
+  public static function showAlert ($alertMessage) {
+    // reset the ViewRegistry
+    ViewRegistry::clearInstance();
+    $vr=ViewRegistry::getInstance( 2,[
+      "alert"=>$alertMessage, "requireFiles"=>null, "includeTemplate"=>"alert.php"
+    ] );
+    return $vr; 
   }
 }

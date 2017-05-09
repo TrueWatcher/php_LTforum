@@ -36,6 +36,67 @@ class UserManager {
   }
   
   /**
+   * Main entry point.
+   * @return false on unknown command, ViewRegistry instance on success or error
+   */
+  static function go(AuthRegistry $aar,PageRegistry $apr, SessionRegistry $asr) {
+    //print_r($_REQUEST);
+    try {
+      $vr=ViewRegistry::getInstance(1,[
+        "alert"=>"", "requireFiles"=>null,"includeTemplate"=>"admin.php",
+        "userList"=>"", "adminList"=>""
+      ]);
+      self::init($aar->g("targetPath"),$apr->g("forum"));
+      switch ( $apr->g("act") ) {
+      case ("lu"):
+        $vr->s("userList",implode(", ",UserManager::listUsers() ) );
+        return($vr);
+      case ("la"):
+        $vr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+        return($vr);
+      case ("uAdd"):
+        $ret=UserManager::manageUser("add",$apr->g("uEntry"));
+        if ($ret) {
+          $vr->clearInstance();
+          return(AdminAct::showAlert ($ret));
+        }
+        $vr->s("userList",implode(", ",UserManager::listUsers() ) );
+        return($vr);
+      case ("uDel"):
+        $ret=UserManager::manageUser("del",$apr->g("uEntry"));
+        if ($ret) {
+          $vr->clearInstance();
+          return(AdminAct::showAlert ($ret));
+        }
+        $vr->s("userList",implode(", ",UserManager::listUsers() ) );
+        return($vr);
+      case ("aAdd"):
+        $ret=UserManager::manageAdmin("add",$apr->g("aUser"));
+        if ($ret) {
+          $vr->clearInstance();
+          return(AdminAct::showAlert($ret));
+        }
+        $vr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+        return($vr);
+      case ("aDel"):
+        $ret=UserManager::manageAdmin("del",$apr->g("aUser"));
+        if ($ret) {
+          $vr->clearInstance();
+          return(AdminAct::showAlert($ret));
+        }
+        $vr->s("adminList",implode(", ",UserManager::listAdmins() ) );
+        return($vr);
+      default:
+        $vr->clearInstance();
+        return(false);
+      }
+    } catch (AccessException $e) {
+      $vr->clearInstance();
+      return(AdminAct::showAlert($e->getMessage()));
+    }
+  }
+  
+  /**
    * Reads users and admins inrormation from the config file.
    * @param string $forumName
    * @param array $users output! pairs userName=>passwordHash

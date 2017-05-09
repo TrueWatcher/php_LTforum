@@ -40,86 +40,56 @@ if ( $acRet !== true ) exit($acRet);
 // continue PageRegistry inits with database
 $apr->initAdmAfterAuth($asr);
 
-try {
-  switch ( $apr->g("act") ) {
-    case ("exp"):
-      //print("export");
-      //print_r($apr);
-      AdminAct::exportHtml ($apr,$asr);
-      //Act::view($apr,$asr);
-      exit(0);
-    case ("imp"):
-      //print("export");
-      AdminAct::importHtml ($apr,$asr);
-      //Act::showAlert($apr,$asr,$error);
-      //else Act::showAlert($apr,$asr,"Import is complete");
-      //Act::view($apr,$asr);
-      exit(0);
-    case ("dr"):
-      //print("delete");
-      AdminAct::deleteRange ($apr,$asr);
-      exit(0);
-    case ("ea"):
-      //print("edit any");
-      AdminAct::editAny ($apr,$asr);
-      exit(0);
-    case ("ua"):
-      AdminAct::updateAny ($apr,$asr);
-      exit(0);
-  }
+$ret=AdminAct::go($apr,$asr);
+if ($ret===false) $ret=UserManager::go($aar,$apr,$asr);
 
-  //print_r($_REQUEST);
-  UserManager::init($aar->g("targetPath"),$apr->g("forum"));
-  switch ( $apr->g("act") ) {
-    case ("lu"):
-      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
-      break;
-    case ("la"):
-      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
-      break;
-    case ("uAdd"):
-      $ret=UserManager::manageUser("add",$apr->g("uEntry"));
-      if ($ret) {
-        Act::showAlert ($apr,$asr,$ret);
-        exit;
-      }
-      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
-      break;
-    case ("uDel"):
-      $ret=UserManager::manageUser("del",$apr->g("uEntry"));
-      if ($ret) {
-        Act::showAlert ($apr,$asr,$ret);
-        exit;
-      }
-      $apr->s("userList",implode(", ",UserManager::listUsers() ) );
-      break;
-    case ("aAdd"):
-      $ret=UserManager::manageAdmin("add",$apr->g("aUser"));
-      if ($ret) {
-        Act::showAlert ($apr,$asr,$ret);
-        exit;
-      }
-      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
-      break;
-    case ("aDel"):
-      $ret=UserManager::manageAdmin("del",$apr->g("aUser"));
-      if ($ret) {
-        Act::showAlert ($apr,$asr,$ret);
-        exit;
-      }
-      $apr->s("adminList",implode(", ",UserManager::listAdmins() ) );
-      break;
-    case (""):
-      break;
-    default ;
-      Act::showAlert ($apr,$asr,"Unknown admin command:".$apr->g("act"));
+if ($ret===false ) {
+  if ( $apr->g("act") ) {
+    $ret=AdminAct::showAlert ("Unknown admin command:".$apr->g("act"));
   }
-
-} catch (AccessException $e) {
-  Act::showAlert ($apr,$asr,$e->getMessage());
+  else {
+    $ret=ViewRegistry::getInstance(2,[
+      "alert"=>"", "requireFiles"=>null,"includeTemplate"=>"admin.php",
+      "userList"=>"", "adminList"=>""
+    ]);
+  }
 }
 
-include ($asr->g("templatePath")."admin.php");
-exit(0);
+viewWrapper($asr,$apr,$ret);
+
+/**
+ * Allows for decoupling the View from the Controller.
+ * First checks if redirect is demanded by ViewRegistry::redirectUri.
+ * Then includes template classes as is stated in ViewRegistry::requireFiles,
+ * and includes template itself as stated in ViewRegistry::includeTemplate
+ * Makes shure SessionRegistry and PageRegistry instances are $sr and $pr as required by templates
+ * @return void
+ */
+function viewWrapper(SessionRegistry $sr,PageRegistry $pr,$vr=null) {
+  //var_dump($vr);
+  if (is_object($vr)) {
+    if ( $vr->checkNotEmpty("redirectUri")) {
+      header("Location: ".$vr->g("redirectUri"));
+      exit(0);
+    }
+    if ($vr->checkNotEmpty("requireFiles")) {
+      $files=explode(",",$vr->g("requireFiles"));
+      foreach($files as $classFile) {
+        require_once($sr->g("templatePath").$classFile);
+      }
+    }
+    if ($vr->checkNotEmpty("includeTemplate")) {
+      include ($sr->g("templatePath").$vr->g("includeTemplate"));
+    }
+    else {
+      throw new UsageException("Empty ViewRegistry::includeTemplate");
+    }
+  }
+  else {
+    var_dump($vr);
+    throw new UsageException ("Non-object 3rd argument");
+  }
+}
+
 
 ?>
