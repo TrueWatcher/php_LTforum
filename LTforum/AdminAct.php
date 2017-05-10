@@ -309,14 +309,11 @@ class AdminAct {
   }
   
   /**
-   * Displays Alert message, possibly with Back and Ok links.
-   * @param
-   * @param
+   * Prepares Alert message, possibly with Back and Ok links.
    * @param string $alertMessage
-   * @return void
+   * @return object ViewRegistry 
    */
   public static function showAlert ($alertMessage) {
-    // reset the ViewRegistry
     ViewRegistry::clearInstance();
     $vr=ViewRegistry::getInstance( 2,[
       "alert"=>$alertMessage, "requireFiles"=>null, "includeTemplate"=>"alert.php"

@@ -12,57 +12,56 @@ class Act {
   /**
    * Resolves the command and calls the appropriate method.
    * Single entry point into frontend command processing.
-   * @return void
+   * @return object ViewRegistry
    */
-  public static function go(PageRegistry $pr,SessionRegistry $sr) {
+  public static function go(SessionRegistry $sr,PageRegistry $pr) {
     $action=$pr->g("act");
     switch ($action) {
-      case "new":
-        self::newMessage($pr,$sr);
-        break;
-      case "el":
-        self::editLast($pr,$sr);
-        break;
-      case "upd":
-        self::updateLast($pr,$sr);
-        break;
-      case "add":
-        self::add($pr,$sr);
-        break;
-      case "search":
-        self::search($pr,$sr);
-        break;
-      default:
-        self::view($pr,$sr);
+    case "new":
+      return(self::newMessage($pr,$sr));
+    case "el":
+      return(self::editLast($pr,$sr));
+    case "upd":
+      return(self::updateLast($pr,$sr));
+    case "add":
+      return(self::add($pr,$sr));
+    case "search":
+      return(self::search($pr,$sr));
+    default:
+      return(self::view($pr,$sr));
     }    
   }
 
   /**
    * Displays form to write a new message.
-   * @return void
+   * @return object ViewRegistry
    */
    public static function newMessage(PageRegistry $pr,SessionRegistry $sr) {
-    $vr=ViewRegistry::getInstance( 2, [ "id"=>"", "message"=>"",  "controlsClass"=>"NewElements" ] );
-    require_once ($sr->g("templatePath")."FormElements.php");
-    require_once ($sr->g("templatePath")."SubFormElements.php");
-    include ($sr->g("templatePath")."form.php");
-    exit(0);
+    $vr=ViewRegistry::getInstance( 2, [ 
+      "id"=>"", "message"=>"",  "controlsClass"=>"NewElements",
+      "requireFiles"=>"FormElements.php,SubFormElements.php", "includeTemplate"=>"form.php"
+    ] );
+    return $vr;
   }
 
   /**
    * Processes form, presented by Act::newMessage.
-   * @return void
+   * @return object ViewRegistry
    */
   public static function add(PageRegistry $pr,SessionRegistry $sr) {
     //$pr->dump();
     $user=$pr->g("user");
     $txt=$pr->g("txt");
     $pr->s( "formLink",self::addToQueryString($pr,"act=new","length","user") );
-    if( empty($user) ) self::showAlert ($pr,$sr,"Please, introduce yourself");
-    if( empty($txt) ) self::showAlert ($pr,$sr,"Please, write some message");
+    if( empty($user) ) {
+      return(self::showAlert ("Please, introduce yourself"));
+    }
+    if( empty($txt) ) {
+      return(self::showAlert ("Please, write some message"));
+    }
     if ( self::charsInString($user,"<>&\"':;()") ) {
       $pr->s("user","");
-      self::showAlert ($pr,$sr,"Username ".htmlspecialchars($user)." contains forbidden symbols");
+      return(self::showAlert ("Username ".htmlspecialchars($user)." contains forbidden symbols"));
     }
 
     if( strlen($user) > 60 ) $user=substr($user,0,60);
@@ -71,32 +70,35 @@ class Act {
     $newMsg=self::makeMsg($user,$txt);
     $pr->g("cardfile")->addMsg($newMsg);
 
-    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message from ".$user." has been added successfully");
-    self::redirectToView ($pr);
+    if ( empty($pr->g("snap")) ) self::showAlert ("Message from ".$user." has been added successfully");
+    return(self::redirectToView ($pr));
   }
 
   /**
    * Displays form to edit the last message, if its author is the current user.
    * Stores that message's Id in SESSION to keep track
-   * @return void
+   * @return object ViewRegistry
    */
   public static function editLast(PageRegistry $pr,SessionRegistry $sr) {
     // checkings
     $lastMsg=$pr->g("cardfile")->getLastMsg();
-    if( $lastMsg["author"] != $pr->g("user") ) self::showAlert ($pr,$sr,"Editing is denied: user names are different !");
+    if( $lastMsg["author"] != $pr->g("user") ) {
+      return(self::showAlert ("Editing is denied: user names are different !"));
+    }
     // $pr::"current" comes from an Edit link
-    if( $lastMsg["id"] != $pr->g("current") ) self::showAlert ($pr,$sr,"Sorry, something is wrong with the message number. Looks like it's not the latest one now. ".$lastMsg["id"]."/".$pr->g("current").".");
+    if( $lastMsg["id"] != $pr->g("current") ) {
+      return(self::showAlert ("Sorry, something is wrong with the message number. Looks like it's not the latest one now. ".$lastMsg["id"]."/".$pr->g("current")."."));
+    }
     // store Id in SESSION
     $_SESSION["current"]=$lastMsg["id"];
     // make sure Updated is cleared
     if ( array_key_exists("updated",$_SESSION) ) unset($_SESSION["updated"]);
     // transfer message and comment
-    $vr=ViewRegistry::getInstance( 2, [ "id"=>$lastMsg["id"], "author"=>$lastMsg["author"], "message"=>$lastMsg["message"], "comment"=>$lastMsg["comment"], "controlsClass"=>"EditElements" ] );
-    require_once ($sr->g("templatePath")."FormElements.php");
-    require_once ($sr->g("templatePath")."SubFormElements.php");
-    // show form
-    include ($sr->g("templatePath")."form.php");
-    exit(0);
+    $vr=ViewRegistry::getInstance( 2, [
+      "id"=>$lastMsg["id"], "author"=>$lastMsg["author"], "message"=>$lastMsg["message"], "comment"=>$lastMsg["comment"], "controlsClass"=>"EditElements",
+      "requireFiles"=>"FormElements.php,SubFormElements.php", "includeTemplate"=>"form.php"
+    ] );
+    return $vr;
   }
 
   /**
@@ -104,17 +106,23 @@ class Act {
    * Takes the Id from SESSION, so one update is guranteed even if there came some more messages.
    * Clears the Id from SESSION on failure or removal, keeps it on successfull update.
    * Sets the Updated flag in the SESSION on successfull first update.
-   * @return void
+   * @return object ViewRegistry
    */
   public static function updateLast(PageRegistry $pr,SessionRegistry $sr) {
     //$pr->dump();
     // $pr::"current" comes from SESSION 
     //$current=$pr->g("current"); conflicts with $_REQUEST["current"]
     $current=$_SESSION["current"];
-    if ( !$current ) self::showAlert ($pr,$sr,"Updating denied. Click the EDIT link again.");
+    if ( !$current ) { 
+      return(self::showAlert ("Updating denied. Click the EDIT link again."));
+    }
     $targetMsg = $pr->g("cardfile")->getOneMsg( $current );
-    if ( !$targetMsg ) self::showAlert ($pr,$sr,"Failed to find message number ".$current." in the database");
-    if( $targetMsg["author"]!=$pr->g("user") ) self::showAlert ($pr,$sr,"Usernames are different!");
+    if ( !$targetMsg ) {
+      return(self::showAlert ("Failed to find message number ".$current." in the database"));
+    }
+    if( $targetMsg["author"]!=$pr->g("user") ) {
+      return(self::showAlert ("Usernames are different!"));
+    }
 
     $pr->s( "formLink",self::addToQueryString($pr,"act=el","length"/*,"user"*/,"current") );
 
@@ -123,19 +131,23 @@ class Act {
       $lastMsg = $pr->g("cardfile")->getLastMsg();
       if( $lastMsg["id"] != $current ) {
         // fail
-        self::showAlert ($pr,$sr,"Sorry, deleting denied as there is some new message below.");
+        return(self::showAlert ("Sorry, deleting denied as there is some new message below."));
       }
       // simply delete
       $pr->g("cardfile")->deletePackMsg($current,$current);
-      if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$current." has been deleted");
+      if ( empty($pr->g("snap")) ) {
+        return(self::showAlert ("Message ".$current." has been deleted"));
+      }
       // no more updates by this Id
       unset($_SESSION["current"]);
-      self::redirectToView ($pr);
+      return(self::redirectToView ($pr));
     }
     // try to update this message
     // check the input strings
     $txt=$pr->g("txt");
-    if( empty($txt) ) self::showAlert ($pr,$sr,"Please, leave something in the Message field");
+    if( empty($txt) ) {
+      return(self::showAlert ("Please, leave something in the Message field"));
+    }
     $txt=self::prepareInputText($txt,$sr);
     $comm=$pr->g("comm");
     $comm=self::prepareInputText($comm,$sr);
@@ -155,19 +167,21 @@ class Act {
         // fail
         unset($_SESSION["current"]);
         unset($_SESSION["updated"]);
-        self::showAlert ($pr,$sr,"Sorry, updating denied as there is some new message below. Create a new message.");
+        return(self::showAlert ("Sorry, updating denied as there is some new message below. Create a new message."));
       }
     }
     // update the message in database
     $pr->g("cardfile")->addMsg($targetMsg,true);// true for overwrite
 
-    if ( empty($pr->g("snap")) ) self::showAlert ($pr,$sr,"Message ".$current." has been updated");
-    self::redirectToView ($pr);
+    if ( empty($pr->g("snap")) ) {
+      return(self::showAlert ("Message ".$current." has been updated"));
+    }
+    return(self::redirectToView ($pr));
   }
 
   /**
    * Displays a page of messages. Default View.
-   * @return void
+   * @return object ViewRegistry
    */
   public static function view (PageRegistry $pr,SessionRegistry $sr) {
     try {
@@ -229,24 +243,21 @@ class Act {
 
       $toShow=$pr->g("cardfile")->yieldPackMsg($begin,$end);
 
-      $vr=ViewRegistry::getInstance( true, array( "controlsClass"=>"RollElements", "forumBegin"=>$forunBegin, "forumEnd"=>$forumEnd, "overlay"=>$overlay, "length"=>$length, "begin"=>$begin, "end"=>$end, "base"=>$base, "pageCurrent"=>$pageCurrent, "pageEnd"=>$pageEnd, "msgGenerator"=>$toShow
-      ) );
+      $vr=ViewRegistry::getInstance( true, [
+        "controlsClass"=>"RollElements", "forumBegin"=>$forunBegin, "forumEnd"=>$forumEnd, "overlay"=>$overlay, "length"=>$length, "begin"=>$begin, "end"=>$end, "base"=>$base, "pageCurrent"=>$pageCurrent, "pageEnd"=>$pageEnd, "msgGenerator"=>$toShow,
+        "requireFiles"=>"SectionElements.php,RollElements.php", "includeTemplate"=>"section.php"
+      ] );
       //$vr->s("no_such_key",0);// check catch UsageException
-
-      //$vr->dump();
-      require_once ($sr->g("templatePath")."SectionElements.php");
-      require_once ($sr->g("templatePath")."RollElements.php");
-      include ($sr->g("templatePath")."section.php");
-      exit(0);
+      return $vr;
     }
     catch (Exception $e) {
-      self::showAlert ($pr,$sr,$e->getMessage());
+      return(self::showAlert($e->getMessage()));
     }
   }// end view
 
   /**
    * Displays the Search form and a page of found messages.
-   * @return void
+   * @return object ViewRegistry
    */
   public static function search (PageRegistry $pr, SessionRegistry $sr) {
     mb_internal_encoding("UTF-8");// ! important
@@ -282,20 +293,17 @@ class Act {
       catch (OperationalException $oe) {
         $searchLink=self::addToQueryString($pr,"act=search&amp;query=","searchLength","length","order");
         $pr->s("formLink",$searchLink);
-        self::showAlert ( $pr,$sr,$oe->getMessage() );
-        exit(0);
+        return(self::showAlert ( $oe->getMessage() ));
       }
 
       $toShow=$pr->g("cardfile")->yieldSearchResults($andTerms,$pr->g("order"),$lim);
     }
 
-    $vr=ViewRegistry::getInstance( 2, array( "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms, "highlight"=>1 ) );
-
-    //$vr->dump();
-    require_once ($sr->g("templatePath")."SectionElements.php");
-    require_once ( $sr->g("templatePath")."SearchElements.php" );
-    include (  $sr->g("templatePath")."section.php" );
-    exit(0);
+    $vr=ViewRegistry::getInstance( 2, [
+      "controlsClass"=>"SearchElements", "query"=>$pr->g("query"), "order"=>$order, "searchLength"=>$lim, "length"=>$pr->g("length"), "msgGenerator"=>$toShow, "searchTerms"=>$andTerms, "highlight"=>1,
+      "requireFiles"=>"SectionElements.php,SearchElements.php", "includeTemplate"=>"section.php"
+    ] );
+    return $vr;
   }
 
   /**
@@ -305,10 +313,23 @@ class Act {
    * @param string $alertMessage
    * @return void
    */
-  public static function showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
+  public static function _showAlert (PageRegistry $pr, SessionRegistry $sr, $alertMessage) {
     $pr->s( "alert",$alertMessage );
     include ($sr->g("templatePath")."alert.php");
     exit(0);
+  }
+  
+  /**
+   * Prepares Alert message, possibly with Back and Ok links.
+   * @param string $alertMessage
+   * @return object ViewRegistry 
+   */
+  public static function showAlert ($alertMessage) {
+    ViewRegistry::clearInstance();
+    $vr=ViewRegistry::getInstance( 2,[
+      "alert"=>$alertMessage, "requireFiles"=>null, "includeTemplate"=>"alert.php"
+    ] );
+    return $vr; 
   }
 
   // UTILITIES ----------------------------------
@@ -371,12 +392,19 @@ class Act {
    * Takes from the Page Registry the actual link to the viewer ( as query string, relative ), turns it into valid absolute address and sends it as REDIRECT header.
    * @return void
    */
-  public static function redirectToView (PageRegistry $pr) {
+  public static function _redirectToView (PageRegistry $pr) {
     $uri=$pr->g("viewLink");
     $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake
     $uri=self::myAbsoluteUri()."/".$uri;
     header("Location: ".$uri);
     exit(0);
+  }
+  public static function redirectToView (PageRegistry $pr) {
+    $uri=$pr->g("viewLink");
+    $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake
+    $uri=self::myAbsoluteUri()."/".$uri;
+    $vr=ViewRegistry::getInstance(2,[ "redirectUri"=>$uri ]);
+    return $vr;
   }
 
   /**

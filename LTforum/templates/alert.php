@@ -19,10 +19,10 @@
 </head>
 <body>
 <?php 
-if (isset($vr) && $vr->g("alert")) $alert=$vr->g("alert");
+if (isset($vr) && $vr->checkNotEmpty("alert")) $alert=$vr->g("alert");
 else $alert=$pr->g("alert");
 ?>
-<!--<p style="text-align:center;"><?php print($alert); ?><br /></p>-->
+<!--<p style="text-align:center;"><?php /*var_dump($alert);*/ print($alert); ?><br /></p>-->
 
 <table class="low">
   <tr><td colspan="2"><?php print($alert); ?></td></tr>

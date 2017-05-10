@@ -70,6 +70,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
   }
   
   public function queryStringIsEmpty() {
+    //echo('act='.$this->g("act").',begin='.$this->g("begin").',end='.$this->g("end") );
     return ( empty($this->g("act")) && empty($this->g("begin")) && empty($this->g("end")) );
   }
   
@@ -131,6 +132,35 @@ class SessionRegistry extends SingletAssocArrayWrapper {
 
 class ViewRegistry extends SingletAssocArrayWrapper {
   protected static $me=null;
+  
+ /**
+  * Allows for decoupling the View from the Controller.
+  * First checks if redirect is demanded by ViewRegistry::redirectUri.
+  * Then includes template classes as is stated in ViewRegistry::requireFiles,
+  * and includes template itself as stated in ViewRegistry::includeTemplate
+  * Makes shure SessionRegistry and PageRegistry instances are $sr and $pr as required by templates
+  * @return void
+  */
+  public function display(SessionRegistry $sr,PageRegistry $pr) {
+    //$this->dump();
+    $vr=$this;// $vr is required for templates
+    if ( $this->checkNotEmpty("redirectUri")) {
+      header("Location: ".$this->g("redirectUri"));
+      exit(0);
+    }
+    if ($this->checkNotEmpty("requireFiles")) {
+      $files=explode(",",$this->g("requireFiles"));
+      foreach($files as $classFile) {
+        require_once($sr->g("templatePath").$classFile);
+      }
+    }
+    if ($this->checkNotEmpty("includeTemplate")) {
+      include ($sr->g("templatePath").$this->g("includeTemplate"));
+    }
+    else {
+      throw new UsageException("Empty ViewRegistry::includeTemplate");
+    }
+  }
 }
 
 ?>

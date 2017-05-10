@@ -55,41 +55,13 @@ if ($ret===false ) {
   }
 }
 
-viewWrapper($asr,$apr,$ret);
-
-/**
- * Allows for decoupling the View from the Controller.
- * First checks if redirect is demanded by ViewRegistry::redirectUri.
- * Then includes template classes as is stated in ViewRegistry::requireFiles,
- * and includes template itself as stated in ViewRegistry::includeTemplate
- * Makes shure SessionRegistry and PageRegistry instances are $sr and $pr as required by templates
- * @return void
- */
-function viewWrapper(SessionRegistry $sr,PageRegistry $pr,$vr=null) {
-  //var_dump($vr);
-  if (is_object($vr)) {
-    if ( $vr->checkNotEmpty("redirectUri")) {
-      header("Location: ".$vr->g("redirectUri"));
-      exit(0);
-    }
-    if ($vr->checkNotEmpty("requireFiles")) {
-      $files=explode(",",$vr->g("requireFiles"));
-      foreach($files as $classFile) {
-        require_once($sr->g("templatePath").$classFile);
-      }
-    }
-    if ($vr->checkNotEmpty("includeTemplate")) {
-      include ($sr->g("templatePath").$vr->g("includeTemplate"));
-    }
-    else {
-      throw new UsageException("Empty ViewRegistry::includeTemplate");
-    }
-  }
-  else {
-    var_dump($vr);
-    throw new UsageException ("Non-object 3rd argument");
-  }
+if ( ! $ret instanceof ViewRegistry) {
+  var_dump($ret);
+  throw new UsageException ("Non-object result");  
 }
+$ret->display($asr,$apr);
+
+
 
 
 ?>

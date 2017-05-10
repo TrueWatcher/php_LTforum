@@ -39,8 +39,13 @@ if($acRet!==true) exit($acRet);
 $pr=PageRegistry::getInstance( 0, [] );
 $pr->initAllAfterAuth(null, null, $sr, "Act", $forumTitle, $forumName);
 
-if ( $pr->queryStringIsEmpty() )  Act::redirectToView($pr);
+if ( $pr->queryStringIsEmpty() ) { $vr=Act::redirectToView($pr); }
+else { $vr=Act::go($sr,$pr); }
 
-Act::go($pr,$sr);
+if ( ! $vr instanceof ViewRegistry ) {
+  var_dump($vr);
+  throw new UsageException ("Non-object result");  
+}
+$vr->display($sr,$pr);
 
 ?>
