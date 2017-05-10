@@ -1,0 +1,47 @@
+en~mock~ru
+Previous page~~Предыдущая страница
+Message~~Сообщение
+Search~~Искать
+Edit/Delete~~Править/Удалить
+Write new~~Написать
+Page~~Страница
+Per page:~~Сообщ на стр
+Apply~~Применить
+Log out~~Выйти
+Please, enter the search string~~Введите слова для поиска
+%s <em>wrote us on %s at %s</em>:~~%s <em>написал/а нам %s в %s</em>: 
+search for "%s"~~поиск "%s"
+View first page~~На первую страницу
+Search for : ~~Искать : 
+View last page~~На последнюю страницу
+Results per page: ~~Результатов на странице:
+ sort : ~~ порядок:
+new ↘ old~~новые ↘ старые
+old ↘ new~~старые ↘ новые
+View page~~Открыть страницу
+Use "foo&bar" to find messages containing both "foo" and "bar"<br/>Use "foo bar" to find messages containing  "foo[SPACE]bar"~~Вводите "бум&блям" для поиска сообщений, содержащих одновременно "бум" и "блям"<br/>Вводите "бум блям" для поиска сообщений, содержащих "бум[ПРОБЕЛ]блям"
+Sorry, no results~~К сожалению, ничего не нашлось
+Login~~Вход
+Thread~~Раздел
+Your name~~Ваше имя
+Your password~~Ваш пароль
+Send as plain text ~~Отправлять незашифрованным
+Submit~~Отправить
+Wrong login or/and password ~~Неправильное имя или пароль
+Please, wait a few seconds and refresh the page~~Пожалуйста, подождите несколько секунд и обновите страницу
+Session reset by user~~До свидания!
+Unanswered: 0~~Неотвеченных сообщений нет
+Please, write some message~~Введите текст сообщения
+Back~~Назад
+Message from %s has been added successfully~~Сообщение от %s принято
+Please, leave something in the Message field~~Не оставляйте поле сообщения пустым
+Message %s has been updated~~Сообщение %s обновлено
+write new message~~новое сообщение
+Your message~~Ваше сообщение
+Go straight to forum after posting~~После отправки перейти прямо к просмотру
+edit message ~~редактирование сообщения 
+Delete this message ~~Удалить это сообщение 
+Edit this text~~Текст для редактирования
+Unanswered: %s, latest: %s at %s~~Неотвеченных сообщений: %s, последнее %s в %s
+Please, register to a new thread~~При смене раздела необходимо зарегистрироваться
+No messages by this user~~У этого пользователя нет сообщений

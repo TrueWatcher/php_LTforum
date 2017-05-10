@@ -19,8 +19,8 @@
 </head>
 <body>
 <?php 
-if (isset($vr) && $vr->checkNotEmpty("alert")) $alert=$vr->g("alert");
-else $alert=$pr->g("alert");
+if (isset($vr) && $vr->checkNotEmpty("alert")) $alert=l($vr->g("alert"));
+else $alert=l($pr->g("alert"));
 ?>
 <!--<p style="text-align:center;"><?php /*var_dump($alert);*/ print($alert); ?><br /></p>-->
 
@@ -29,7 +29,7 @@ else $alert=$pr->g("alert");
   <tr>
   <td><?php
   if( !empty($pr->g("formLink")) )
-  print ( "<a href=\"{$pr->g("formLink")}\">Back</a>" );
+  print ( "<a href=\"{$pr->g("formLink")}\">".l("Back")."</a>" );
   ?></td>
   <td><?php
   if( !empty($pr->g("viewLink")) )
@@ -38,9 +38,6 @@ else $alert=$pr->g("alert");
   </tr>
 </table>
 
-<p id="footer"><?php
-$outcome="alert~".$pr->g("alert");
-if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->");
-?></p>
+<p id="footer"></p>
 </body>
 </html>

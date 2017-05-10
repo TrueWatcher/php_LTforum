@@ -16,6 +16,7 @@ require_once ($mainPath."AccessHelper.php");
 require_once ($mainPath."AccessController.php");
 require_once ($mainPath."Applicant.php");
 require_once ($mainPath."UserManager.php");
+require_once ($mainPath."Translator.php");
 
 /**
  * Imitates page request.

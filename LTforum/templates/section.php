@@ -23,11 +23,11 @@ if ( !is_subclass_of($cc,"SectionElements") ) throw new UsageException ("Layout 
 </head>
 <body>
 <table class="low"><tr>
-  <td><?php print ( $cc::prevPageLink($vr,"Previous page",false,"footer") ); ?></td>
+  <td><?php print ( $cc::prevPageLink($vr,l("Previous page"),false,"footer") ); ?></td>
   <td><?php print ( $cc::numberForm($vr) ); ?></td>
   <td><?php print ( $cc::searchLinkForm($vr) ); ?></td>
 </tr></table>
-<?php if( $pr->g("alert") ) print("<hr/><p class=\"n\">".$pr->g("alert")."</p>"); ?>
+<?php if( $pr->g("alert") ) print("<hr/><p class=\"n\">".l($pr->g("alert"))."</p>"); ?>
 <?php
 $j=0;
 if ( !empty($vr->g("msgGenerator")) ) {
@@ -47,10 +47,7 @@ if ( !empty($vr->g("msgGenerator")) ) {
   <td><?php print ( $cc::lengthForm($vr) ); ?></td>
   <?php print ( $cc::logoutLink() ); ?>
 </tr></table>
-<p id="footer"><?php
-$outcome="viewed~".$j;
-if( $sr->g("toPrintOutcome") ) print("<!--Outcome:".$outcome."-->");
-?></p>
+<p id="footer"></p>
 <?php print ( $cc::onreadyScript($sr) ); ?>
 </body>
 </html>

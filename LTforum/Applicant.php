@@ -451,7 +451,7 @@ class Applicant {
   /**
    * Checks if there are new messages since the latest current user's message.
    * Main feature of the postAuth state.
-   * @return string notification
+   * @return string|Array notification
    */
   public function getUnanswered() {
     if ( !class_exists("CardfileSqlt") ) throw new UsageException ("Some dependency is missing");
@@ -466,8 +466,10 @@ class Applicant {
     // check if the latest message is authored by this user
     $last=$dbm->getLastMsg();
     $unanswered = $last["id"] - $found["id"];
-    $note="Unanswered: ".$unanswered;
-    if ( $unanswered ) $note.=", latest: ".$last["date"]." ".$last["time"];
+    if ( $unanswered ) {
+      $note=[ "Unanswered: %s, latest: %s at %s", $unanswered, $last["date"], $last["time"] ];  
+    }
+    else $note="Unanswered: 0"; 
     //$dbm->destroy();
     return ($note);
   }

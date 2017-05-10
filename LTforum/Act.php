@@ -61,7 +61,7 @@ class Act {
     }
     if ( self::charsInString($user,"<>&\"':;()") ) {
       $pr->s("user","");
-      return(self::showAlert ("Username ".htmlspecialchars($user)." contains forbidden symbols"));
+      return(self::showAlert (["Username %s contains forbidden symbols",htmlspecialchars($user)]));
     }
 
     if( strlen($user) > 60 ) $user=substr($user,0,60);
@@ -70,7 +70,7 @@ class Act {
     $newMsg=self::makeMsg($user,$txt);
     $pr->g("cardfile")->addMsg($newMsg);
 
-    if ( empty($pr->g("snap")) ) self::showAlert ("Message from ".$user." has been added successfully");
+    if ( empty($pr->g("snap")) ) self::showAlert (["Message from %s has been added successfully",$user]);
     return(self::redirectToView ($pr));
   }
 
@@ -87,7 +87,7 @@ class Act {
     }
     // $pr::"current" comes from an Edit link
     if( $lastMsg["id"] != $pr->g("current") ) {
-      return(self::showAlert ("Sorry, something is wrong with the message number. Looks like it's not the latest one now. ".$lastMsg["id"]."/".$pr->g("current")."."));
+      return(self::showAlert (["Sorry, something is wrong with the message number. Looks like it's not the latest one now: %s/%s.", $lastMsg["id"], $pr->g("current") ]));
     }
     // store Id in SESSION
     $_SESSION["current"]=$lastMsg["id"];
@@ -118,7 +118,7 @@ class Act {
     }
     $targetMsg = $pr->g("cardfile")->getOneMsg( $current );
     if ( !$targetMsg ) {
-      return(self::showAlert ("Failed to find message number ".$current." in the database"));
+      return(self::showAlert (["Failed to find message number %s in the database",$current]));
     }
     if( $targetMsg["author"]!=$pr->g("user") ) {
       return(self::showAlert ("Usernames are different!"));
@@ -136,7 +136,7 @@ class Act {
       // simply delete
       $pr->g("cardfile")->deletePackMsg($current,$current);
       if ( empty($pr->g("snap")) ) {
-        return(self::showAlert ("Message ".$current." has been deleted"));
+        return(self::showAlert (["Message %s has been deleted",$current]));
       }
       // no more updates by this Id
       unset($_SESSION["current"]);
@@ -174,7 +174,8 @@ class Act {
     $pr->g("cardfile")->addMsg($targetMsg,true);// true for overwrite
 
     if ( empty($pr->g("snap")) ) {
-      return(self::showAlert ("Message ".$current." has been updated"));
+      return(self::showAlert (["Message %s has been updated",$current]));
+      //"Message ".$current." has been updated"
     }
     return(self::redirectToView ($pr));
   }

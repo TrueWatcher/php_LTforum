@@ -10,14 +10,14 @@
 class SearchElements extends SectionElements {
 
   static function titleSuffix (ViewRegistry $context) {
-    $s="search for \"".$context->g("query")."\"";
+    $s=l(['search for "%s"',$context->g("query")]);
     return ($s);
   }
 
   static function idLink ($msg,ViewRegistry $context) {
     $qs="act=&amp;begin=".$msg["id"]."&amp;length=".$context->g("length");
     $link=self::genericLink ( $qs,"#".$msg["id"] );
-    return('<b title="View page">'.$link.'</b>&nbsp;');
+    return('<b title="'.l("View page").'">'.$link.'</b>&nbsp;');
   }
 
   static function localControls ($msg,ViewRegistry $context,PageRegistry $pageContext) {
@@ -127,12 +127,13 @@ class SearchElements extends SectionElements {
   }
 
   static function prevPageLink (ViewRegistry $context,$anchor,$showDeadAnchor=false,$fragment="") {
-    $anchor="View first page";
+    $anchor=l("View first page");
     $qs="act=&amp;begin=1&amp;length=".$context->g("length");
     return( self::genericLink($qs,$anchor) );
   }
 
-  static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="View last page",$showDeadAnchor=false) {
+  static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="",$showDeadAnchor=false) {
+    if (empty($anchor)) $anchor=l("View last page");
     $qs="act=&amp;end=-1&amp;length=".$context->g("length");
     return( self::genericLink($qs,$anchor) );
   }
@@ -146,7 +147,7 @@ class SearchElements extends SectionElements {
   static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");
 
-    $form="<form action=\"\" method=\"get\" id=\"resultsPerPage\"><p>Results per page: ";
+    $form="<form action=\"\" method=\"get\" id=\"resultsPerPage\"><p>".l("Results per page: ");
     $form.="<select name=\"searchLength\">";
     $optList="";
     foreach ($lengths as $l) {
@@ -156,7 +157,7 @@ class SearchElements extends SectionElements {
     }
     //<option value="10">10</option>
     $form.=$optList;
-    $form.="</select> <input type=\"submit\" value=\"Apply\"/>";
+    $form.="</select> <input type=\"submit\" value=\"".l("Apply")."\"/>";
     $form.="<input type=\"hidden\" name=\"act\" value=\"search\"/>";
     $form.="<input type=\"hidden\" name=\"query\" value='".$context->g("query")."'/>";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\"/>";
@@ -168,16 +169,16 @@ class SearchElements extends SectionElements {
   static function searchLinkForm (ViewRegistry $context) {
     //$orders=["asc"=>,"desc"];
 
-    $form="<form action=\"\" method=\"post\" id=\"search\"><p>Search for : ";
+    $form="<form action=\"\" method=\"post\" id=\"search\"><p>".l("Search for : ");
     $form.="<input type=\"text\" name=\"query\" value='".$context->g("query")."'/>";
-    $form.="<input type=\"submit\" value=\"Search\"/><br/>";
+    $form.="<input type=\"submit\" value=\"".l("Search")."\"/><br/>";
 
-    $form.=" sort : <input type=\"radio\" name=\"order\" value=\"desc\"";
+    $form.=l(" sort : ")."<input type=\"radio\" name=\"order\" value=\"desc\"";
     if ( $context->g("order")==="desc" ) $form.=" checked=\"checked\"";
-    $form.=" /> new ↘ old &nbsp;&nbsp;";
+    $form.=" /> ".l("new ↘ old")." &nbsp;&nbsp;";
     $form.="<input type=\"radio\" name=\"order\" value=\"asc\"";
     if ( $context->g("order")==="asc" ) $form.=" checked=\"checked\"";
-    $form.=" /> old ↘ new";
+    $form.=" /> ".l("old ↘ new");
 
     $form.="<input type=\"hidden\" name=\"act\" value=\"search\"/>";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\"/>";
@@ -187,8 +188,14 @@ class SearchElements extends SectionElements {
   }
 
   static function bottomAlert (PageRegistry $pageContext,$actualCount) {
-    if ( $actualCount==0 && !empty($pageContext->g("query")) ) return ("Sorry, no results");
-    if ( $actualCount>0 && $actualCount==$pageContext->g("searchLength") ) return ("Only ".$actualCount." results shown, there may be more. Increase the page length or change order" );
+    if ( $actualCount==0 && !empty($pageContext->g("query")) ) { 
+      return ( l("Sorry, no results") );
+    }
+    if ( $actualCount>0 && $actualCount==$pageContext->g("searchLength") ) {
+      return ( l( [
+        "Only %s results shown, there may be more. Increase the page length or change order",$actualCount
+      ] ) );
+    }
   }
 
 }

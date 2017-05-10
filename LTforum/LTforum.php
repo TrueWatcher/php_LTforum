@@ -18,12 +18,16 @@ require_once ($mainPath."MyExceptions.php");
 require_once ($mainPath."AccessHelper.php");
 require_once ($mainPath."AccessController.php");
 require_once ($mainPath."Applicant.php");
+require_once ($mainPath."Translator.php");
 
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // minimal initializations
-$ivf=SessionRegistry::initVectorForFrontend($mainPath,$templatePath,$assetsPath,$forumName);
+if(!isset($lang) || empty($lang)) $lang="en";
+$ivf=SessionRegistry::initVectorForFrontend($mainPath,$templatePath,$assetsPath,$forumName,$lang);
 $sr=SessionRegistry::getInstance(2,$ivf);
+
+Translator::init($sr->g("lang"),$sr->g("mainPath").$sr->g("templatePath"),1);
 
 // here goes the Access Controller
 //$ivf=AuthRegistry::initVectorForFrontend($forumName,$templatePath,$assetsPath);
@@ -46,6 +50,7 @@ if ( ! $vr instanceof ViewRegistry ) {
   var_dump($vr);
   throw new UsageException ("Non-object result");  
 }
+
 $vr->display($sr,$pr);
 
 ?>

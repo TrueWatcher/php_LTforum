@@ -116,9 +116,9 @@ class PageRegistry extends SingletAssocArrayWrapper {
 class SessionRegistry extends SingletAssocArrayWrapper {
   protected static $me=null;
   
-  public static function initVectorForFrontend($mainPath,$templatePath,$assetsPath,$forumName) {
+  public static function initVectorForFrontend($mainPath,$templatePath,$assetsPath,$forumName,$lang="en") {
     $ivf=[
-    "lang"=>"en", "viewDefaultLength"=>10, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageLetters"=>750, "narrowScreen"=>640, "forum"=>$forumName ];
+    "lang"=>$lang, "viewDefaultLength"=>10, "viewOverlay"=>1, "toPrintOutcome"=>0,"mainPath"=>$mainPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "maxMessageLetters"=>750, "narrowScreen"=>640, "forum"=>$forumName ];
     return $ivf;
   }
   

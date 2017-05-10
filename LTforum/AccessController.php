@@ -319,7 +319,7 @@ class AccessController {
       throw new UsageException ("Wrong Command/State reg=".$this->c->g("reg")."/".$a->getStatus()."!");
 
     default:
-      $hc::showAuthAlert($this->c,"Wrong command reg=".$this->c->g("reg")."!");
+      $hc::showAuthAlert($this->c,["Wrong command reg=%s!",$this->c->g("reg")]);
       // state noChange
       //return (false);
       break;

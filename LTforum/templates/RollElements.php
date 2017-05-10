@@ -24,7 +24,7 @@ class RollElements extends SectionElements {
       //if ( !empty($pageContext->g("user")) ) $userParam="&amp;user=".urlencode($pageContext->g("user"));
       $qs="act=el".$userParam."&amp;current=".$msg["id"]."&amp;length=".$context->g("length");
       $link=self::genericLink($qs,"§");
-      return('<b title="Edit/Delete">'.$link.'</b>&nbsp;');
+      return('<b title='.l("Edit/Delete").'>'.$link.'</b>&nbsp;');
     }
   }
 
@@ -140,7 +140,7 @@ class RollElements extends SectionElements {
     $panel.=self::firstPageLink ($context)."&nbsp;&nbsp;";
     $panel.=self::genericRewind ($context,"-3",-3,true)."&nbsp;&nbsp;";
     $panel.=self::prevPageLink($context,"-1",true)."&nbsp;&nbsp;";
-    $panel.="Page:&nbsp;".$context->g("pageCurrent")."&nbsp;&nbsp;";
+    $panel.=l("Page").":&nbsp;".$context->g("pageCurrent")."&nbsp;&nbsp;";
     $panel.=self::nextPageLink($context,$no,"1+",true)."&nbsp;&nbsp;";
     $panel.=self::genericRewind ($context,"3+",3,true)."&nbsp;&nbsp;";
     $panel.=self::lastPageLink ($context);
@@ -149,12 +149,12 @@ class RollElements extends SectionElements {
   }
 
   static function newMsgLink (ViewRegistry $context) {
-    $el='<a href="?act=new&amp;length='.$context->g("length").'">Write new</a>';
+    $el='<a href="?act=new&amp;length='.$context->g("length").'">'.l("Write new").'</a>';
     return ($el);
   }
 
   static function searchLinkForm (ViewRegistry $context) {
-    $el='<a href="?act=search&amp;query=&amp;length='.$context->g("length").'" target="_blank">Search</a>';
+    $el='<a href="?act=search&amp;query=&amp;length='.$context->g("length").'" target="_blank">'.l("Search").'</a>';
     return ($el);
   }
   /*
@@ -164,7 +164,7 @@ class RollElements extends SectionElements {
   static function lengthForm (ViewRegistry $context) {
     $lengths=array(10,20,50,100,"*");
 
-    $form="<form action=\"\" method=\"get\" id=\"perPage\" drawer=\"Per\"><p>Per page: <select name=\"length\">";
+    $form="<form action=\"\" method=\"get\" id=\"perPage\" drawer=\"Per\"><p>".l("Per page:")." <select name=\"length\">";
     $optList="";
     foreach ($lengths as $l) {
       $optList.="<option value=\"".$l."\"";
@@ -173,7 +173,7 @@ class RollElements extends SectionElements {
     }
     //<option value="10">10</option>
     $form.=$optList;
-    $form.="</select> <input type=\"submit\" value=\"Apply\"/>";
+    $form.="</select> <input type=\"submit\" value=\"".l("Apply")."\"/>";
     $defineBase="<input type=\"hidden\" name=\"";
     $bs=$context->g("base");
     $defineBase.=$bs."\" value=\"";
@@ -188,7 +188,7 @@ class RollElements extends SectionElements {
    * A small form to go to any message by its number.
    */
   static function numberForm (ViewRegistry $context) {
-    $form="<form action=\"\" method=\"get\" id=\"messageNumber\" drawer=\"Rec\"><p>Message&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): ";
+    $form="<form action=\"\" method=\"get\" id=\"messageNumber\" drawer=\"Rec\"><p>".l("Message")."&nbsp;(".$context->g("forumBegin")."..".$context->g("forumEnd")."): ";
     $form.="<input type=\"text\" name=\"begin\" style=\"width:5em;\" value=\"".$context->g("begin")."\" />";
     $form.="<input type=\"hidden\" name=\"length\" value=\"".$context->g("length")."\" />";
     $form.="</p></form>";
@@ -197,7 +197,7 @@ class RollElements extends SectionElements {
 
   static function logoutLink() {
     //return ( "<td>" . self::genericLink("reg=reset","Log out") . "</td>" );
-    return ( "<td>" . self::genericLink("reg=deact","Log out") . "</td>" );
+    return ( "<td>" . self::genericLink("reg=deact",l("Log out"))."</td>" );
   }
   /*
    * Checks screen width and loads minifier script (drawers.js) if it is narrow

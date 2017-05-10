@@ -33,7 +33,8 @@ abstract class AuthElements {
 
   //abstract static function titleSuffix (ViewRegistry $context);
   static function titleSuffix (AuthRegistry $context) {
-    return ( "Login : ".$context->g("realm") );
+    $r=l("Login")." : ".$context->g("realm");
+    return ( $r );
   }
 
   static function hiddenFields ($context) {
@@ -44,12 +45,12 @@ abstract class AuthElements {
 
   static function alertP (AuthRegistry $context) {
     if ( empty($context->g("alert")) ) return ("");
-    $s="<tr><td id=\"alert\" colspan=\"2\">".$context->g("alert")."</td></tr>";
+    $s="<tr><td id=\"alert\" colspan=\"2\">".l($context->g("alert"))."</td></tr>";
     return($s);
   }
 
   static function realmP (AuthRegistry $context) {
-    $label="Thread : ";
+    $label=l("Thread")." : ";
     return ( self::wrapRow ( self::wrapFldTh($label).self::wrapFldTd($context->g("realm")) ) );
   }
 
@@ -66,7 +67,7 @@ abstract class AuthElements {
   }
 
   static function plainChkbx () {
-    $label="Send as plain text ";
+    $label=l("Send as plain text ");
     $row=self::wrapFldTh( self::genericLabel("plain",$label) );
     $row.=self::wrapFldTd( '<input type="checkbox" id="plain" name="plain" checked="checked" />' );
     // should be unchecked by javaScript
@@ -89,7 +90,7 @@ abstract class AuthElements {
   }
 
   static function submitButton () {
-    $s='<input class="submit" type="submit" value="Submit" />';
+    $s='<input class="submit" type="submit" value="'.l("Submit").'" />';
     $s='<td id="enter" colspan="2">'.$s."</td>\r\n";
     $s=self::wrapRow ($s);
     return($s);

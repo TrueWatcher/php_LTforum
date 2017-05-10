@@ -228,9 +228,11 @@ class AccessHelper {
     //$ar->s("serverNonce",$sn);// needed by form
     require_once($ar->g("templatePath")."AuthElements.php");
     require_once($ar->g("templatePath")."SubAuthElements.php");
-    $formSelect= [ 0=>"PlainAuthElements",
-                    1=>"OpportunisticAuthElements",
-                    2=>"StrictAuthElements" ];
+    $formSelect= [
+      0=>"PlainAuthElements",
+      1=>"OpportunisticAuthElements",
+      2=>"StrictAuthElements"
+    ];
     $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
     include($ar->g("templatePath")."authForm.php");
   }

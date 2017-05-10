@@ -18,6 +18,7 @@ require_once ($mainPath."AccessHelper.php");
 require_once ($mainPath."AccessController.php");
 require_once ($mainPath."Applicant.php");
 require_once ($mainPath."UserManager.php");
+require_once ($mainPath."Translator.php");
 
 $ivb=SessionRegistry::initVectorForBackend($mainPath,$templatePath,$assetsPath,null,$forumsPath);
 // strict=1 required as assetsPath is modified for the export command
@@ -60,8 +61,5 @@ if ( ! $ret instanceof ViewRegistry) {
   throw new UsageException ("Non-object result");  
 }
 $ret->display($asr,$apr);
-
-
-
 
 ?>

@@ -11,7 +11,7 @@
 class EditanyElements extends FormElements {
 
   static function titleSuffix (ViewRegistry $context) {
-    return ( "edit message ".$context->g("id") );
+    return ( l("edit message ").$context->g("id") );
   }
 
   static function hiddenFields ($pageContext) {
@@ -40,7 +40,7 @@ class EditanyElements extends FormElements {
 class NewElements extends FormElements {
 
   static function titleSuffix (ViewRegistry $context) {
-    return ("write new message");
+    return (l("write new message"));
   }
 
   static function hiddenFields ($pageContext) {
@@ -61,7 +61,7 @@ class NewElements extends FormElements {
   static function deleteChkbx () {} // disabled
 
   static function txtText ($settings,$context,$labelText=null) {
-    return ( parent::txtText($settings,$context,"Your message") );
+    return ( parent::txtText($settings,$context,l("Your message")) );
   }
 
   static function commText ($settings,$context) {} // disabled
@@ -74,7 +74,7 @@ class NewElements extends FormElements {
 class EditElements extends FormElements {
 
   static function titleSuffix (ViewRegistry $context) {
-    return ( "edit message ".$context->g("id") );
+    return ( l("edit message ").$context->g("id") );
   }
 
   static function hiddenFields ($pageContext) {

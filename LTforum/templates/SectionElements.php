@@ -15,7 +15,11 @@ abstract class SectionElements {
 
   static function oneMessage ($msg,$localControlsString,$context) {
     $newline="<hr />\r\n";
-    $newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
+    //$newline.='<address>'.$msg['author'].' <em>wrote us on '.$msg["date"]." at ".$msg["time"]."</em>:";
+    $newline.='<address>'.
+      l([
+        "%s <em>wrote us on %s at %s</em>:", $msg['author'], $msg["date"], $msg["time"]
+      ]);
     if ( $localControlsString ) $newline.='<b class="fr">'.$localControlsString.'</b>';
     $newline.="</address>\r\n";
     $newline.='<p class="m">'.$msg['message']."</p>\r\n";

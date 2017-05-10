@@ -50,20 +50,21 @@ abstract class FormElements {
   }
 
   static function deleteChkbx () {
-    $label="Delete this message ";
+    $label=l("Delete this message ");
     $row=self::wrapFldTh( self::genericLabel("del",$label) );
     $row.=self::wrapFldTd( '<input type="checkbox" id="del" name="del" />' );
     return ( self::wrapRow ($row) );
   }
 
   static function clearChkbx () {
-    $label="Set current date and time ";
+    $label=l("Set current date and time ");
     $row=self::wrapFldTh( self::genericLabel("clear",$label) );
     $row.=self::wrapFldTd('<input type="checkbox" id="clear" name="clear" />');
     return ( self::wrapRow ($row) );
   }
 
-  static function txtText (SessionRegistry $settings,ViewRegistry $context,$labelText="Edit this text") {
+  static function txtText (SessionRegistry $settings,ViewRegistry $context,$labelText=null) {
+    if (empty($labelText)) $labelText=l("Edit this text");
     //$maxMessageLetters=(int)( $settings->g("maxMessageBytes")/2 );
     $maxMessageLetters = $settings->g("maxMessageLetters");
     $label='<th colspan="2"><label for="txt">'.$labelText.' (<span id="cnt">max '.$maxMessageLetters.' letters</span>):</label></th>';
@@ -74,13 +75,13 @@ abstract class FormElements {
   static function commText (SessionRegistry $settings,ViewRegistry $context) {
     //$maxMessageLetters=(int)($settings->g("maxMessageBytes")/2);
     $maxMessageLetters = $settings->g("maxMessageLetters");
-    $label='<th colspan="2"><label for="comm">Edit this commentary (<span id="cnt2">max '.$maxMessageLetters.' letters</span>):</label></th>';
+    $label='<th colspan="2"><label for="comm">'.l("Edit this commentary").' (<span id="cnt2">max '.$maxMessageLetters.' letters</span>):</label></th>';
     $textarea='<td colspan="2" id="c"><textarea id="comm" name="comm" rows="" cols="" maxlength="'.$maxMessageLetters.'" >'.$context->g("comment").'</textarea></td>';
     return( self::wrapRow ($label)."\r\n".self::wrapRow  ($textarea) );
   }
 
   static function snapChkbx () {
-    $label="Go straight to forum after posting";
+    $label=l("Go straight to forum after posting");
     $row=self::wrapFldTh( self::genericLabel("snap",$label) );
     $row.=self::wrapFldTd('<input type="checkbox" id="snap" name="snap" checked="checked" />');
     return ( self::wrapRow ($row) );

@@ -30,8 +30,8 @@ if ( !is_subclass_of($cc,"AuthElements") ) throw new UsageException ("Layout aut
       <?php
       print ( $cc::realmP($ar) );
       print ( $cc::alertP ($ar) );
-      print ( $cc::authorInput("Your name :","user","",null,null) );
-      print ( $cc::pswInput("Your password :","ps","",null,null) );
+      print ( $cc::authorInput(l("Your name")." :","user","",null,null) );
+      print ( $cc::pswInput(l("Your password")." :","ps","",null,null) );
       print ( $cc::plainChkbx () );
       print ( $cc::submitButton() );?>
     </table>

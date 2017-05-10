@@ -12,6 +12,7 @@
 
 $forumName="test";// canonical forum name
 $forumTitle="Dedicated tests thread";// page title
+$lang="mock";//"ru";
 $mainPath="../LTforum/";// relative to here
 $templatePath="templates/"; // relative to main LTforum folder
 $assetsPath="../assets/"; // relative to main LTforum folder
