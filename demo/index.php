@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.0 experimental deployment
+ * @package LTforum
+ * @version 1.4 added ini files
  */
 /**
  * Forum thread entry point
@@ -10,12 +10,14 @@
 
 //echo ("I'm LTforum/demo/index.php");
 
-$forumName="demo";// canonical forum name
-$forumTitle="Just another open miniforum";// page title
-$mainPath="../LTforum/";// relative to here
-$templatePath="templates/"; // relative to main LTforum folder
-$assetsPath="../assets/"; // relative to here
+$threadEntryParams=[
+  "forum"=>"demo",/* canonical forum name */
+  "title"=>"Just another open miniforum",/* page title */
+  "mainPath"=>"../LTforum/",/* relative to here */
+  "templatePath"=>"templates/",/* relative to main LTforum folder */
+  "assetsPath"=>"../assets/",/* relative to main LTforum folder */
+  /*"lang"=>"mock" en */
+];
 
-require_once ($mainPath."LTforum.php");
-
+require_once ($threadEntryParams["mainPath"]."LTforum.php");
 ?>

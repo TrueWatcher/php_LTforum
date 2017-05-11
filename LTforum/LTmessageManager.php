@@ -1,13 +1,13 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added Access Controller and User Manager
+ * @package LTforum
+ * @version 1.4 added ini files
  */
 /**
  * LTforum Admin panel, common for all forum-threads.
  * Requires forumName and, if authentication is absent, PIN
  */
-
+$mainPath=$adminEntryParams["mainPath"];
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Registries.php");
 require_once ($mainPath."CardfileSqlt.php");
@@ -20,18 +20,19 @@ require_once ($mainPath."Applicant.php");
 require_once ($mainPath."UserManager.php");
 require_once ($mainPath."Translator.php");
 
-$ivb=SessionRegistry::initVectorForBackend($mainPath,$templatePath,$assetsPath,null,$forumsPath);
-// strict=1 required as assetsPath is modified for the export command
-$asr=SessionRegistry::getInstance( 1, $ivb );
+$adminDefaults=SessionRegistry::$defaultsBackend;
+$asr=SessionRegistry::getInstance(1,$adminDefaults);
+$asr->overrideValuesBy($adminEntryParams);
 
 // we need forumName from input and we need paths that depend on it, so PageRegistry is created before authentication
 $apr=PageRegistry::getInstance( 0,[] );
-$apr->initAdmBeforeAuth(null,null, $asr, "Act", $adminTitle);
+$apr->initAdmBeforeAuth(null, null, $asr, "Act", $asr->g("adminTitle"));
 
 // here goes the Access Controller
-//$ivb=AuthRegistry::initVectorForBackend($apr->g("forum"),$forumsPath,$templatePath,$assetsPath);
-$ivb=AuthRegistry::initVector($apr->g("forum"), $forumsPath.$apr->g("forum")."/", $templatePath, $assetsPath, 1);
-$aar=AuthRegistry::getInstance(1,$ivb);
+$authDefaults=AuthRegistry::getDefaults();
+$aar=AuthRegistry::getInstance(1,$authDefaults);
+$fromSr=$asr->exportToAdminAuth($apr->g("forum"));
+$aar->overrideValuesBy($fromSr);
 $ac=new AccessController($aar);
 $acRet=$ac->go($aar);// so short
 //echo("Trace:".$aar->g("trace")."\n");
@@ -49,10 +50,7 @@ if ($ret===false ) {
     $ret=AdminAct::showAlert ("Unknown admin command:".$apr->g("act"));
   }
   else {
-    $ret=ViewRegistry::getInstance(2,[
-      "alert"=>"", "requireFiles"=>null,"includeTemplate"=>"admin.php",
-      "userList"=>"", "adminList"=>""
-    ]);
+    $ret=ViewRegistry::getInstance(2, ViewRegistry::getAdminDefaults());
   }
 }
 

@@ -1,0 +1,5 @@
+; must not contain empty lines and must end with NL !
+[chat]
+admin=67e19021b4b6d994bc73ed56549be0b2
+[chatAdmins]
+admin=

@@ -109,6 +109,31 @@
       $sc=get_called_class();
       $sc::$me=null;
     }
+    
+    public function overrideValuesBy(Array $guest) {
+      if (empty($guest)) return;
+      $myKeys=array_keys($this->arr);
+      $guestKeys=array_keys($guest);
+      foreach ($guestKeys as $key) {
+        if (in_array($key,$myKeys)) {
+          $this->arr[$key]=$guest[$key];
+        }
+        else throw new UsageException ("Key ".$key." was not found in the host array");
+      }
+    }
+    
+    public function addFreshPairsFrom(Array $guest) {
+      if (empty($guest)) return;
+      $myKeys=array_keys($this->arr);
+      $guestKeys=array_keys($guest);
+      foreach ($guestKeys as $key) {
+        if ( ! in_array($key,$myKeys)) {
+          $this->arr[$key]=$guest[$key];
+        }
+        else throw new UsageException ("Key ".$key." is already present in the host array");
+      }    
+    }
+    
   }// end SingletAssocArrayWrapper
 
 ?>

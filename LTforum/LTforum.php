@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added Access Controller and User Manager
+ * @package LTforum
+ * @version 1.4 added ini files
  */
 
 /**
@@ -9,7 +9,7 @@
  * Initializations, AccessController call and command processor call.
  * Commands are in Act.php
  */
-
+$mainPath=$threadEntryParams["mainPath"];
 require_once ($mainPath."AssocArrayWrapper.php");
 require_once ($mainPath."Registries.php");
 require_once ($mainPath."CardfileSqlt.php");
@@ -23,16 +23,17 @@ require_once ($mainPath."Translator.php");
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // minimal initializations
-if(!isset($lang) || empty($lang)) $lang="en";
-$ivf=SessionRegistry::initVectorForFrontend($mainPath,$templatePath,$assetsPath,$forumName,$lang);
-$sr=SessionRegistry::getInstance(2,$ivf);
+$systemWideDefaults=SessionRegistry::$defaultsFrontend;
+$sr=SessionRegistry::getInstance(2,$systemWideDefaults);
+$sr->overrideValuesBy($threadEntryParams);
 
 Translator::init($sr->g("lang"),$sr->g("mainPath").$sr->g("templatePath"),1);
 
 // here goes the Access Controller
-//$ivf=AuthRegistry::initVectorForFrontend($forumName,$templatePath,$assetsPath);
-$ivf=AuthRegistry::initVector($forumName, "", $templatePath, $assetsPath, 0);
-$ar=AuthRegistry::getInstance(1,$ivf);
+$authDefaults=AuthRegistry::getDefaults();
+$ar=AuthRegistry::getInstance(1,$authDefaults);
+$fromSr=$sr->exportToFrontendAuth();
+$ar->overrideValuesBy($fromSr);
 $ac=new AccessController($ar);
 $acRet=$ac->go();
 //echo("Trace:".$ar->g("trace")."\n");
@@ -41,7 +42,7 @@ if($acRet!==true) exit($acRet);
 
 // more initializations using database
 $pr=PageRegistry::getInstance( 0, [] );
-$pr->initAllAfterAuth(null, null, $sr, "Act", $forumTitle, $forumName);
+$pr->initAllAfterAuth(null, null, $sr, "Act", $sr->g("title"), $sr->g("forum"));
 
 if ( $pr->queryStringIsEmpty() ) { $vr=Act::redirectToView($pr); }
 else { $vr=Act::go($sr,$pr); }
