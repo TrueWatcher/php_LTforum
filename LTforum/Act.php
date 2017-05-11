@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @package LTforum
+ * @version 1.4 added ini files
  */
 
 /**
@@ -243,12 +243,17 @@ class Act {
       else throw new UsageException ("Illegal value at \"base\" key :".$base.'!');
 
       $toShow=$pr->g("cardfile")->yieldPackMsg($begin,$end);
+      
+      if($end==$forumEnd && $sr->checkNotEmpty("autoRefresh")) $autoRefresh=$sr->g("autoRefresh");
+      else $autoRefresh=false;
 
-      $vr=ViewRegistry::getInstance( true, [
+      $vr=ViewRegistry::getInstance( 1, [
         "controlsClass"=>"RollElements", "forumBegin"=>$forunBegin, "forumEnd"=>$forumEnd, "overlay"=>$overlay, "length"=>$length, "begin"=>$begin, "end"=>$end, "base"=>$base, "pageCurrent"=>$pageCurrent, "pageEnd"=>$pageEnd, "msgGenerator"=>$toShow,
+        "autoRefresh"=>$autoRefresh, 
         "requireFiles"=>"SectionElements.php,RollElements.php", "includeTemplate"=>"section.php"
       ] );
       //$vr->s("no_such_key",0);// check catch UsageException
+      //$vr->dump();
       return $vr;
     }
     catch (Exception $e) {
@@ -393,13 +398,6 @@ class Act {
    * Takes from the Page Registry the actual link to the viewer ( as query string, relative ), turns it into valid absolute address and sends it as REDIRECT header.
    * @return void
    */
-  public static function _redirectToView (PageRegistry $pr) {
-    $uri=$pr->g("viewLink");
-    $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake
-    $uri=self::myAbsoluteUri()."/".$uri;
-    header("Location: ".$uri);
-    exit(0);
-  }
   public static function redirectToView (PageRegistry $pr) {
     $uri=$pr->g("viewLink");
     $uri=str_replace("&amp;","&",$uri);// it's a header rather than link -- entity is mistake

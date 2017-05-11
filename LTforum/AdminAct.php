@@ -117,6 +117,8 @@ class AdminAct {
     touch ($fullFile);
     if (! file_exists($fullFile) ) throw new AccessException ("Cannot create file ".$fullFile." , check the folder permissions");
     $apr->s("exportFileFull",$fullFile);
+    
+    Translator::init($apr->g("forumLang"),$asr->g("templatePath"),0);
 
     //---here comes the interception of the presentation ---
 
@@ -129,6 +131,7 @@ class AdminAct {
     ob_end_clean();
     
     $vr->clearInstance();// ViewRegistry is needed for normal page view
+    Translator::$enabled=0;
     return(self::showAlert("Exported messages ".$begin."..".$realEnd." to ".$fullFile." , total ".$processed.", about ".ceil($processedBytes/1000)."KB. ".$warning));
 
     /* just history

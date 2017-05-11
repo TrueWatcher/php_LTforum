@@ -63,7 +63,8 @@ class RollElements extends SectionElements {
     return ( self::genericLink($qs,$anchor,$fragment) );
   }
 
-  static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
+  static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor=null,$showDeadAnchor=false) {
+    if(empty($anchor)) $anchor=l("Next page");
     $step = $context->g("length") - $context->g("overlay");
     $nextBegin = $context->g("begin") + $step;
     $nextEnd = $context->g("end") + $step;

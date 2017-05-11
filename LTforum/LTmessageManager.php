@@ -20,7 +20,7 @@ require_once ($mainPath."Applicant.php");
 require_once ($mainPath."UserManager.php");
 require_once ($mainPath."Translator.php");
 
-$adminDefaults=SessionRegistry::$defaultsBackend;
+$adminDefaults=SessionRegistry::getDefaultsBackend();
 $asr=SessionRegistry::getInstance(1,$adminDefaults);
 $asr->overrideValuesBy($adminEntryParams);
 

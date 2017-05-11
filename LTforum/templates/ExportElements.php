@@ -26,11 +26,11 @@ class ExportElements extends SectionElements {
   }
 
   static function prevPageLink (ViewRegistry $context,$anchor,$showDeadAnchor=false,$fragment="") {
-    return("<a href=\"\">Previous page</a>");
+    return("<a href=\"\">".l("Previous page")."</a>");
   }
 
   static function nextPageLink (ViewRegistry $context,&$pageIsLast=false,$anchor="Next page",$showDeadAnchor=false) {
-    return("<a href=\"./?begin=".($context->g("end")+1)."\">Next page</a>");
+    return("<a href=\"./?begin=".($context->g("end")+1)."\">".l("Next page")."</a>");
   }
 
   static function pagePanel (ViewRegistry $context) {} // element is disabled

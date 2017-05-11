@@ -63,7 +63,7 @@ class AuthRegistry extends SingletAssocArrayWrapper {
   
   public static function getDefaults() {
     $r=[
-      "realm"=>"", "targetPath"=>"", "templatePath"=>"", "assetsPath"=>"", "isAdminArea"=>1, "authName"=>"", "serverNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1,  "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
+      "realm"=>"", "targetPath"=>"", "templatePath"=>"", "assetsPath"=>"", "isAdminArea"=>1, "authName"=>"", "serverNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1,  "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "guestsAllowed"=>false, "masterRealms"=>"", "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
     ];
     return $r;
   }

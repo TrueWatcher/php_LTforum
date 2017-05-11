@@ -23,9 +23,14 @@ require_once ($mainPath."Translator.php");
 //echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // minimal initializations
-$systemWideDefaults=SessionRegistry::$defaultsFrontend;
+$systemWideDefaults=SessionRegistry::getDefaultsFrontend();
 $sr=SessionRegistry::getInstance(2,$systemWideDefaults);
 $sr->overrideValuesBy($threadEntryParams);
+//$sr->dump();
+
+$iniParams=getIniParams("../".$sr->g("forum")."/");
+//print_r($iniParams);
+$sr->overrideValuesBy($iniParams["thread"]);
 
 Translator::init($sr->g("lang"),$sr->g("mainPath").$sr->g("templatePath"),1);
 
@@ -34,6 +39,8 @@ $authDefaults=AuthRegistry::getDefaults();
 $ar=AuthRegistry::getInstance(1,$authDefaults);
 $fromSr=$sr->exportToFrontendAuth();
 $ar->overrideValuesBy($fromSr);
+$ar->overrideValuesBy($iniParams["auth"]);
+$ar->overrideValuesBy($iniParams["intervals"]);
 $ac=new AccessController($ar);
 $acRet=$ac->go();
 //echo("Trace:".$ar->g("trace")."\n");

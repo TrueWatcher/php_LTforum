@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added Access Controller and User Manager
+ * @package LTforum
+ * @version 1.4 added ini files
  */
 /**
  * Form View elements for New, EditLast and EditAny commands.

@@ -1,14 +1,14 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added Access Controller and User Manager
+ * @package LTforum
+ * @version 1.4 added ini files
  */
 
 /**
  * Generic Form for new, editLast, editAny.
  * @uses ViewRegistry $vr
- * @uses PageRegistry $apr
- * @uses SessionRegistry $asr
+ * @uses PageRegistry $pr
+ * @uses SessionRegistry $sr
  */
 
 $cc=$vr->g("controlsClass");
@@ -36,7 +36,9 @@ if ( !is_subclass_of($cc,"FormElements") ) throw new UsageException ("Layout for
       print ( $cc::snapChkbx () );
       ?>
       <tr>
-        <td id="enter" colspan="2"><input class="submit" type="submit" value="Submit" /></td>
+        <td id="enter" colspan="2">
+          <input class="submit" type="submit" value="<?php echo(l("Submit")); ?>" />
+        </td>
       </tr>
     </table>
   </fieldset>

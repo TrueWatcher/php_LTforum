@@ -21,7 +21,7 @@
 </head>
 <body>
 <h1><?php print($pr->g("forum")); ?></h1>
-<p>Messages: <?php print( $pr->g("forumBegin")."..".$pr->g("forumEnd") ); ?></p>
+<p><?php printf("messages: %s..%s, language: %s",$pr->g("forumBegin"),$pr->g("forumEnd"),$pr->g("forumLang") ); ?></p>
 <hr />
 <p><?php print($pr->g("alert")); ?></p>
 

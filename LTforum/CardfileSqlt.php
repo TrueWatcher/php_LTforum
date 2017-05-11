@@ -1,7 +1,7 @@
 <?php
 /**
  * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @version 1.4 added ini files
  */
 
 /**
@@ -25,8 +25,10 @@ class ForumDb {
  */
 class CardfileSqlt extends ForumDb {
   protected static $table="LTforum";
+  protected static $timeShift=0;
 
-  function __construct($forumName,$allowCreate=false,$tableName=null) {
+  function __construct($forumName,$allowCreate=false,$tableName=null,$timeShiftHrs=0) {
+    self::$timeShift=$timeShiftHrs*3600;
     $forumPath="";// relative to /thread/index.php
     $forumDbFile=$forumPath.$forumName.".db";
     if ( !empty($tableName) ) self::$table=$tableName;
@@ -74,7 +76,7 @@ class CardfileSqlt extends ForumDb {
   }
 
   public function addFirstMsg($dbFileName) {
-    $dateTime=explode( "~",date("j.m.Y~G-i") );
+    $dateTime=explode( "~",date("j.m.Y~G-i",time()+self::$timeShift) );
 
     $qAddFirstMsg="INSERT INTO '".self::$table."' (
       date, time, author, message, comment ) VALUES ('".
@@ -103,7 +105,7 @@ class CardfileSqlt extends ForumDb {
       $t=$msg["time"];
     }
     else {// set current date and time
-      $dateTime=explode( "~",date("j.m.Y~G-i") );
+      $dateTime=explode( "~", date("j.m.Y~G-i",time()+self::$timeShift) );
       $d=$dateTime[0];
       $t=$dateTime[1];
     }
@@ -212,7 +214,6 @@ class CardfileSqlt extends ForumDb {
     if ( substr($order,0,1)==="d" ) $qAll.=" ORDER BY id DESC";
     $result=parent::$forumDbo->query($qAll);
     $count=0;
-    //$msgs=[];
 
     if ($limit<=0) $limit=1000000;
     while ( $count<$limit && ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
@@ -221,7 +222,6 @@ class CardfileSqlt extends ForumDb {
       $afterId=mb_strpos($haystack,"  ");
       $haystack=mb_substr($haystack,$afterId);
       // search
-      //$res=self::found($haystack,$what);
       $res=$testTheString($haystack,$what);// test function was received as argument
       //print ("\r\n{$msg["id"]}--$res;");
       if ($res) {
@@ -230,44 +230,6 @@ class CardfileSqlt extends ForumDb {
         yield $count=>$msg;// not yield ($count=>$msg); !
       }
     }// end main cycle
-    //return $msgs;
-  }
-
-  private function defunct_yieldSearchResults ($what,$order,$limit) {
-    $qSearch="SELECT id, date, time, author, message, comment
-      FROM '".self::$table."' WHERE ";
-    if (! is_array($what) ) {}
-    foreach ($what as $i=>&$andTerm) {
-      if ($i>0) $qSearch.=" AND ";
-      /*$qSearch.="( instr( ' '||date||'  '||time||'  '||author||'  '||message||'  '||comment||' ' ,(:word".$i.") )";
-      if ( substr($andTerm,0,1)==="-" ) {
-        $qSearch.="=0 ) ";
-        $andTerm=substr($andTerm,1);
-      }
-      else $qSearch.=">0 ) ";*/
-      if ( substr($andTerm,0,1)==="-" ) {
-        $qSearch.=" NOT ";
-        $andTerm=substr($andTerm,1);
-      }
-      $qSearch.=" LIKE('%'||:word".$i."||'%',' '||date||'  '||time||'  '||author||'  '||message||'  '||comment||' ')=1";
-    }
-    if ( substr($order,0,1)==="d" ) $qSearch.=" ORDER BY id DESC";
-    $qSearch.=" LIMIT :limit";
-    print($qSearch);
-    print_r($what);
-    $stmt=parent::$forumDbo->prepare($qSearch);
-    foreach ($what as $j=>$andTermM) {
-      $stmt->bindValue(':word'.$i,$andTermM,SQLITE3_TEXT);
-    }
-    $stmt->bindValue(':limit',$limit,SQLITE3_INTEGER);
-    $result = $stmt->execute();
-    //$msgs=array();
-    $count=0;
-    while ( ( $msg=$result->fetchArray(SQLITE3_ASSOC) ) ) {
-      //$msgs[]=$msg;
-      $count++;
-      yield $count=>$msg;// not yield ($count=>$msg); !
-    }
   }
 
 }// end CardfileSqlt

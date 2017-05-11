@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added Access Controller and User Manager
+ * @package LTforum
+ * @version 1.4 added ini files
  */
 /**
  * Common template for NewElements,EditElements and EditanyElements.
@@ -34,7 +34,7 @@ abstract class FormElements {
   abstract static function hiddenFields ($pageContext);
 
   static function idP (ViewRegistry $context) {
-    $label="Message ID : ";
+    $label=l("Message ID")." : ";
     return ( self::wrapRow ( self::wrapFldTh($label).self::wrapFldTd($context->g("id")) ) );
   }
 
@@ -95,7 +95,7 @@ abstract class FormElements {
     $s='function counter (ofield,ocounter,maxL) {
           var l=ofield.value.length;
           ocounter.style.color= l>maxL ? "#f11" : "";
-          ocounter.innerHTML=" "+l+" letters, max "+maxL;
+          ocounter.innerHTML=" "+l+" '.l("letters, max").' "+maxL;
           return(false);
         }';
     return( self::wrapJs($s) );

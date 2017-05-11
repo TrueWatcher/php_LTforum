@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added Access Controller and User Manager
+ * @package LTforum
+ * @version 1.4 added ini files
  */
  
 class PageRegistry extends SingletAssocArrayWrapper {
@@ -28,10 +28,13 @@ class PageRegistry extends SingletAssocArrayWrapper {
 
   public function tryInitCardfile(SessionRegistry $sr, $helperClass) {
     try {
-      $this->s( "cardfile",new CardfileSqlt( $sr->g("forum"),true ) );
+      $cs=new CardfileSqlt( $sr->g("forum"), true, null, $sr->g("timeShiftHrs") );
+      $this->s( "cardfile", $cs);
     }
     catch (Exception $e) {
-      $helperClass::showAlert ($this,$sr,$e->getMessage());
+      $vr=$helperClass::showAlert ($e->getMessage());
+      $vr->display();
+      exit;
     }      
   }
   
@@ -110,20 +113,46 @@ class PageRegistry extends SingletAssocArrayWrapper {
     $this->s("forumEnd",$forumEnd);
     $missing=$forumEnd-$forumBegin+1-$total;
     if ($missing) exit("There are ".$missing." missing messages");
+    $forumLang=$this->findThreadLang($asr);
+    $this->s("forumLang",$forumLang);
+  }
+  
+  protected function findThreadLang($asr) {
+    $apr=$this;
+    $targetPath=$asr->g("forumsPath").$apr->g("forum")."/";
+    if( ! file_exists($targetPath."index.php")) throw new AccessException('Something is wrong with "'.$targetPath.'" folder');
+    //echo("=$targetPath= ");
+    $threadIni=getIniParams($targetPath);
+    //print_r($threadIni);  
+    if( isset($threadIni["thread"]["lang"]) ) return($threadIni["thread"]["lang"]);
+    $indexFile=file_get_contents($targetPath."index.php");
+    $re='~"lang"\s*=>\s*"(\w+)"~';
+    $i=preg_match($re,$indexFile,$found);
+    //print_r($found);
+    if($i) return($found[1]);
+    $d=SessionRegistry::getDefaultsFrontend();
+    if ( ! isset($d["lang"]) ) throw new AccessException("Something is wrong with SessionRegistry defaults");
+    return $d["lang"];
   }
 }
 
 class SessionRegistry extends SingletAssocArrayWrapper {
   protected static $me=null;
   
-  public static $defaultsFrontend=[
-    "viewDefaultLength"=>10, "viewOverlay"=>1, "mainPath"=>"", "templatePath"=>"", "assetsPath"=>"", "forum"=>"some forum", "title"=>"some title", "lang"=>"en", "timeShift"=>0, "maxMessageLetters"=>750, "narrowScreen"=>640, "autoRefresh"=>0
-  ];
+  public static function getDefaultsFrontend() {
+    $r=[
+      "viewDefaultLength"=>10, "viewOverlay"=>1, "mainPath"=>"", "templatePath"=>"", "assetsPath"=>"", "forum"=>"some forum", "title"=>"some title", "lang"=>"en", "timeShiftHrs"=>0, "maxMessageLetters"=>750, "narrowScreen"=>640, "autoRefresh"=>0
+    ];
+    return $r;
+  }
 
-  public static $defaultsBackend=[
-    /*"viewDefaultLength"=>10,*/ "viewOverlay"=>1, "mainPath"=>"", "templatePath"=>"", "assetsPath"=>"", /*"forum"=>"some forum",*/ "adminTitle"=>"LTforum admin panel", "lang"=>"en", /*"timeShift"=>0,*/ "maxMessageLetters"=>750, /*"narrowScreen"=>640, "autoRefresh"=>0,*/
-    "forumsPath"=>""
-  ];
+  public static function getDefaultsBackend() {
+    $r=[
+      /*"viewDefaultLength"=>10,*/ "viewOverlay"=>1, "mainPath"=>"", "templatePath"=>"", "assetsPath"=>"", /*"forum"=>"some forum",*/ "adminTitle"=>"LTforum admin panel", "lang"=>"en", /*"timeShift"=>0,*/ "maxMessageLetters"=>750, /*"narrowScreen"=>640, "autoRefresh"=>0,*/
+      "forumsPath"=>""
+    ];
+    return $r;
+  }
   
   public function exportToFrontendAuth() {
     $a=[
@@ -174,6 +203,9 @@ class ViewRegistry extends SingletAssocArrayWrapper {
     if ( $this->checkNotEmpty("redirectUri")) {
       header("Location: ".$this->g("redirectUri"));
       exit(0);
+    }
+    if ( $this->checkNotEmpty("autoRefresh")) {
+      header("Refresh: ".$this->g("autoRefresh"));
     }
     if ($this->checkNotEmpty("requireFiles")) {
       $files=explode(",",$this->g("requireFiles"));

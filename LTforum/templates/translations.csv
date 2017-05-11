@@ -1,5 +1,6 @@
 en~mock~ru
 Previous page~~Предыдущая страница
+Next page~~Следующая страница
 Message~~Сообщение
 Search~~Искать
 Edit/Delete~~Править/Удалить
@@ -30,7 +31,6 @@ Submit~~Отправить
 Wrong login or/and password ~~Неправильное имя или пароль
 Please, wait a few seconds and refresh the page~~Пожалуйста, подождите несколько секунд и обновите страницу
 Session reset by user~~До свидания!
-Unanswered: 0~~Неотвеченных сообщений нет
 Please, write some message~~Введите текст сообщения
 Back~~Назад
 Message from %s has been added successfully~~Сообщение от %s принято
@@ -41,9 +41,12 @@ Your message~~Ваше сообщение
 Go straight to forum after posting~~После отправки перейти прямо к просмотру
 edit message ~~редактирование сообщения 
 Delete this message ~~Удалить это сообщение 
-Edit this text~~Текст для редактирования
+Edit this text~~Текст сообщения
+Unanswered: 0~~Неотвеченных сообщений нет
 Unanswered: %s, latest: %s at %s~~Неотвеченных сообщений: %s, последнее %s в %s
 Please, register to a new thread~~При смене раздела необходимо зарегистрироваться
 No messages by this user~~У этого пользователя нет сообщений
-Wrong login or/and password~~
-Please, introduce yourself~~
+Wrong login or/and password~~Неправильное имя или пароль
+Please, introduce yourself~~Введите своё имя
+Message ID~~Сообщение №
+letters, max~~букв, максимум
