@@ -55,8 +55,7 @@ You may also want to add your own welcome message and remove the automatic one t
   
 If your have enough rights to set up HTTPS, your are advised to do it ;).  
 If HTTPS is unavailable, it's recommended to enforce JS-Digest authentication:  
-open /LTforum/LTforum.php and in line 73 set "authMode"=>2  
-then do the same with /LTforum/LTmessageManager.php , line 61  
+open /LTforum/AccessController.php and in array in line 57 set "authMode"=>2  
 Note that it can protect your passwords only from passive eavesdropping, not from a deliberate attack.
 
 
@@ -80,10 +79,5 @@ new AccessController and UserManager, tests, refactoring
 v.1.2.22   9 Jan 2017
 rewritten AccessController, unit tests, feature "number of unanswered messages" on registration form
 
-
-
-#TODOs
-
-Conception of localization  
-Nice frontend  
-RSS generator/formatter  
+v.1.4.5    12 May 2017
+added internationalizaion engine, russian version of frontend, added new features: thread .ini files, autorefresh, time difference compensation, guest unregistered view, registration for a group of threads
