@@ -30,9 +30,7 @@ $apr->initAdmBeforeAuth(null, null, $asr, "Act", $asr->g("adminTitle"));
 
 // here goes the Access Controller
 $authDefaults=AuthRegistry::getDefaults();
-$aar=AuthRegistry::getInstance(1,$authDefaults);
-//$fromSr=$asr->exportToAdminAuth($apr->g("forum"));
-//$aar->overrideValuesBy($fromSr);
+$aar=AuthRegistry::getInstance(1,$authDefaults);;
 $aar->adjustForAdmin($asr,$apr);
 $ac=new AccessController($aar);
 $acRet=$ac->go($aar);// so short

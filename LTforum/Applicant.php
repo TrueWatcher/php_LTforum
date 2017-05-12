@@ -354,8 +354,14 @@ class Applicant {
   }
 
   public function checkRealm () {
-    $r=$this->c->g("realm");
-    if ( $r && $this->session["realm"]===$r ) return true;// passed
+    $pageRealm=$this->c->g("realm");
+    $sessionRealm=$this->session["realm"];
+    if ( $sessionRealm && $sessionRealm==$pageRealm ) return true;// passed
+    $pageMasterRealms=$this->c->g("masterRealms");
+    if ( $pageMasterRealms ) {
+      $pageMasterRealms=explode(",",$pageMasterRealms);
+      if ( $sessionRealm && in_array($sessionRealm,$pageMasterRealms) ) return true;
+    }
     return ("Please, register to a new thread");
   }
 

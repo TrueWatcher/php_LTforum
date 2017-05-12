@@ -51,7 +51,7 @@ function page ($registryTemplate, $input, &$session, &$registry, $verbose=0) {
 
 class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
 
-  protected $authRegistryTemplate = [ "realm"=>"test", "targetPath"=>"../", "templatePath"=>"../../LTforum/templates/", "assetsPath"=>"../../assests/", "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>2, "maxDelayAuth"=>4, "maxDelayPage"=>6, "maxTimeoutGcCookie"=>10, "minRegenerateCookie"=>8, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>"" ];
+  protected $authRegistryTemplate = [ "realm"=>"test", "targetPath"=>"../", "templatePath"=>"../../LTforum/templates/", "assetsPath"=>"../../assests/", "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>2, "maxDelayAuth"=>4, "maxDelayPage"=>6, "maxTimeoutGcCookie"=>10, "minRegenerateCookie"=>8, "guestsAllowed"=>false, "masterRealms"=>"",  "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>"" ];
 
   public function _test_getStaticHello() {
     $hello=AccessController::hello();

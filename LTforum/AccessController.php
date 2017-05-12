@@ -52,15 +52,6 @@ class AuthRegistry extends SingletAssocArrayWrapper {
     $this->s("trace",$t);
   }
   
-  static function _initVector($forumName,$targetPath,$templatePath,$assetsPath,$isAdminArea) {
-  // frontend: ($forumName, "", $templatePath, $assetsPath, 0)
-  // backend ($apr->g("forum"), $forumsPath.$apr->g("forum")."/", $templatePath, $assetsPath, 1)
-    $iv=[
-      "realm"=>$forumName, "targetPath"=>$targetPath, "templatePath"=>$templatePath, "assetsPath"=>$assetsPath, "isAdminArea"=>$isAdminArea, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
-    ];
-    return $iv;
-  }
-  
   public static function getDefaults() {
     $r=[
       "realm"=>"", "targetPath"=>"", "templatePath"=>"", "assetsPath"=>"", "isAdminArea"=>1, "authName"=>"", "serverNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1,  "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "guestsAllowed"=>false, "masterRealms"=>"", "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
@@ -88,6 +79,10 @@ class AuthRegistry extends SingletAssocArrayWrapper {
       "isAdminArea"=>1
     ];
     $this->overrideValuesBy($a);  
+  }
+  
+  public function guestPassAllowed() {
+    return( empty($this->arr["reg"]) && ! $this->arr["isAdminArea"] && $this->arr["guestsAllowed"] );
   }
 }
 
@@ -124,15 +119,21 @@ class AccessController {
     $ar=$this->c;
     $hc=$this->helper;// $this->helper::func() causes error
     $note="";
-    $pauseFail=rand(10,20);
-    $pauseAllow=3;//rand(2,5);
+    $pauseFail=rand(5,15);
+    $pauseAllow=2;//rand(2,5);
     $return=false;
+    
+    $this->c->readCommands($this->r);
+    if ($this->c->guestPassAllowed() && $hc::tryPassAsGuest($this->c)) {
+      $return=true;
+      $this->c->trace($return);
+      return ($return);
+    }
 
     $hc::startSession($this->c);
     //echo(" After start: ");
     //if (isset($_SESSION)) print_r($_SESSION);// DEBUG
     if (isset($_SESSION) && !isset($this->session) ) $this->session = &$_SESSION;// important & !
-    $this->c->readCommands($this->r);
     //$this->c->dump();
     $a = new Applicant ( $this->c, $this->r, $this->session, $this->helper );
     $a->initMin();

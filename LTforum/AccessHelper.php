@@ -254,6 +254,14 @@ class AccessHelper {
     include($ar->g("templatePath")."authForm.php");
   }
   
+  static function tryPassAsGuest(AuthRegistry $ar) {
+    $allowedCommands=explode(",",$ar->g("guestsAllowed"));
+    if (in_array("view",$allowedCommands)) $allowedCommands[]="";
+    //echo("act={$ar->g("act")} ");
+    if (in_array($ar->g("act"),$allowedCommands)) return true;
+    return false;    
+  }
+  
 }
 
 /**

@@ -58,10 +58,12 @@ class PageRegistry extends SingletAssocArrayWrapper {
     $inputs=readByKeys($this->input,$inputKeys);
     $this->addFreshPairsFrom($inputs);
 
-    $sessionKeys=["authName"=>"user", /*"current"=>"current", conflicts with readInput*/ "updated"=>"updated" ];
-    //$this->readSession($sessionKeys);
-    $sessvars=readByKeys($this->session,$sessionKeys); 
-    $this->addFreshPairsFrom($sessvars);// does not work as "user" is overwritten ?
+    if (is_array($this->session)) {
+      $sessionKeys=["authName"=>"user", /*"current"=>"current", conflicts with readInput*/ "updated"=>"updated" ];
+      //$this->readSession($sessionKeys); 
+      $sessvars=readByKeys($this->session,$sessionKeys); 
+      $this->addFreshPairsFrom($sessvars);
+    }
 
     if ($forumTitle) $this->s("title",$forumTitle);
     else $this->s("title","LTforum::".$forumName);
