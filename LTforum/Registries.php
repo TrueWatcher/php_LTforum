@@ -154,28 +154,6 @@ class SessionRegistry extends SingletAssocArrayWrapper {
     return $r;
   }
   
-  public function exportToFrontendAuth() {
-    $a=[
-      "realm"=>$this->arr["forum"],
-      "targetPath"=>"",/*$this->arr["targetPath"],*/
-      "templatePath"=>$this->arr["templatePath"],
-      "assetsPath"=>$this->arr["assetsPath"],
-      "isAdminArea"=>0
-    ];
-    return $a;
-  }
-  
-  public function exportToAdminAuth($forum) {
-    $a=[
-      "realm"=>$forum,
-      "targetPath"=>$this->arr["forumsPath"].$forum."/",
-      "templatePath"=>$this->arr["templatePath"],
-      "assetsPath"=>$this->arr["assetsPath"],
-      "isAdminArea"=>1
-    ];
-    return $a;
-  }
-  
 }
 
 class ViewRegistry extends SingletAssocArrayWrapper {

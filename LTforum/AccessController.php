@@ -67,6 +67,28 @@ class AuthRegistry extends SingletAssocArrayWrapper {
     ];
     return $r;
   }
+  
+  public function adjustForFrontend(SessionRegistry $sr) {
+    $a=[
+      "realm"=>$sr->g("forum"),
+      "targetPath"=>"",/*$sr->g("targetPath"),*/
+      "templatePath"=>$sr->g("templatePath"),
+      "assetsPath"=>$sr->g("assetsPath"),
+      "isAdminArea"=>0
+    ];
+    $this->overrideValuesBy($a);  
+  }
+  
+  public function adjustForAdmin(SessionRegistry $asr,PageRegistry $apr) {
+    $a=[
+      "realm"=>$apr->g("forum"),
+      "targetPath"=>$asr->g("forumsPath").$apr->g("forum")."/",
+      "templatePath"=>$asr->g("templatePath"),
+      "assetsPath"=>$asr->g("assetsPath"),
+      "isAdminArea"=>1
+    ];
+    $this->overrideValuesBy($a);  
+  }
 }
 
 class AccessController {
@@ -82,9 +104,7 @@ class AccessController {
   
   function __construct(AuthRegistry $context,$request=null,&$session=null, $helperClass="AccessHelper") {
     if ( !isset($request) ) $request=$_REQUEST;
-    //if ( !isset($session) ) $session=$_SESSION;
     if (!is_array($request)) throw new UsageException("Wrong argument request!");
-    //if (!is_array($session)) throw new UsageException("Wrong argument session!");
     if ( !class_exists($helperClass) ) throw new UsageException("Wrong helper class ".$helperClass."!");
     $this->c = $context;
     $this->r = $request;
@@ -128,8 +148,6 @@ class AccessController {
       // redirect to cleaned uri without reg=deact
       $targetUri=$hc::makeRedirectUri($this->c);
       $hc::sendRedirect($targetUri);
-      //header( "Location: ".$targetUri );
-      //return ( "redirected to ".$targetUri );
       $return="redirected to ".$targetUri;
       break;        
 
@@ -141,14 +159,12 @@ class AccessController {
           $a->setStatus("zero");
           $hc::regenerateId();
           $a->demandReg($ret,"preAuth");
-          //return(false);
           break;
         }
         if ( $a->statusEquals("active")) {
           // active > postAuth
           $hc::regenerateId();
           $a->demandReg("Session reset by user","postAuth");
-          //return(false);
           break;
         }
         else {
@@ -156,17 +172,13 @@ class AccessController {
           // redirect to cleaned uri without reg=deact
           $targetUri=$hc::makeRedirectUri($this->c);
           $hc::sendRedirect($targetUri);
-          //header( "Location: ".$targetUri );
-          //return ( "redirected to ".$targetUri );
           //$return="redirected to ".$targetUri;
-          //return(false);
           break;
         }
       }
       if ( empty($this->session) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
         // same as reg=reset
         $a->demandReg("","preAuth");
-        //return(false);
         break;
       }
       throw new UsageException ("Wrong Command/State reg=".$this->c->g("reg")."/".$a->getStatus()."!");
@@ -178,19 +190,12 @@ class AccessController {
         // error, possibly an attack
         // alert and no state change
         $hc::showAuthAlert($this->c,"Unappropriate registration request");
-        //return(false);
         break;
-        /*
-        // active > zero > preAuth
-        $hc::regenerateId();
-        $a->setStatus("zero");
-        // fall-through*/
       }
       if ( empty($this->session) || $a->statusEquals("zero") ) {
         // this also should not happen normally
         // zero > preAuth
         $a->demandReg("A wrong-timed request","preAuth");
-        //return(false);
         break;
       }
       if ( $a->statusEquals("preAuth") || $a->statusEquals("postAuth") ) {
@@ -199,14 +204,12 @@ class AccessController {
         if ( $ret!==true ) {
           // preAuth or postAuth > preAuth
           $a->demandReg($ret,"preAuth");
-          //return(false);
           break;
         }
         $ret=$a->checkNotBefore();
         if ( $ret!==true ) {
           $hc::showAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
           //$a->setStatus("noChange");
-          //return(false);
           break;
         }
 
@@ -222,7 +225,6 @@ class AccessController {
           // preAuth or postAuth > preAuth
           sleep($pauseFail);
           $a->demandReg($ret,"preAuth");
-          //return(false);
           break;
         }
         // successful registration
@@ -238,11 +240,9 @@ class AccessController {
         // redirect ?
         if ( $a->optionalRedirect() ) { 
           // header has been sent
-          //return (false);
           break;
         }
         // continue to main controller
-        //return (true);
         $return=true;
         break;
       }
@@ -251,7 +251,6 @@ class AccessController {
     case "":
       if ( empty($this->session) || $a->statusEquals("preAuth") ) {
         $a->demandReg("","preAuth");
-        //return(false);
         break;
       }
       if ( $a->statusEquals("active") ) {
@@ -261,14 +260,12 @@ class AccessController {
         if ( $ret!==true ) {
           // active > preAuth
           $a->demandReg($ret,"preAuth");
-          //return(false);
           break;
         }
         $ret = $a->checkNotBefore();
         if ( $ret!==true ) {
           $hc::showAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
           //$a->setStatus("active");
-          //return(false);
           break;
         }
         $ret = $a->checkActiveUntil();
@@ -278,14 +275,12 @@ class AccessController {
           //session_regenerate_id(true);
           $a->markCookieTime();
           $a->demandReg($note,"postAuth");
-          //return(false);
           break;
         }
         // happy end
         // continue to main controller
         $a->setTimeLimits( 0,$this->c->g("maxDelayPage") );
         //$a->setStatus("active");
-        //return (true);
         $return=true;
         break;
       }
@@ -296,7 +291,6 @@ class AccessController {
           $note=$a->getUnanswered();
           $a->keepCookie();// regenerate cookie and id if the session is aged (more than 1 day typically)
           $a->demandReg($note,"postAuth");
-          //return(false);
           break;
         }
         else {
@@ -305,7 +299,6 @@ class AccessController {
           $a->setStatus("zero");
           $hc::regenerateId();
           $a->demandReg($ret,"preAuth");
-          //return(false);
           break;
         }
       }
@@ -314,7 +307,6 @@ class AccessController {
     default:
       $hc::showAuthAlert($this->c,["Wrong command reg=%s!",$this->c->g("reg")]);
       // state noChange
-      //return (false);
       break;
     }// end switch
     

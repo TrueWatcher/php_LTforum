@@ -24,7 +24,7 @@ require_once ($mainPath."Translator.php");
 
 // minimal initializations
 $systemWideDefaults=SessionRegistry::getDefaultsFrontend();
-$sr=SessionRegistry::getInstance(2,$systemWideDefaults);
+$sr=SessionRegistry::getInstance(1,$systemWideDefaults);
 $sr->overrideValuesBy($threadEntryParams);
 //$sr->dump();
 
@@ -37,8 +37,7 @@ Translator::init($sr->g("lang"),$sr->g("mainPath").$sr->g("templatePath"),1);
 // here goes the Access Controller
 $authDefaults=AuthRegistry::getDefaults();
 $ar=AuthRegistry::getInstance(1,$authDefaults);
-$fromSr=$sr->exportToFrontendAuth();
-$ar->overrideValuesBy($fromSr);
+$ar->adjustForFrontend($sr);
 $ar->overrideValuesBy($iniParams["auth"]);
 $ar->overrideValuesBy($iniParams["intervals"]);
 $ac=new AccessController($ar);

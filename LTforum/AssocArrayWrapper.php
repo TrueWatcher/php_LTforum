@@ -112,6 +112,7 @@
     
     public function overrideValuesBy(Array $guest) {
       if (empty($guest)) return;
+      if ($this->strict==2) throw new UsageException ("Cannot override values as the object was created in readonly mode");
       $myKeys=array_keys($this->arr);
       $guestKeys=array_keys($guest);
       foreach ($guestKeys as $key) {
@@ -124,6 +125,7 @@
     
     public function addFreshPairsFrom(Array $guest) {
       if (empty($guest)) return;
+      if ($this->strict>0) throw new UsageException ("Cannot add pairs as the object was created in stict or readonly mode");
       $myKeys=array_keys($this->arr);
       $guestKeys=array_keys($guest);
       foreach ($guestKeys as $key) {
