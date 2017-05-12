@@ -39,14 +39,14 @@ class UserManager {
    * Main entry point.
    * @return false on unknown command, ViewRegistry instance on success or error
    */
-  static function go(AuthRegistry $aar,PageRegistry $apr, SessionRegistry $asr) {
+  static function go(PageRegistry $apr, SessionRegistry $asr) {
     //print_r($_REQUEST);
     try {
       $vr=ViewRegistry::getInstance(1,[
         "alert"=>"", "requireFiles"=>null,"includeTemplate"=>"admin.php",
         "userList"=>"", "adminList"=>""
       ]);
-      self::init($aar->g("targetPath"),$apr->g("forum"));
+      self::init($asr->g("forumsPath").$apr->g("forum")."/",$apr->g("forum"));
       switch ( $apr->g("act") ) {
       case ("lu"):
         $vr->s("userList",implode(", ",UserManager::listUsers() ) );
@@ -195,6 +195,8 @@ class UserManager {
     case "del":
       if (!$found) return("No such user");
       if (count(self::$users)==1) return("Can not remove the only user");
+      if (array_key_exists( $userName,self::$admins ) && count(self::$admins)==1) return("Can not remove the only admin");
+      
       $ret=self::delFromIniFile($entry,self::$forumName);
       if ( !$ret && array_key_exists( $userName,self::$admins ) ) {
         $ret=self::manageAdmin("del",$userName);

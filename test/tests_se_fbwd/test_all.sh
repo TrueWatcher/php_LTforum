@@ -2,6 +2,7 @@
 rm ../.group
 rm ../test.db
 cp "test.db" "../test.db"
+phpunit testUnitAdmin
 phpunit testUnitAccCntr
 phpunit testAuth
 #rm ../test.db

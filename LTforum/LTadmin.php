@@ -42,7 +42,7 @@ if ( $acRet !== true ) exit($acRet);
 $apr->initAdmAfterAuth($asr);
 
 $ret=AdminAct::go($apr,$asr);
-if ($ret===false) $ret=UserManager::go($aar,$apr,$asr);
+if ($ret===false) $ret=UserManager::go($apr,$asr);
 
 if ($ret===false ) {
   if ( $apr->g("act") ) {

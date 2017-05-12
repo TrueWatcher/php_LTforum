@@ -77,10 +77,11 @@ class PageRegistry extends SingletAssocArrayWrapper {
   }
   
   public function initAdmBeforeAuth($input=null, $session=null, SessionRegistry $sr, $helperClass, $adminTitle) {
+  // $session is not used by admin functions
     if( !isset($input) ) $this->input = $_REQUEST;
     else $this->input = $input;
-    if( !isset($session) ) $this->session = & $_SESSION;
-    else $this->session = &$session;
+    //if( !isset($session) ) $this->session = & $_SESSION;
+    //else $this->session = &$session;
     $this->helperClass = $helperClass;
     
     $inputKeys=["act","forum","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear","uEntry","user","aUser"];
