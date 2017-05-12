@@ -15,7 +15,7 @@ $adminEntryParams=[
   "forumsPath"=>""/* relative to here */
 ];
 
-require_once ($adminEntryParams["mainPath"]."LTmessageManager.php");
+require_once ($adminEntryParams["mainPath"]."LTadmin.php");
 ?>
 
 
