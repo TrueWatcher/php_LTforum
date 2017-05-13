@@ -125,6 +125,8 @@ class AccessController {
     
     $this->c->readCommands($this->r);
     if ($this->c->guestPassAllowed() && $hc::tryPassAsGuest($this->c)) {
+      // If there's an active session, resume it. Useful for things like "Edit/Delete last message"
+      if( isset($_COOKIE) && ! empty($_COOKIE) ) $hc::startSession($this->c);
       $return=true;
       $this->c->trace($return);
       return ($return);

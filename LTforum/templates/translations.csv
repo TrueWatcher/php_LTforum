@@ -50,3 +50,5 @@ Wrong login or/and password~~Неправильное имя или пароль
 Please, introduce yourself~~Введите своё имя
 Message ID~~Сообщение №
 letters, max~~букв, максимум
+Only %s results shown, there may be more. Increase the page length or change order~~Это только первые %s результатов, следующие могли не поместиться. Установите большее количество сообщений на странице или измените порядок сортировки
+max %s  letters~~не более %s букв

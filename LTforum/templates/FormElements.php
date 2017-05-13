@@ -67,7 +67,7 @@ abstract class FormElements {
     if (empty($labelText)) $labelText=l("Edit this text");
     //$maxMessageLetters=(int)( $settings->g("maxMessageBytes")/2 );
     $maxMessageLetters = $settings->g("maxMessageLetters");
-    $label='<th colspan="2"><label for="txt">'.$labelText.' (<span id="cnt">max '.$maxMessageLetters.' letters</span>):</label></th>';
+    $label='<th colspan="2"><label for="txt">'.$labelText.' (<span id="cnt">'.l(["max %s  letters",$maxMessageLetters]).'</span>):</label></th>';
     $textarea='<td colspan="2" id="t"><textarea id="txt" name="txt" rows="" cols="" maxlength="'.$maxMessageLetters.'" >'.$context->g("message").'</textarea></td>';
     return( self::wrapRow ($label)."\r\n".self::wrapRow  ($textarea)  );
   }
@@ -75,7 +75,7 @@ abstract class FormElements {
   static function commText (SessionRegistry $settings,ViewRegistry $context) {
     //$maxMessageLetters=(int)($settings->g("maxMessageBytes")/2);
     $maxMessageLetters = $settings->g("maxMessageLetters");
-    $label='<th colspan="2"><label for="comm">'.l("Edit this commentary").' (<span id="cnt2">max '.$maxMessageLetters.' letters</span>):</label></th>';
+    $label='<th colspan="2"><label for="comm">'.l("Edit this commentary").' (<span id="cnt2">'.l(["max %s  letters",$maxMessageLetters]).'</span>):</label></th>';
     $textarea='<td colspan="2" id="c"><textarea id="comm" name="comm" rows="" cols="" maxlength="'.$maxMessageLetters.'" >'.$context->g("comment").'</textarea></td>';
     return( self::wrapRow ($label)."\r\n".self::wrapRow  ($textarea) );
   }
