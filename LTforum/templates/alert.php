@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @package LTforum
+ * @version 1.4
  */
 
 /**
@@ -20,7 +20,8 @@
 <body>
 <?php 
 if (isset($vr) && $vr->checkNotEmpty("alert")) $alert=l($vr->g("alert"));
-else $alert=l($pr->g("alert"));
+else if ($pr->checkNotEmpty("alert")) $alert=l($pr->g("alert"));
+else $alert="";
 ?>
 <!--<p style="text-align:center;"><?php /*var_dump($alert);*/ print($alert); ?><br /></p>-->
 
@@ -28,11 +29,11 @@ else $alert=l($pr->g("alert"));
   <tr><td colspan="2"><?php print($alert); ?></td></tr>
   <tr>
   <td><?php
-  if( !empty($pr->g("formLink")) )
+  if( $pr->checkNotEmpty("formLink") )
   print ( "<a href=\"{$pr->g("formLink")}\">".l("Back")."</a>" );
   ?></td>
   <td><?php
-  if( !empty($pr->g("viewLink")) )
+  if( $pr->checkNotEmpty("viewLink") )
   print ( "<a href=\"{$pr->g("viewLink")}\">Ok</a>" );
   ?></td>
   </tr>

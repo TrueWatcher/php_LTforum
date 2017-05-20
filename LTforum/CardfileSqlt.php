@@ -1,6 +1,6 @@
 <?php
 /**
- * @pakage LTforum
+ * @package LTforum
  * @version 1.4 added ini files
  */
 

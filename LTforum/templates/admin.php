@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added SessionManager and UserManager
+ * @package LTforum
+ * @version 1.4
  */
 
 /**
@@ -23,7 +23,7 @@
 <h1><?php print($pr->g("forum")); ?></h1>
 <p><?php printf("messages: %s..%s, language: %s",$pr->g("forumBegin"),$pr->g("forumEnd"),$pr->g("forumLang") ); ?></p>
 <hr />
-<p><?php print($pr->g("alert")); ?></p>
+<p><?php if( $pr->checkNotEmpty("alert") ) print($pr->g("alert")); ?></p>
 
 <form action="" method="get" id="export">
   <fieldset>
@@ -159,11 +159,11 @@
 <p id="footer"></p>
 <!--<table class="low"><tr>
   <td><?php
-  if( !empty($pr->g("formLink")) )
+  if( $pr->checkNotEmpty("formLink") )
   print ( "<a href=\"{$pr->g("formLink")}\">Try again</a>" );
   ?></td>
   <td><?php
-  if( !empty($pr->g("viewLink")) )
+  if( $pr->checkNotEmpty("viewLink") )
   print ( "<a href=\"{$pr->g("viewLink")}\">Go read messages</a>" );
   ?></td>
 </tr></table>-->

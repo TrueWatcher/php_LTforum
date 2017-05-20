@@ -126,7 +126,7 @@ class Act {
 
     $pr->s( "formLink",self::addToQueryString($pr,"act=el","length"/*,"user"*/,"current") );
 
-    if ( !empty($pr->g("del")) ) { // delete this message
+    if ( $pr->checkNotEmpty("del") ) { // delete this message
       // check if it is still last
       $lastMsg = $pr->g("cardfile")->getLastMsg();
       if( $lastMsg["id"] != $current ) {
@@ -281,10 +281,10 @@ class Act {
       $skipSearch=1;
     }
 
-    $lim=$pr->g("searchLength");
-    if ( empty($lim) ) $lim=$pr->g("length");
-    $order=$pr->g("order");
-    if ( empty($order) ) $order="desc";
+    if ( $pr->checkNotEmpty("searchLength") ) $lim=$pr->g("searchLength");
+    else $lim=$pr->g("length");
+    if ( $pr->checkNotEmpty("order") ) $order=$pr->g("order");
+    else $order="desc";
 
     if ($skipSearch) $toShow=null;
     else {
@@ -396,7 +396,7 @@ class Act {
 
   /**
    * Takes from the Page Registry the actual link to the viewer ( as query string, relative ), turns it into valid absolute address and sends it as REDIRECT header.
-   * @return void
+   * @return ViewRegistry object
    */
   public static function redirectToView (PageRegistry $pr) {
     $uri=$pr->g("viewLink");
@@ -412,16 +412,16 @@ class Act {
    * @param     string          $command this will be inserted as such
    * @param     string          name of registry parameter, will be inserted as &name=value
    * @param     string          more of these
-   * @returns string ready Query String with leading ? and middle ampersands as &amp;
+   * @returns   string          ready Query String with leading ? and middle ampersands as &amp;
    */
   public static function addToQueryString (PageRegistry $pr,$command) {
     $qs=$command;
     for ($i=2;$i<func_num_args();$i++) {
       $n=func_get_arg($i);
-      if( !empty($qs) && !empty($pr->g($n)) ) $qs.="&amp;";
-      if( !empty($pr->g($n)) ) $qs.=$n."=".urlencode($pr->g($n));
+      if( ! empty($qs) && $pr->checkNotEmpty($n) ) $qs.="&amp;";
+      if( $pr->checkNotEmpty($n) ) $qs.=$n."=".urlencode($pr->g($n));
     }
-    if( !empty($qs) ) $qs="?".$qs;
+    if( ! empty($qs) ) $qs="?".$qs;
     return ($qs);
   }
 

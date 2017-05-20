@@ -30,7 +30,7 @@ function page($input,$entryParams) {
   $adminDefaults=SessionRegistry::getDefaultsBackend();
   $asr=SessionRegistry::getInstance(1,$adminDefaults);
   $asr->overrideValuesBy($entryParams);
-  $apr=PageRegistry::getInstance( 0,[] );
+  $apr=PageRegistry::getInstance( 0, ["alert"=>""] );
   $apr->initAdmBeforeAuth($input, $session, $asr, "Act", $asr->g("adminTitle"));
   $apr->initAdmAfterAuth($asr);
 
