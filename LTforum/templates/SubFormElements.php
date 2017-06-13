@@ -18,7 +18,7 @@ class EditanyElements extends FormElements {
     $h=self::genericInput ("hidden","act","ua");
     $h.=self::genericInput ("hidden","current",$pageContext->g("current"));
     $h.=self::genericInput ("hidden","forum",$pageContext->g("forum"));
-    $h.=self::genericInput ("hidden","pin",$pageContext->g("pin"));
+    //$h.=self::genericInput ("hidden","pin",$pageContext->g("pin"));
     return ($h);
   }
 

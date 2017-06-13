@@ -51,7 +51,7 @@ abstract class AuthElements {
 
   static function realmP (AuthRegistry $context) {
     $label=l("Thread")." : ";
-    return ( self::wrapRow ( self::wrapFldTh($label).self::wrapFldTd($context->g("realm")) ) );
+    return ( self::wrapRow ( self::wrapFldTh($label).self::wrapFldTd("<h1>".$context->g("realm")."</h1>") ) );
   }
 
   static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {

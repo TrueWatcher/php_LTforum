@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @package LTforum
+ * @version 1.4 
  */
 
 /**
@@ -17,21 +17,12 @@ class AdminAct {
     try {
       switch ( $apr->g("act") ) {
       case ("exp"):
-        //print("export");
-        //print_r($apr);
         return(self::exportHtml ($apr,$asr));
       case ("imp"):
-        //print("export");
         return(self::importHtml ($apr,$asr));
-        //self::showAlert($apr,$asr,$error);
-        //else self::showAlert($apr,$asr,"Import is complete");
-        //Act::view($apr,$asr);
-        //exit(0);
       case ("dr"):
-        //print("delete");
         return(self::deleteRange ($apr,$asr));
       case ("ea"):
-        //print("edit any");
         return(self::editAny ($apr,$asr));
       case ("ua"):
         return(self::updateAny ($apr,$asr));
@@ -46,10 +37,9 @@ class AdminAct {
   public function exportHtml (PageRegistry $apr, SessionRegistry $asr) {
     require_once($asr->g("templatePath")."SectionElements.php");
     require_once($asr->g("templatePath")."ExportElements.php");
-    //require_once($asr->g("templatePath")."RollElements.php");//will be removed
 
     //Act::view($apr,$asr);
-    if ( empty($apr->g("begin")) || ( empty($apr->g("end")) && empty($apr->g("kb")) ) ) {
+    if ( ( ! $apr->checkNotEmpty("begin") ) || ( ! $apr->checkNotEmpty("end") && ! $apr->checkNotEmpty("kb") ) ) {
       return(self::showAlert("You should give begin and end|kb"));
     }
     $begin=$apr->g("begin");
@@ -74,14 +64,13 @@ class AdminAct {
       }
       $processed++;
       if ( $apr->g("newBegin") >= 1 ) $m["id"] = $apr->g("newBegin") + $processed - 1;
-      if ( empty($apr->g("newBegin")) ) $m["id"] = "";
+      if ( ! $apr->checkNotEmpty("newBegin") ) $m["id"] = "";
       $html=ExportElements::oneMessage ( $m,ExportElements::idTitle ($m),$no=null );
 
       $processedBytes+=strlen($html);
-      //$messages.=$html;// remove this, only length is needed
 
       $msgList[]=$m;
-      if ( $apr->g("kb")>=1 && ceil($processedBytes/1000)>=$apr->g("kb") ) {
+      if ( $apr->g("kb") >= 1 && ceil($processedBytes/1000) >= $apr->g("kb") ) {
         //print("size exceeded");
         break;
       }
@@ -110,8 +99,8 @@ class AdminAct {
     $sr=clone $asr;// need to change assetsPath
     $sr->s( "assetsPath","../".$asr->g("assetsPath") );
 
-    $file=$apr->g("obj");
-    if ( empty($file) ) $file=$apr->g("forum")."_".$newBegin."_".$newEnd;
+    if ($apr->checkNotEmpty("obj")) $file=$apr->g("obj");
+    else $file=$apr->g("forum")."_".$newBegin."_".$newEnd;
     $fullFile=$asr->g("forumsPath").$apr->g("forum")."/".$file.".html";
     //print ($fullFile);
     touch ($fullFile);
@@ -274,15 +263,10 @@ class AdminAct {
       "controlsClass"=>"EditanyElements"] 
     );
     return ($vr);
-    /*require_once($asr->g("templatePath")."FormElements.php");
-    require_once($asr->g("templatePath")."SubFormElements.php");
-    // show form
-    include ($asr->g("templatePath")."form.php");
-    exit(0);*/
   }
 
   public function updateAny (PageRegistry $apr, SessionRegistry $asr) {
-    $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum","pin","current") );
+    $apr->s( "formLink",Act::addToQueryString($apr,"act=ea","forum",/*"pin",*/"current") );
     $targetId=$apr->g("current");
     if ( $targetId < $apr->g("forumBegin") || $targetId > $apr->g("forumEnd") ) {
       return(self::showAlert("Invalid message number : ".$targetId));
@@ -305,7 +289,7 @@ class AdminAct {
     $m["author"]=$author;
     $m["message"]=$txt;
     $m["comment"]=$comm;
-    if ( !empty($apr->g("clear")) ) $m["time"]=$m["date"]="";// current date and time will be set
+    if ( $apr->checkNotEmpty("clear") ) $m["time"]=$m["date"]="";// current date and time will be set
     $apr->g("cardfile")->addMsg($m,true);// true for overwrite
 
     return(self::showAlert("Message ".$apr->g("current")." has been updated"));

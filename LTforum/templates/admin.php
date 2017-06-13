@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added SessionManager and UserManager
+ * @package LTforum
+ * @version 1.4
  */
 
 /**
@@ -23,7 +23,7 @@
 <h1><?php print($pr->g("forum")); ?></h1>
 <p><?php printf("messages: %s..%s, language: %s",$pr->g("forumBegin"),$pr->g("forumEnd"),$pr->g("forumLang") ); ?></p>
 <hr />
-<p><?php print($pr->g("alert")); ?></p>
+<p><?php if( $pr->checkNotEmpty("alert") ) print($pr->g("alert")); ?></p>
 
 <form action="" method="get" id="export">
   <fieldset>
@@ -81,6 +81,9 @@
     <br />
     All admins: <a href="?forum=<?php print( $pr->g("forum") ); ?>&amp;act=la"><button type="button">Get admins list</button></a><br />
     <input type="textarea" style="width:100%" id="adminList" value="<?php print($vr->g("adminList")); ?>" />
+    <br />
+    All visitors: <a href="?forum=<?php print( $pr->g("forum") ); ?>&amp;act=lv"><button type="button">Get visitors list</button></a><br />
+    <input type="textarea" style="width:100%" id="visitorList" value="<?php print($vr->g("visitorList")); ?>" />
   </fieldset>
 </div>
 
@@ -108,6 +111,17 @@
     <br />
     <button type="button" id="aAdd">Add to Admins</button>
     <button type="button" id="aDel">Remove from Admins</button>
+    <input type="hidden" name="forum" value="<?php print( $pr->g("forum") ) ?>" />
+  </fieldset>
+</form>
+<form action="" method="post" id="manVisitor">
+  <fieldset>
+    User:<br />
+    Name : <input type="text" name="aUser" id="aUser" />
+    <br />
+    for <input type="text" name="period" id="period" /> s
+    <button type="submit">Make a temporary visitor</button>
+    <input type="hidden" name="act" value="markVisitor" />
     <input type="hidden" name="forum" value="<?php print( $pr->g("forum") ) ?>" />
   </fieldset>
 </form>
@@ -159,11 +173,11 @@
 <p id="footer"></p>
 <!--<table class="low"><tr>
   <td><?php
-  if( !empty($pr->g("formLink")) )
+  if( $pr->checkNotEmpty("formLink") )
   print ( "<a href=\"{$pr->g("formLink")}\">Try again</a>" );
   ?></td>
   <td><?php
-  if( !empty($pr->g("viewLink")) )
+  if( $pr->checkNotEmpty("viewLink") )
   print ( "<a href=\"{$pr->g("viewLink")}\">Go read messages</a>" );
   ?></td>
 </tr></table>-->

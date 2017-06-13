@@ -36,23 +36,12 @@ textarea {
   width: 92%;
   height: 7em;
 }
-input#name,input#email {
-  min-width: 95%;
-  /*width: 14em;*/
-}
-input.submit {
-  padding: .3em;
-  background-color: #abc;
-  border: 2px solid #842;
-}
-input.submit:hover {
-  background-color: #eed;
-}
 td,th {
   padding: .5em;
 }
 th {
   text-align: left;
+  font-weight: normal;
 }
 td {
   text-align: left;
@@ -61,16 +50,34 @@ td#enter,td#cancel,td#t,td#c {
   text-align: center;
 }
 label,legend,input.submit {
-  font-family: Verdana, sans-serif;
-  font-size: .8em;
-  font-weight: bold;
+  font-family: Arial,sans-serif;
+  /*font-weight: bold;*/
 }
-input,textarea,select {
+th,td {
+  /*font-family: Verdana,sans-serif;*/
+  /*font-size: 0.9em;*/
+}
+input.submit {
+  font-weight: bold;
+  font-size: 1.0em;
+  border: 2px solid #842;
+}
+input,button {
+  padding: .3em;
+  background-color: #abc;
+  border: 2px solid #842;
+}
+textarea,input,select {
   font-family: Arial, sans-serif;
-  font-size: 1.05em;
+  font-size: 1.15em;
   background-color: #abc;
   border: none;
+  padding: 0.3em;
 }
-input:focus,textarea:focus,select:focus,checkbox:hover,label:hover {
+input:focus,input:hover,button:hover,textarea:focus,textarea:hover,select:focus,checkbox:hover,label:hover {
   background-color: #eed;
+}
+h1,h2 {
+  font-weight: bold;
+  font-size: 1.15em;
 }

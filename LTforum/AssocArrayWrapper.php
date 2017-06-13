@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @package LTforum
+ * @version 1.4 blocked reading by nonexistent key even in loose mode SingletAssocArrayWrapper
  */
 
   class AssocArrayWrapper {
@@ -70,9 +70,9 @@
     }*/
 
     public function g($key) {
-      if ( !array_key_exists($key,$this->arr) ) {
-        if (!$this->strict) return ("");
-        else throw new Exception ("Reading by non-existent key ".$key);
+      if ( ! array_key_exists($key,$this->arr) ) {
+        /*if (!$this->strict) return ("");
+        else */throw new Exception ("Reading by non-existent key ".$key);
       }
       return( $this->arr[$key] );
     }

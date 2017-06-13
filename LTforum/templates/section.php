@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.1 added Search command, refactored View classes
+ * @package LTforum
+ * @version 1.4
  */
  /**
  * A View to display a list of messages plus some nice control elements.
@@ -27,10 +27,10 @@ if ( !is_subclass_of($cc,"SectionElements") ) throw new UsageException ("Layout 
   <td><?php print ( $cc::numberForm($vr) ); ?></td>
   <td><?php print ( $cc::searchLinkForm($vr) ); ?></td>
 </tr></table>
-<?php if( $pr->g("alert") ) print("<hr/><p class=\"n\">".l($pr->g("alert"))."</p>"); ?>
+<?php if( $pr->checkNotEmpty("alert") ) print("<hr/><p class=\"n\">".l($pr->g("alert"))."</p>"); ?>
 <?php
 $j=0;
-if ( !empty($vr->g("msgGenerator")) ) {
+if ( $vr->checkNotEmpty("msgGenerator") ) {
   foreach ($vr->g("msgGenerator") as $j=>$msg) {
     print( $cc::oneMessage($msg,$cc::localControls($msg,$vr,$pr),$vr) );
   }

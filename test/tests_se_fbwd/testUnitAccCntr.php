@@ -40,12 +40,14 @@ function page ($registryTemplate, $input, &$session, &$registry, $verbose=0) {
   $registry=$ar;
   //print_r($ac->session);
   echo ("Trace:".$ar->g("trace")."\n");
-  echo ("Alert:".$ar->g("alert")."\n");
+  echo ("Alert:".l($ar->g("alert"))."\n");
+
   if ($verbose) { 
     echo ("Session:");
     print_r($session);
   }
   //$ar->destroy();
+  CardfileSqlt::destroy();
   return ($acRet);
 }
 
@@ -53,7 +55,7 @@ echo("\nUnit tests for AccessController\n\n");
 
 class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
 
-  protected $authRegistryTemplate = [ "realm"=>"test", "targetPath"=>"../", "templatePath"=>"../../LTforum/templates/", "assetsPath"=>"../../assests/", "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>2, "maxDelayAuth"=>4, "maxDelayPage"=>6, "maxTimeoutGcCookie"=>10, "minRegenerateCookie"=>8, "guestsAllowed"=>false, "masterRealms"=>"",  "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>"" ];
+  protected $authRegistryTemplate = [ "realm"=>"test", "targetPath"=>"../", "templatePath"=>"../../LTforum/templates/", "assetsPath"=>"../../assests/", "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>2, "maxDelayAuth"=>4, "maxDelayPage"=>6, "maxTimeoutGcCookie"=>10, "minRegenerateCookie"=>8, "guestsAllowed"=>false, "masterRealms"=>"", "expireWarnInterval"=>1, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>"" ];
 
   public function _test_getStaticHello() {
     $hello=AccessController::hello();
@@ -306,8 +308,7 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $rightAlert=( strpos($a,"nanswered")!==false || strpos($a,"this user")!==false );
     $this->assertTrue($rightAlert,"Missing or wrong info in postAuth");
     $this->assertGreaterThan($nb,$session["notBefore"],"Stalled notBefore");
-
-    CardfileSqlt::destroy();
+    
     
     echo("\ntesting not regenerate cookie in postAuth state before minRegenerateCookie\n");
     $ct=$session["cookieTime"];
@@ -324,8 +325,7 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $rightAlert=( strpos($a,"nanswered")!==false || strpos($a,"this user")!==false );
     $this->assertTrue($rightAlert,"Missing or wrong info in postAuth");
     $this->assertGreaterThan($nb,$session["notBefore"],"Stalled notBefore");
-    
-    CardfileSqlt::destroy();
+
     
     echo("\ntesting regenerate cookie in postAuth state\n");
     $ct=$session["cookieTime"];
@@ -342,8 +342,7 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $rightAlert=( strpos($a,"nanswered")!==false || strpos($a,"this user")!==false );
     $this->assertTrue($rightAlert,"Missing or wrong info in postAuth");
     $this->assertGreaterThan($nb,$session["notBefore"],"Stalled notBefore");
-    
-    CardfileSqlt::destroy();
+
     
     echo("\ntesting cross-realm registration in post-auth, expecting success\n");
     $art["realm"]="demo";
@@ -354,7 +353,6 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $t=$ar->g("trace");
     $this->assertEquals ( ">postAuth>active>true", $t, "Wrong trace" );
 
-    CardfileSqlt::destroy();
     
     echo("\nsending deactivate command\n");
     $input=["reg"=>"deact"];
@@ -362,15 +360,13 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $t=$ar->g("trace");
     $this->assertEquals  ( ">active>reg_id>postAuth>false", $t, "Wrong trace" );    
 
-    CardfileSqlt::destroy();
     
     echo("\ntest repeated deact request, expecting redirect\n");
     $input=["reg"=>"deact"];
     page($art,$input,$session,$ar,$verbose);
     $t=$ar->g("trace");
     $this->assertEquals  ( ">postAuth>redirect>false", $t, "Wrong trace" );    
-    
-    CardfileSqlt::destroy();
+
     
     echo("\ntesting cross-realm page request in postAuth, expecting transit to preAuth\n");
     $art["realm"]="test";
@@ -384,7 +380,6 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $this->assertContains ("new thread",$ar->g("alert"),"Wrong message" );
     $this->assertGreaterThan($nb,$session["notBefore"],"Stalled notBefore");
 
-    CardfileSqlt::destroy();
     
     echo("\nTest delays OK\n");
   }
@@ -506,6 +501,170 @@ class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
     $this->assertFalse ( isset($session["authName"]), "Remaining authName in SESSION" );
     
     echo ("\nTest blocking plaintext auth OK\n");      
+  }
+  
+    
+  public function test_visitors() {
+    $verbose=0;
+    $art = $this->authRegistryTemplate;
+  
+    $input=[];
+    $session=[];
+    $ar=null;
+  
+    echo("\ncreating a user visitor/vis\n");
+    $userName="visitor";
+    $userPsw="vis";
+    UserManager::init($art["targetPath"],"test");
+    $ret=UserManager::manageUser("add","",$userName,"test",$userPsw);
+    $ok=( $ret==="" || $ret==="This user already exists" );
+    $this->assertTrue($ok,"Failed to create visitor/vis");
+    
+    echo("\nsetting visitor/vis as a visitor\n");
+    $lifetime=$art["maxDelayPage"]-1;
+    $deadLine=time()+$lifetime;
+    $ret=UserManager::markAsVisitor($userName,$lifetime);
+    $this->assertEmpty($ret,"Failed to mark a visitor");
+    
+    echo("\ngetting a visitor list and checking it\n");
+    $vl=UserManager::listVisitors();
+    $ke=array_key_exists($userName,$vl);
+    $this->assertTrue($ke,"No userName in the visitor list");
+    $this->assertEquals($deadLine,$vl[$userName],"Wrong deadline");
+    
+    echo("\ngetting the form\n");
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
+    $this->assertNotEmpty ($session["serverNonce"], "Empty serverNonce" );
+    
+    echo("\nregistering normally, expecting success\n");
+    sleep( $art["minDelay"] );
+    $input=["reg"=>"authOpp","plain"=>1,"user"=>$userName,"ps"=>$userPsw];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals  ( ">preAuth>reg_id>active>true", $t, "Wrong trace" );
+    $this->assertGreaterThan (time(),$session["expires"],"Missing EXPIRES from session");
+    
+    echo("\ngetting a page, expecting success\n");
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>true", $t, "Wrong trace" );
+    
+    echo("\ngetting a page while in warnInterval, expecting alert\n");
+    // lifetime=5 , warn since 5
+    sleep(1);
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>false", $t, "Wrong trace" );
+    $warning=l($ar->g("alert"));
+    $this->assertContains("will expire in 0 minutes",$warning,"Wrong expire warning");
+    $this->assertContains($userName,$warning,"Wrong expire warning");
+    $this->assertGreaterThan(0,$session["warned"],"Missing WARNED from session");
+    
+    echo("\ngetting a page again, expecting success\n");
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>true", $t, "Wrong trace" );
+    
+    echo("\ngetting a page after deadline, expecting alert\n");
+    // lifetime=5 , warn since 5
+    sleep(1);
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>zero>false", $t, "Wrong trace" );
+    $warning=l($ar->g("alert"));
+    $this->assertContains("has expired",$warning,"Wrong expire message");
+    $this->assertContains($userName,$warning,"Wrong expire message");
+    
+    echo("\ntrying to register again, expecting failure and users cleanup\n");
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
+    $this->assertNotEmpty ($session["serverNonce"], "Empty serverNonce" );
+    sleep( $art["minDelay"] );
+    $input=["reg"=>"authOpp","plain"=>1,"user"=>$userName,"ps"=>$userPsw];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals  ( ">preAuth>preAuth>false", $t, "Wrong trace" );
+    
+    echo("\nchecking the user list and the visitor list\n");
+    UserManager::init($art["targetPath"],"test");// re-read .group file
+    $ul=UserManager::listUsers();
+    $this->assertNotContains($userName,implode(", ",$ul),"userName still in the user list");
+    $vl=UserManager::listVisitors();
+    $ke=array_key_exists($userName,$vl);
+    $this->assertFalse($ke,"userName still in the visitor list");
+    
+    echo("\nTest visitor create-login-warn-expire OK\n");
+  }
+  
+  public function test_guestAndMaster() {
+    $verbose=0;
+    $art = $this->authRegistryTemplate;
+  
+    $input=[];
+    $session=[];
+    $ar=null;
+    
+    echo("\ngetting a page with guest pass allowed, expecting success\n");
+    $art["guestsAllowed"]="view,search";
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">true", $t, "Wrong trace" );
+    $this->assertTrue(empty($session),"Non-empty SESSION after guest pass");
+    
+    echo("\ngetting a page beyond guest-allowed, expecting registration form\n");
+    $art["guestsAllowed"]="view,search";
+    $input=["act"=>"new"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">zero>preAuth>false", $t, "Wrong trace" );
+    
+    echo("\nregistering as user/abc, expecting success and redirect\n");
+    $userName="user";
+    $userPsw="abc";
+    sleep( $art["minDelay"] + 1 );
+    $input=["reg"=>"authOpp","plain"=>1,"user"=>$userName,"ps"=>$userPsw];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">preAuth>reg_id>active>redirect>false", $t, "Wrong trace" );
+    $this->assertEquals ( $userName, $session["authName"], "Wrong authName" );
+    
+    echo("\ngetting a page beyond guest-allowed, expecting success\n");
+    $art["guestsAllowed"]="view,search";
+    $input=["act"=>"new"];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>true", $t, "Wrong trace" );
+    
+    echo("\ngetting a page from another thread with masterRealm allowed, expecting success\n");
+    $art = $this->authRegistryTemplate;
+    $art["realm"]="demo";
+    $art["targetPath"]="../demo/";
+    $art["masterRealms"]="super,test";
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>true", $t, "Wrong trace" );
+    $this->assertFalse ($ar->checkNotEmpty("alert"),"Alert thrown" );
+    
+    echo("\ngetting a page from another thread, expecting failure\n");
+    $art["masterRealms"]="";
+    $input=[];
+    page($art,$input,$session,$ar,$verbose);
+    $t=$ar->g("trace");
+    $this->assertEquals ( ">active>preAuth>false", $t, "Wrong trace" );
+    $this->assertTrue ($ar->checkNotEmpty("alert"),"missing alert" );
+    
+    echo("\nTest guest pass and masterRealm pass OK\n");
   }
 }    
 ?>
