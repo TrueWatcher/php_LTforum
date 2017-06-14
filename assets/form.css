@@ -62,7 +62,7 @@ input.submit {
   font-size: 1.0em;
   border: 2px solid #842;
 }
-input {
+input,button {
   padding: .3em;
   background-color: #abc;
   border: 2px solid #842;
@@ -74,7 +74,7 @@ textarea,input,select {
   border: none;
   padding: 0.3em;
 }
-input:focus,input:hover,textarea:focus,textarea:hover,select:focus,checkbox:hover,label:hover {
+input:focus,input:hover,button:hover,textarea:focus,textarea:hover,select:focus,checkbox:hover,label:hover {
   background-color: #eed;
 }
 h1,h2 {

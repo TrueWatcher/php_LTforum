@@ -15,10 +15,17 @@
     static function plainChkbx () {}
     static function authorInput ($label,$inputName,$authorName,$context,$pageContext) {}
     static function pswInput ($label,$inputName,$pswValue,$context,$pageContext) {}
-    static function submitButton() {}
+    //static function submitButton() {}
     static function titleSuffix() { return("Login : alert"); }
     static function realmP($context) {}
     // pAlert inherited
+    static function submitButton() {
+      $s='<a href=""><button type="button">Ok</button></a>';
+      $s='<td id="enter" colspan="2">'.$s."</td>\r\n";
+      $s=self::wrapRow ($s);
+      return($s);
+      //'.$_SERVER["HTTP_REFERER"].'
+    }
   }
 
   class OpportunisticAuthElements extends AuthElements {

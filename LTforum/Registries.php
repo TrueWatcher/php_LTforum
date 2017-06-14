@@ -84,7 +84,7 @@ class PageRegistry extends SingletAssocArrayWrapper {
     //else $this->session = &$session;
     $this->helperClass = $helperClass;
     
-    $inputKeys=["act","forum","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear","uEntry","user","aUser"];
+    $inputKeys=["act","forum","current","begin","end","length","obj","order","kb","newBegin","txt","comm","author","clear","uEntry","user","aUser","period"];
     $inputs=readByKeys($this->input,$inputKeys);
     $this->addFreshPairsFrom($inputs);
     
@@ -165,7 +165,7 @@ class ViewRegistry extends SingletAssocArrayWrapper {
   public static function getAdminDefaults() {
     $r=[
       "alert"=>"", "requireFiles"=>null,"includeTemplate"=>"admin.php",
-      "userList"=>"", "adminList"=>""
+      "userList"=>"", "adminList"=>"", "visitorList"=>""
     ];
     return $r;
   }

@@ -51,8 +51,8 @@ function page($input,$entryParams) {
     throw new UsageException ("Non-object result");  
   }
   if($verbose) {
-    echo("Alert_vr : ".$ret->g("alert")."\n");
-    echo("Alert_apr : ".$apr->g("alert")."\n");
+    if($ret->checkNotEmpty("alert")) echo("Alert_vr : ".$ret->g("alert")."\n");
+    if($apr->checkNotEmpty("alert")) echo("Alert_apr : ".$apr->g("alert")."\n");
   }
   
   $r=$ret->export();

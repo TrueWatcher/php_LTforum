@@ -274,6 +274,16 @@ class Applicant {
     $ret=$this->$method( $this->c );
     if ( $ret!==true ) return($ret);
     $this->realm = $this->c->g("realm");
+    
+    // check if this user is in visitor list and save deadline to session
+    $deadline=$this->authVisitor( $this->c );
+    if ($deadline!==true) {
+      $this->session["expires"]=$deadline;
+    }
+    else {
+      if(isset($this->session["expires"])) unset($this->session["expires"]);
+      if(isset($this->session["warned"])) unset($this->session["warned"]);
+    }
 
     //check admin rights at registration and save a flag to SESSION
     $ret=$this->authAdmin( $this->c );
@@ -364,6 +374,22 @@ class Applicant {
     }
     return ("Please, register to a new thread");
   }
+  
+  public function checkExpiredAndWarn() {
+    if ( ! array_key_exists("expires",$this->session)) return true;
+    $remains=$this->session["expires"]-time();
+    if ($remains < 0) {
+      $name=$this->authName;
+      $this->setStatus("zero");
+      return([ "Dear %s, your session has expired, thank you for your visit.",$name ]);
+    }
+    $expireWarnInterval=$this->c->g("expireWarnInterval");//300;
+    if ($remains < $expireWarnInterval && ! array_key_exists("warned",$this->session)) {
+      $this->session["warned"]=1;
+      return([ "Dear %s, your session will expire in %s minutes", $this->authName, (int)($remains/60) ]);
+    }
+    return true;
+  }
 
    /**
      * Checks user form and performs PLaintext auth.
@@ -441,12 +467,12 @@ class Applicant {
     return(true);
   }
 
-    /**
-     * Checks if the given user has admin rights against .group file.
-     * @uses AccessHelper::parseGroup
-     * @param {object AuthRegistry} $context
-     * @returns true if has, false or error message if has not
-     */
+  /**
+    * Checks if the given user has admin rights against .group file.
+    * @uses AccessHelper::parseGroup
+    * @param {object AuthRegistry} $context
+    * @returns true if has, false or error message if has not
+    */
   protected function authAdmin (AuthRegistry $ar) {
     $hc=$this->helper;
     $admins = $hc::parseGroup( $ar->g("realm")."Admins", $ar );
@@ -454,31 +480,19 @@ class Applicant {
     return ("Not an admin");
   }
 
-  /**
-   * Checks if there are new messages since the latest current user's message.
-   * Main feature of the postAuth state.
-   * @return string|Array notification
-   */
-  public function getUnanswered() {
-    if ( !class_exists("CardfileSqlt") ) throw new UsageException ("Some dependency is missing");
-    $dbFile = $this->c->g("targetPath").$this->c->g("realm"); 
-    //$dbFile = $this->c->g("targetPath")."../".$this->c->g("realm")."/".$this->c->g("realm");
-    $dbm=new CardfileSqlt($dbFile,false);
-
-    $found=$dbm->getLastMsgByAuthor($this->authName);
-    if (!$found) { // no messages by this user in this forum
-      return("No messages by this user");
-    }
-    // check if the latest message is authored by this user
-    $last=$dbm->getLastMsg();
-    $unanswered = $last["id"] - $found["id"];
-    if ( $unanswered ) {
-      $note=[ "Unanswered: %s, latest: %s at %s", $unanswered, $last["date"], $last["time"] ];  
-    }
-    else $note="Unanswered: 0"; 
-    //$dbm->destroy();
-    return ($note);
-  }
+    /**
+    * Checks if the given user is temporary against .group file.
+    * @uses AccessHelper::parseGroup
+    * @param {object AuthRegistry} $context
+    * @returns deadline if is temporary, true if is permanent
+    */
+  protected function authVisitor (AuthRegistry $ar) {
+    $hc=$this->helper;
+    $visitors = $hc::parseGroup( $ar->g("realm")."Visitors", $ar );
+    if ( array_key_exists( $this->authName, $visitors ) ) return ($visitors[$this->authName]);
+    return (true);
+  }  
+  
 }
 
 ?>

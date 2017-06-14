@@ -54,7 +54,7 @@ class AuthRegistry extends SingletAssocArrayWrapper {
   
   public static function getDefaults() {
     $r=[
-      "realm"=>"", "targetPath"=>"", "templatePath"=>"", "assetsPath"=>"", "isAdminArea"=>1, "authName"=>"", "serverNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1,  "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "guestsAllowed"=>false, "masterRealms"=>"", "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
+      "realm"=>"", "targetPath"=>"", "templatePath"=>"", "assetsPath"=>"", "isAdminArea"=>1, "authName"=>"", "serverNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1,  "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "guestsAllowed"=>false, "masterRealms"=>"", "expireWarnInterval"=>300, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
     ];
     return $r;
   }
@@ -222,6 +222,8 @@ class AccessController {
         $this->c->readSession($this->session);
         $a->initFull();
         // pre-registration checks and registration processaing
+        $hc::removeExpiredVisitors($this->c->g("realm"),$this->c);
+        //exit;        
         $ret=$a->beforeAuth();
         if ( $ret===true ) $ret=$a->processAuth();
         if ( $ret!==true ) {
@@ -252,7 +254,7 @@ class AccessController {
       throw new UsageException ("Wrong Command/State reg=".$this->c->g("reg")."/".$a->getStatus()."!");
 
     case "":
-      if ( empty($this->session) || $a->statusEquals("preAuth") ) {
+      if ( empty($this->session) || $a->statusEquals("zero") || $a->statusEquals("preAuth") ) {
         $a->demandReg("","preAuth");
         break;
       }
@@ -265,6 +267,11 @@ class AccessController {
           $a->demandReg($ret,"preAuth");
           break;
         }
+        $ret = $a->checkExpiredAndWarn();
+        if ( $ret!==true ) {
+          $hc::showAuthAlert($this->c,$ret);
+          break;
+        }
         $ret = $a->checkNotBefore();
         if ( $ret!==true ) {
           $hc::showAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
@@ -274,12 +281,13 @@ class AccessController {
         $ret = $a->checkActiveUntil();
         if ( $ret!==true ) {
           // active > postAuth
-          $note=$a->getUnanswered();
+          $note=$hc::getUnanswered($this->session["authName"],$this->c);
           //session_regenerate_id(true);
           $a->markCookieTime();
           $a->demandReg($note,"postAuth");
           break;
         }
+        
         // happy end
         // continue to main controller
         $a->setTimeLimits( 0,$this->c->g("maxDelayPage") );
@@ -291,7 +299,7 @@ class AccessController {
         $ret = $a->checkRealm();
         if ($ret===true) {
           // postAuth > postAuth
-          $note=$a->getUnanswered();
+          $note=$hc::getUnanswered($this->session["authName"],$this->c);
           $a->keepCookie();// regenerate cookie and id if the session is aged (more than 1 day typically)
           $a->demandReg($note,"postAuth");
           break;

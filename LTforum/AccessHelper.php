@@ -68,6 +68,7 @@ class AccessHelper {
     $s.="admin=".self::makeHa1("admin",$forum,"admin").$nl;
     $s.="[".$forum."Admins]".$nl;
     $s.="admin=".$nl;
+    $s.="[".$forum."Visitors]".$nl;
     file_put_contents( $path.self::$groupFileName, $s );
   }
 
@@ -93,6 +94,48 @@ class AccessHelper {
     return($parsed[$realm]);
   }
   
+  static function removeExpiredVisitors($realm,$context) {
+    $targetPath="";
+    if ($context) $targetPath=$context->g("targetPath");
+    $groupFile=$targetPath.self::$groupFileName;
+    if ( ! file_exists($groupFile) ) {
+      return;
+    }
+    $buf=file_get_contents($groupFile);
+    $parsed=parse_ini_string($buf,true);
+    $rv=$realm."Visitors";
+    if( ! array_key_exists($rv,$parsed)) return;
+    $visitorsList=$parsed[$rv];
+    //print_r($visitorsList);
+    $expiredList=[];
+    $t=time();
+    foreach($visitorsList as $visitor=>$deadline) {
+      if($t > $deadline) $expiredList[]=$visitor;
+    }
+    if (empty($expiredList)) return;
+    
+    $nl="\n";
+    $buf=explode($nl,$buf);
+    $i=0;
+    $l=count($buf);
+    for ($i=0; $i<$l; $i++) {
+      foreach($expiredList as $name) {
+        if(strpos($buf[$i], $name."=")===0) {
+          unset($buf[$i]);
+          break;
+        }
+      }
+    }
+    
+    $buf=implode($nl,$buf);
+    $parsed=parse_ini_string($buf,true);
+    $userList=$parsed[$realm];
+    if (count($userList)==0) throw new UsageException ("Cannot remove all users");
+    $adminsList=$parsed[$realm."Admins"];
+    if (count($adminsList)==0) throw new UsageException ("Cannot remove all admins");
+    file_put_contents($groupFile,$buf);    
+  } 
+  
   /**
     * Generates random server nonce for the Digest authentication.
     * @returns string
@@ -109,6 +152,32 @@ class AccessHelper {
     }
     $sn=base64_encode($sn);
     return($sn);
+  }
+  
+  /**
+   * Checks if there are new messages since the latest current user's message.
+   * Main feature of the postAuth state.
+   * @return string|Array notification
+   */
+  public static function getUnanswered($name, AuthRegistry $context) {
+    if(empty($name)) return("-");
+    if ( ! class_exists("CardfileSqlt") ) throw new UsageException ("Some dependency is missing");
+    $dbFile = $context->g("targetPath").$context->g("realm"); 
+    $dbm=new CardfileSqlt($dbFile,false);
+
+    $found=$dbm->getLastMsgByAuthor($name);
+    if ( ! $found) { // no messages by this user in this forum
+      return("No messages by this user");
+    }
+    // check if the latest message is authored by this user
+    $last=$dbm->getLastMsg();
+    $unanswered = $last["id"] - $found["id"];
+    if ( $unanswered ) {
+      $note=[ "Unanswered: %s, latest: %s at %s", $unanswered, $last["date"], $last["time"] ];  
+    }
+    else $note="Unanswered: 0"; 
+    //$dbm->destroy();
+    return ($note);
   }
 
   // ----- Interface methods for AccessController  -----
@@ -254,6 +323,11 @@ class AccessHelper {
     include($ar->g("templatePath")."authForm.php");
   }
   
+  /**
+   * Checks forum command (including default empty command, meaning "view") against guest-allowed commands.
+   * @param {object AuthRegistry} $ar
+   * @return true if allowed, false if mot allowed
+   */
   static function tryPassAsGuest(AuthRegistry $ar) {
     $allowedCommands=explode(",",$ar->g("guestsAllowed"));
     if (in_array("view",$allowedCommands)) $allowedCommands[]="";

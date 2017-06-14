@@ -3,7 +3,7 @@
 /**
  * Entry point into Translator.
  * Also transforms [formatString,var1,varN] with vsprint, so is required even when Translator is not used.
- * @param string|Array $text
+ * @param string|Array|boolean $text
  * @return string
  */
 function l($text) {
@@ -15,7 +15,10 @@ function l($text) {
   else if (is_string($text)) {
     $string=$text;
   }
-  else throw new UsageException("Invalid argument:".$text."!");
+  else if ($text===false || $text===true) return "";
+  else {
+    throw new UsageException("Invalid argument:".$text." of type ".gettype($text)." !");
+  }
   if (class_exists("Translator") && Translator::$enabled) {
     $string=Translator::go($string);
   }
