@@ -50,4 +50,9 @@ Wrong login or/and password~~Неправильное имя или пароль
 Please, introduce yourself~~Введите своё имя
 Message ID~~Сообщение №
 letters, max~~букв, максимум
-max %s  letters~~
+Only %s results shown, there may be more. Increase the page length or change order~~Это только первые %s результатов, следующие могли не поместиться. Установите большее количество сообщений на странице или измените порядок сортировки
+max %s  letters~~не более %s букв
+Unappropriate registration request~~Что-то не сработало, обновите страницу
+Please, register again~~Зарегистрируйтесь, пожалуйста, снова
+Dear %s, your session will expire in %s minutes~~Дорогой %s, ваш сеанс закончится через %s минут(ы)
+Dear %s, your session has expired, thank you for your visit.~~Дорогой %s, ваш сеанс закончился, спасибо за общение
