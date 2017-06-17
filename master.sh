@@ -4,7 +4,11 @@ rm test/.group
 rm demo/.group
 git rm -f test/.group
 git rm -f demo/.group
-rm test/junk
-git rm -f test/junk
+rm -r test/junk
+git rm -fr test/junk
+rm -r test/tests
+git rm -fr test/tests
 git rm -f \*.sh
 git rm -f test/\*.html
+git add --all *
+
