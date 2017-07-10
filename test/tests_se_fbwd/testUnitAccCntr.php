@@ -38,15 +38,13 @@ function page ($registryTemplate, $input, &$session, &$registry, $verbose=0) {
   $ac=new AccessController( $ar, $input, $session, "DetachedAccessHelper" );
   $acRet=$ac->go();
   $registry=$ar;
-  //print_r($ac->session);
+  $ac->displayTitle();
   echo ("Trace:".$ar->g("trace")."\n");
   echo ("Alert:".l($ar->g("alert"))."\n");
-
   if ($verbose) { 
     echo ("Session:");
     print_r($session);
   }
-  //$ar->destroy();
   CardfileSqlt::destroy();
   return ($acRet);
 }
@@ -55,7 +53,7 @@ echo("\nUnit tests for AccessController\n\n");
 
 class Test_AccessController_basic extends PHPUnit_Framework_TestCase {
 
-  protected $authRegistryTemplate = [ "realm"=>"test", "targetPath"=>"../", "templatePath"=>"../../LTforum/templates/", "assetsPath"=>"../../assests/", "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>2, "maxDelayAuth"=>4, "maxDelayPage"=>6, "maxTimeoutGcCookie"=>10, "minRegenerateCookie"=>8, "guestsAllowed"=>false, "masterRealms"=>"", "expireWarnInterval"=>1, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>"" ];
+  protected $authRegistryTemplate = [ "realm"=>"test", "targetPath"=>"../", "templatePath"=>"../../LTforum/templates/", "assetsPath"=>"../../assests/", "isAdminArea"=>0, "authName"=>"", "serverNonce"=>"",  "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1, "minDelay"=>2, "maxDelayAuth"=>4, "maxDelayPage"=>6, "maxTimeoutGcCookie"=>10, "minRegenerateCookie"=>8, "guestsAllowed"=>false, "masterRealms"=>"", "expireWarnInterval"=>1, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "header"=>"", "requireFiles"=>"", "includeTemplate"=>"", "controlsClass"=>"", "trace"=>"" ];
 
   public function _test_getStaticHello() {
     $hello=AccessController::hello();

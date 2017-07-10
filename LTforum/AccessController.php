@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added SessionManager
+ * @package LTforum
+ * @version 1.5 added features to auth subsystem
  */
 
 class AuthRegistry extends SingletAssocArrayWrapper {
@@ -54,7 +54,7 @@ class AuthRegistry extends SingletAssocArrayWrapper {
   
   public static function getDefaults() {
     $r=[
-      "realm"=>"", "targetPath"=>"", "templatePath"=>"", "assetsPath"=>"", "isAdminArea"=>1, "authName"=>"", "serverNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1,  "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "guestsAllowed"=>false, "masterRealms"=>"", "expireWarnInterval"=>300, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "controlsClass"=>"", "trace"=>""
+      "realm"=>"", "targetPath"=>"", "templatePath"=>"", "assetsPath"=>"", "isAdminArea"=>1, "authName"=>"", "serverNonce"=>"", "serverCount"=>0, "clientCount"=>0, "secret"=>"", "authMode"=>1,  "minDelay"=>5, "maxDelayAuth"=>5*60, "maxDelayPage"=>60*60, "maxTimeoutGcCookie"=>5*24*3600, "minRegenerateCookie"=>1*24*3600, "guestsAllowed"=>false, "masterRealms"=>"", "expireWarnInterval"=>300, "reg"=>"", "act"=>"", "user"=>"", "ps"=>"", "cn"=>"", "response"=>"", "plain"=>"", "pers"=>"", "alert"=>"", "header"=>"", "requireFiles"=>"", "includeTemplate"=>"", "controlsClass"=>"", "trace"=>""
     ];
     return $r;
   }
@@ -97,10 +97,17 @@ class AccessController {
   protected $session;// session.normally $_SESSION
   protected $helper;// helper class (library), normally AccessHelper
   
+  /**
+   * Attaches context, input, session, helper objects. Is essential for unit testing.
+   * @param object $context
+   * @param array|null $request an array to simulate the request string or null to attach $_REQUEST
+   * @param array|null $session !input-output an array to simulate the session data or null to attach $_SESSION
+   * @param string $helperClass
+   */
   function __construct(AuthRegistry $context,$request=null,&$session=null, $helperClass="AccessHelper") {
-    if ( !isset($request) ) $request=$_REQUEST;
-    if (!is_array($request)) throw new UsageException("Wrong argument request!");
-    if ( !class_exists($helperClass) ) throw new UsageException("Wrong helper class ".$helperClass."!");
+    if ( ! isset($request)) $request=$_REQUEST;
+    if ( ! is_array($request)) throw new UsageException("Wrong argument request!");
+    if ( ! class_exists($helperClass) ) throw new UsageException("Wrong helper class ".$helperClass."!");
     $this->c = $context;
     $this->r = $request;
     $this->session = &$session;
@@ -109,7 +116,7 @@ class AccessController {
   }
   
   /**
-    * Controller top level. Initializations and command/state logic.
+    * Access Controller top level. Initializations and command/state logic.
     * @uses Applicant
     * @uses AccessHelper for interfaces to View, session control, Header
     * @see LTforum/AccessController_table.rtf for command/state table
@@ -150,7 +157,7 @@ class AccessController {
       // any state > preAuth
       // redirect to cleaned uri without reg=deact
       $targetUri=$hc::makeRedirectUri($this->c);
-      $hc::sendRedirect($targetUri);
+      $hc::makeRedirect($targetUri,$this->c);
       $return="redirected to ".$targetUri;
       break;        
 
@@ -174,7 +181,7 @@ class AccessController {
           // postAuth > postAuth
           // redirect to cleaned uri without reg=deact
           $targetUri=$hc::makeRedirectUri($this->c);
-          $hc::sendRedirect($targetUri);
+          $hc::makeRedirect($targetUri,$this->c);
           //$return="redirected to ".$targetUri;
           break;
         }
@@ -192,7 +199,7 @@ class AccessController {
       if ( $a->statusEquals("active") ) {
         // error, possibly an attack
         // alert and no state change
-        $hc::showAuthAlert($this->c,"Unappropriate registration request");
+        $hc::makeAuthAlert($this->c,"Unappropriate registration request");
         break;
       }
       if ( empty($this->session) || $a->statusEquals("zero") ) {
@@ -211,7 +218,7 @@ class AccessController {
         }
         $ret=$a->checkNotBefore();
         if ( $ret!==true ) {
-          $hc::showAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
+          $hc::makeAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
           //$a->setStatus("noChange");
           break;
         }
@@ -242,6 +249,8 @@ class AccessController {
         sleep($pauseAllow);
         $a->setTimeLimits( 0,$this->c->g("maxDelayPage") );
         $a->setStatus("active");
+        // make something more if needed
+        $hc::onRegistrationEvent($this->c,$this->session);
         // redirect ?
         if ( $a->optionalRedirect() ) { 
           // header has been sent
@@ -269,12 +278,12 @@ class AccessController {
         }
         $ret = $a->checkExpiredAndWarn();
         if ( $ret!==true ) {
-          $hc::showAuthAlert($this->c,$ret);
+          $hc::makeAuthAlert($this->c,$ret);
           break;
         }
         $ret = $a->checkNotBefore();
         if ( $ret!==true ) {
-          $hc::showAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
+          $hc::makeAuthAlert($this->c,"Please, wait a few seconds and refresh the page");
           //$a->setStatus("active");
           break;
         }
@@ -316,7 +325,7 @@ class AccessController {
       throw new UsageException ("Wrong Command/State reg=".$this->c->g("reg")."/".$a->getStatus()."!");
 
     default:
-      $hc::showAuthAlert($this->c,["Wrong command reg=%s!",$this->c->g("reg")]);
+      $hc::makeAuthAlert($this->c,["Wrong command reg=%s!",$this->c->g("reg")]);
       // state noChange
       break;
     }// end switch
@@ -328,4 +337,51 @@ class AccessController {
     return ($return);
 
   }// end go
+
+  /**
+   * Sends headers and displays login or alert page as is prepared in AccessRegidtry.
+   * @return void
+   */
+  public function display() {
+    $ar=$this->c;
+    //$ar->dump();
+    if ( $ar->checkNotEmpty("header")) {
+      header($ar->g("header"));
+      //return;
+    }
+    if ($ar->checkNotEmpty("requireFiles")) {
+      $files=$ar->g("requireFiles");
+      if(is_string($files)) $files=explode(",",$files);
+      foreach($files as $classFile) {
+        require_once($ar->g("templatePath").$classFile);
+      }
+    }
+    if ($ar->checkNotEmpty("includeTemplate")) {
+      include ($ar->g("templatePath").$ar->g("includeTemplate"));
+    }
+    else {
+      //echo(" Empty AuthRegistry::includeTemplate ");
+      //throw new UsageException("Empty AuthRegistry::includeTemplate");
+    }
+  }// end display
+
+  /**
+   * The debug mode of display().
+   * @return void
+   */  
+  public function displayTitle() {
+    $ar=$this->c;
+    //$ar->dump();  
+    if ($ar->checkNotEmpty("requireFiles")) {
+      $files=$ar->g("requireFiles");
+      if(is_string($files)) $files=explode(",",$files);
+      foreach($files as $classFile) {
+        require_once($ar->g("templatePath").$classFile);
+      }
+    }
+    if ($ar->checkNotEmpty("includeTemplate")) {
+      $cc=$ar->g("controlsClass");
+      echo("\nPage:".$cc::titleSuffix($ar)."\n");
+    }  
+  }
 }// end AccessController
