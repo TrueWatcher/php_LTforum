@@ -1,11 +1,14 @@
 <?php
+/**
+ * @package LTforum
+ * @version 1.5 added features to auth subsystem
+ */
 
 /**
  * Deals with authentication and other procedures changing $_SESSION.
  * used by AccessController
  * @uses AccessHelper
  */
-
 class Applicant {
 
   protected $status;
@@ -221,18 +224,17 @@ class Applicant {
     $hc=$this->helper;
     
     // if request contains a command, remember it in SESSION for final redirect
-    //if ( !empty($_SERVER["QUERY_STRING"]) ) {
-    if ( $this->c->g("reg") || $this->c->g("act") || ( isset($_SERVER["QUERY_STRING"]) && !empty($_SERVER["QUERY_STRING"]) ) ) {
+    if ( $this->c->g("reg") || $this->c->g("act") || ( isset($_SERVER["QUERY_STRING"]) && ! empty($_SERVER["QUERY_STRING"]) ) ) {
       //echo( " QS=".$_SERVER["QUERY_STRING"]);
       $this->session["targetUri"] = $hc::makeRedirectUri($this->c);
     }
-    else if ( !empty($this->session) && array_key_exists("targetUri",$this->session)) { unset($this->session["targetUri"]); }
+    else if ( ! empty($this->session) && array_key_exists("targetUri",$this->session)) { unset($this->session["targetUri"]); }
 
-    $sn = $hc::makeServerNonce();
+    $sn=$hc::makeServerNonce();
     $this->c->s("serverNonce",$sn);
     $this->session["serverNonce"]=$sn;
     $this->setTimeLimits( $this->c->g("minDelay"), $this->c->g("maxDelayAuth") );
-    $hc::showAuthForm( $this->c, $note );
+    $hc::makeAuthForm( $this->c, $note );
 
     $this->setStatus($exitStatus);
   }
@@ -307,10 +309,7 @@ class Applicant {
       $r=$this->session["targetUri"];
       unset($this->session["targetUri"]);
       //return false;// turn this off for DEBUG
-      $hc::sendRedirect($r);
-      //header( "Location: ".$r );
-      //session_write_close();
-      //exit();
+      $hc::makeRedirect($r,$this->c);
       return ( "redirected to ".$r );
      }
      return false;

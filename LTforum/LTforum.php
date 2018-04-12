@@ -1,7 +1,7 @@
 <?php
 /**
  * @package LTforum
- * @version 1.4 added ini files
+ * @version 1.5 added features to auth subsystem
  */
 
 /**
@@ -19,8 +19,6 @@ require_once ($mainPath."AccessHelper.php");
 require_once ($mainPath."AccessController.php");
 require_once ($mainPath."Applicant.php");
 require_once ($mainPath."Translator.php");
-
-//echo ("\r\nI'm LTforum/LTforum/LTforum.php");
 
 // minimal initializations
 $systemWideDefaults=SessionRegistry::getDefaultsFrontend();
@@ -44,7 +42,10 @@ $ac=new AccessController($ar);
 $acRet=$ac->go();
 //echo("Trace:".$ar->g("trace")."\n");
 //echo( "Alert:".$ar->g("alert")."\n" );
-if($acRet!==true) exit($acRet);
+if($acRet!==true) {
+  $ac->display();
+  exit($acRet);
+}
 
 // more initializations using database
 $pr=PageRegistry::getInstance( 0, [] );

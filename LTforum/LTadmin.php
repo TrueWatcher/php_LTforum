@@ -1,11 +1,11 @@
 <?php
 /**
  * @package LTforum
- * @version 1.4 added ini files
+ * @version 1.5 added features to auth subsystem
  */
 /**
  * LTforum Admin panel, common for all forum-threads.
- * Requires forumName and, if authentication is absent, PIN
+ * Requires forumName
  */
 $mainPath=$adminEntryParams["mainPath"];
 require_once ($mainPath."AssocArrayWrapper.php");
@@ -36,8 +36,10 @@ $ac=new AccessController($aar);
 $acRet=$ac->go($aar);// so short
 //echo("Trace:".$aar->g("trace")."\n");
 //echo( "Alert:".$aar->g("alert")."\n" );
-if ( $acRet !== true ) exit($acRet);
-
+if ( $acRet !== true ) {
+  $ac->display();
+  exit($acRet);
+}
 // continue PageRegistry inits with database
 $apr->initAdmAfterAuth($asr);
 

@@ -1,7 +1,7 @@
 <?php
 /**
- * @pakage LTforum
- * @version 1.2 added SessionManager
+ * @package LTforum
+ * @version 1.5 added features to auth subsystem
  */
 
 /**
@@ -227,21 +227,6 @@ class AccessHelper {
     session_regenerate_id(true);
   }
   
-  /**
-   * Writes the array argument to SESSION without changing SESSION pointer. Currently unused.
-   */
-  static function writeSession($arr) {
-    // $var=$_SESSION; $var[$key]="value" sets value only in $var, not in $_SESSION
-    // no session_write_close() anywhere before this !!!
-    echo(" Copying session ");
-    $sk=array_keys($_SESSION);
-    foreach ($sk as $k) { unset($_SESSION[$k]); } 
-    $as=$a->session;
-    foreach ( $as as $k=>$v ) {
-      $_SESSION[$k]=$v;
-    }
-  }
-  
   // --- interface to Header ---
   /**
     * If requested page has some parameters, saves them to SESSION.
@@ -273,17 +258,21 @@ class AccessHelper {
   }
   
   /**
-   * Sends Location header.
+   * Prepares to send the Location header.
+   * Sending itself is in AccessController::display()
    * @param string $targetUri
+   * @param {object AuthRegistry} $ar
    * @return nothing
-   */
-  static function sendRedirect($targetUri) {
-    header( "Location: ".$targetUri );
+   */  
+  static function makeRedirect($targetUri,AuthRegistry $ar) {
+    $ar->trace("redirect");
+    $ar->s("header", "Location: ".$targetUri );
   }
   
   // --- interface to View ---
   /**
-    * Displays the registration form.
+    * Prepares to display the registration form.
+    * Display itself is in AccessController::display()
     * Also stores original request uri to SESSION and generates serverNonce.
     * @uses templates/AuthElements
     * @uses templates/SubAuthElements
@@ -292,22 +281,20 @@ class AccessHelper {
     * @param string $authMessage message to display in the form
     * @return nothing
     */
-  static function showAuthForm (AuthRegistry $ar, $authMessage="") {
-    $ar->s("alert",$authMessage);
-    //$ar->s("serverNonce",$sn);// needed by form
-    require_once($ar->g("templatePath")."AuthElements.php");
-    require_once($ar->g("templatePath")."SubAuthElements.php");
+  static function makeAuthForm(AuthRegistry $ar, $authMessage="") {
+    self::makeAuthAlert($ar,$authMessage);
+    // now adjust the controlsClass
     $formSelect= [
       0=>"PlainAuthElements",
       1=>"OpportunisticAuthElements",
       2=>"StrictAuthElements"
     ];
     $ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
-    include($ar->g("templatePath")."authForm.php");
   }
 
   /**
-    * Displays simple alert message, formatted as the registration form.
+    * Prepares to display the simple alert message, formatted as the registration form.
+    * Display itself is in AccessController::display()
     * @uses templates/AuthElements
     * @uses templates/SubAuthElements
     * @uses templates/AuthForm.php
@@ -315,14 +302,13 @@ class AccessHelper {
     * @param string $authMessage message to display in the form
     * @return nothing
     */
-  static function showAuthAlert (AuthRegistry $ar, $authMessage="") {
+  static function makeAuthAlert(AuthRegistry $ar, $authMessage="") {
     $ar->s("alert",$authMessage);
-    require_once($ar->g("templatePath")."AuthElements.php");
-    require_once($ar->g("templatePath")."SubAuthElements.php");
-    $ar->s( "controlsClass", "AlertAuthElements" );
-    include($ar->g("templatePath")."authForm.php");
-  }
-  
+    $ar->s("requireFiles", [ "AuthElements.php", "SubAuthElements.php" ] );
+    $ar->s("includeTemplate","authForm.php");
+    $ar->s("controlsClass", "AlertAuthElements");
+  }  
+    
   /**
    * Checks forum command (including default empty command, meaning "view") against guest-allowed commands.
    * @param {object AuthRegistry} $ar
@@ -336,6 +322,10 @@ class AccessHelper {
     return false;    
   }
   
+  /**
+   * Just a hook. May be overriden in a subclass if some more action is needed.
+   */
+  static function onRegistrationEvent(AuthRegistry $ar,&$session) {}
 }
 
 /**
@@ -366,34 +356,5 @@ class DetachedAccessHelper extends AccessHelper {
     $target="?";
     if ( $act ) $target.="act=".$act;
     return($target);
-  }
-  
-  static function sendRedirect($targetUri) {
-    $ar=AuthRegistry::getInstance();
-    $ar->trace("redirect");
-  }
-  
-  // --- interface to View ---
-  static function showAuthForm (AuthRegistry $ar, $authMessage="") {
-    $ar->s("alert",$authMessage);
-    //$ar->s("serverNonce",$sn);// needed by form
-    require_once($ar->g("templatePath")."AuthElements.php");
-    require_once($ar->g("templatePath")."SubAuthElements.php");
-    $formSelect= [ 0=>"PlainAuthElements",
-                    1=>"OpportunisticAuthElements",
-                    2=>"StrictAuthElements" ];
-    //$ar->s( "controlsClass", $formSelect[$ar->g("authMode")] );
-    $cc = $formSelect[$ar->g("authMode")];
-    echo ( "Page:".$cc::titleSuffix($ar)."\n" );
-    //include($ar->g("templatePath")."authForm.php");
-  }
-
-  static function showAuthAlert (AuthRegistry $ar, $authMessage="") {
-    $ar->s("alert",$authMessage);
-    require_once($ar->g("templatePath")."AuthElements.php");
-    require_once($ar->g("templatePath")."SubAuthElements.php");
-    echo ( "Page:".AlertAuthElements::titleSuffix($ar)."\n" );
-    //$ar->s( "controlsClass", "AlertAuthElements" );
-    //include($ar->g("templatePath")."authForm.php");
   }
 }
