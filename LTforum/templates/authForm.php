@@ -20,6 +20,7 @@ if ( !is_subclass_of($cc,"AuthElements") ) throw new UsageException ("Layout aut
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title><?php print( /*$pr->g("title")." : ".*/$cc::titleSuffix($ar) ); ?></title>
   <link rel="stylesheet" type="text/css" href="<?php print($ar->g("assetsPath")."form.css") ?>" media="all" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.5" />
   <?php print ( $cc::scriptHelper($ar) ); ?>
 </head>
 <body>
